@@ -1,173 +1,195 @@
-# PHASE 4 — DEVSECOPS FOUNDATION (MONOREPO)
+# PHASE 4 — DEVSECOPS FOUNDATION
 
 Project: **KeJepangDulu Web eLearning Platform**
-Version: **1.0 (Monorepo Strategy)**
-Status: **Active — Execution Starting Phase**
-Depends On:
-
-* Phase 0 — Business Foundation
-* Phase 1 — Product & System Requirements
-* Phase 2 — Content Strategy
-* Phase 3 — System Architecture
-
+Version: **2.0 (Monorepo + OIDC Architecture)**
+Status: **Active — Execution Phase**
+Depends On: **PHASE 3 — System Architecture Design**
 Last Updated: **2026-04-10**
 
 ---
 
 # 0. OBJECTIVE
 
-This phase establishes the **development, security, and deployment foundation** using a **monorepo architecture**.
+This phase establishes the **secure development and deployment foundation**.
 
-This phase ensures:
+It ensures:
 
-* Version-controlled infrastructure
-* Secure development workflows
-* Automated deployment pipelines
-* Consistent code standards
-* Controlled access management
-* Future scalability readiness
+* Secure CI/CD pipeline
+* No static AWS credentials
+* Infrastructure automation
+* Code standardization
+* Security-first workflow
+* Team scalability
+* Deployment consistency
 
-This phase enables:
+Authentication method:
 
 ```text
-Safe Development
-Secure Deployment
-Reliable Infrastructure
+GitHub → AWS via OIDC (OpenID Connect)
 ```
 
-Without this phase:
+NOT:
 
 ```text
-System instability risk increases
-Security risk increases
-Deployment complexity increases
+AWS_ACCESS_KEY in GitHub Secrets
 ```
 
 ---
 
-# 1. MONOREPO STRATEGY
+# 1. DEVSECOPS ARCHITECTURE OVERVIEW
 
 ---
 
-## 1.1 Monorepo Philosophy
-
-All system components are stored inside:
+## 1.1 High-Level DevSecOps Flow
 
 ```text
-Single Git Repository
+Developer Push Code
+        |
+        v
+GitHub Repository (Monorepo)
+        |
+        v
+GitHub Actions Workflow
+        |
+        v
+OIDC Authentication
+        |
+        v
+Assume AWS Role
+        |
+        v
+Deploy Infrastructure / Services
 ```
 
-Benefits:
+---
+
+## 1.2 Core DevSecOps Components
+
+```yaml
+devsecops_components:
+
+  source_control:
+
+    GitHub
+
+  ci_cd:
+
+    GitHub Actions
+
+  authentication:
+
+    AWS OIDC Federation
+
+  infrastructure:
+
+    Terraform
+
+  application:
+
+    AWS SAM
+
+  security:
+
+    IAM Roles
+
+  secrets:
+
+    AWS Secrets Manager
+
+  logging:
+
+    CloudWatch
+```
+
+---
+
+# 2. MONOREPO STRATEGY
+
+---
+
+## 2.1 Monorepo Philosophy
+
+All components live in:
 
 ```text
-Shared configurations
+single repository
+```
+
+Advantages:
+
+```text
 Centralized version control
+Shared dependencies
 Simplified CI/CD
-Reduced duplication
-Better dependency control
+Better traceability
+Consistent deployment
 ```
 
 ---
 
-## 1.2 Repository Name
-
-```text
-kejepangdulu-platform
-```
-
----
-
-## 1.3 Repository Structure
+## 2.2 Monorepo Root Structure
 
 ```text
 kejepangdulu-platform/
 
 ├── apps/
-│   ├── web/
-│   │   (Next.js frontend)
-│   │
-│   ├── api/
-│   │   (Lambda services)
+│   ├── frontend/
+│   ├── backend-api/
+│   └── admin-tools/
 │
-├── packages/
-│   ├── ui/
-│   │   (Shared UI components)
-│   │
-│   ├── config/
-│   │   (Shared configs)
-│   │
-│   ├── types/
-│   │   (Shared TypeScript types)
+├── services/
+│   ├── auth/
+│   ├── payment/
+│   ├── product/
+│   ├── content/
+│   └── user/
 │
 ├── infrastructure/
 │   ├── terraform/
-│   │
 │   ├── sam/
+│   └── scripts/
 │
-├── scripts/
+├── shared/
+│   ├── types/
+│   ├── utils/
+│   └── constants/
 │
 ├── docs/
+│   ├── phase0/
+│   ├── phase1/
+│   ├── phase2/
+│   ├── phase3/
+│   └── phase4/
 │
 ├── .github/
-│   ├── workflows/
+│   └── workflows/
 │
 ├── package.json
-├── pnpm-workspace.yaml
-├── turbo.json
-└── README.md
-```
-
-Recommended tools:
-
-```text
-pnpm
-Turborepo
-TypeScript
+├── README.md
+└── .gitignore
 ```
 
 ---
 
-# 2. VERSION CONTROL STRATEGY
+# 3. BRANCH STRATEGY
 
 ---
 
-## 2.1 Git Provider
+## 3.1 Branch Model
 
 ```text
-GitHub
-```
+main      → production
 
-Recommended:
+dev       → integration
 
-```text
-GitHub Organization
-```
-
-Example:
-
-```text
-kejepangdulu-org
+feature/* → feature development
 ```
 
 ---
 
-## 2.2 Branch Strategy
+## 3.2 Branch Protection Rules
 
-```text
-main → production
-
-dev → integration
-
-feature/* → development
-
-hotfix/* → urgent fixes
-```
-
----
-
-## 2.3 Branch Protection Rules
-
-Protect:
+Protected branches:
 
 ```text
 main
@@ -178,74 +200,48 @@ Rules:
 
 ```text
 Require pull request
+Require status checks
 Require code review
-Require CI passing
-Block direct push
+Block force push
 ```
 
 ---
 
-# 3. DEVELOPMENT TOOLCHAIN
+# 4. GITHUB ORGANIZATION SETUP
 
 ---
 
-## 3.1 Core Development Stack
-
-```text
-Node.js 20.x
-
-TypeScript
-
-Next.js
-
-AWS SDK v3
-```
-
----
-
-## 3.2 Package Manager
+## 4.1 Organization Name
 
 Recommended:
 
 ```text
-pnpm
-```
-
-Reason:
-
-```text
-Faster installs
-Better monorepo support
-Lower disk usage
+kejepangdulu
 ```
 
 ---
 
-## 3.3 Build System
-
-Recommended:
+## 4.2 Repository Name
 
 ```text
-Turborepo
+kejepangdulu-platform
 ```
 
-Purpose:
+Monorepo model:
 
 ```text
-Parallel builds
-Caching
-Dependency tracking
+Single repository only
 ```
 
 ---
 
-# 4. SECURITY FOUNDATIONS
+# 5. GITHUB SECURITY CONFIGURATION
 
 ---
 
-## 4.1 Repository Security
+## 5.1 Enable Security Features
 
-Enable:
+Required:
 
 ```text
 Dependabot
@@ -254,225 +250,119 @@ Secret scanning
 
 Code scanning
 
-Dependency review
+Dependency alerts
 ```
 
 ---
 
-## 4.2 Secrets Management Strategy
+## 5.2 Enable Dependabot
 
-Two layers:
-
-```text
-GitHub Secrets
-AWS Secrets Manager
-```
-
-Stored secrets:
+Purpose:
 
 ```text
-AWS_ACCESS_KEY_ID
-
-AWS_SECRET_ACCESS_KEY
-
-MIDTRANS_SERVER_KEY
-
-COGNITO_CLIENT_SECRET
-
-JWT_SECRET
-```
-
-Never store secrets in:
-
-```text
-Source code
-Environment files in repo
+Auto update dependencies
+Fix security vulnerabilities
 ```
 
 ---
 
-## 4.3 IAM Role Strategy
+# 6. AWS OIDC AUTHENTICATION SETUP
 
-Roles:
+(VERY IMPORTANT SECTION)
 
-```text
-developer-role
+---
 
-ci-cd-role
+## 6.1 Why OIDC?
 
-terraform-role
-
-lambda-role
-```
-
-Principle:
+Benefits:
 
 ```text
-Least Privilege
+No AWS access keys
+
+Short-lived credentials
+
+Automatic credential rotation
+
+Better security
+
+Industry standard
 ```
 
 ---
 
-# 5. MONOREPO APPLICATION STRUCTURE
+## 6.2 Create OIDC Identity Provider
 
----
-
-# 5.1 Frontend Application
-
-Location:
+AWS:
 
 ```text
-apps/web/
+IAM → Identity Providers
 ```
 
-Stack:
+Provider:
 
 ```text
-Next.js
-
-React
-
-TypeScript
+token.actions.githubusercontent.com
 ```
 
-Responsibilities:
+Audience:
 
 ```text
-Authentication UI
-
-Dashboard UI
-
-Product Viewer
-
-Material Viewer
-
-Quiz Viewer
-
-Payment Interface
+sts.amazonaws.com
 ```
 
 ---
 
-# 5.2 Backend API
+## 6.3 Create AWS OIDC Role
 
-Location:
+Role name:
 
 ```text
-apps/api/
+github-actions-deploy-role
 ```
 
-Stack:
+Trust policy:
 
-```text
-Node.js
-
-AWS Lambda
-
-TypeScript
-```
-
-Lambda groups:
-
-```text
-auth/
-
-product/
-
-payment/
-
-material/
-
-content/
-```
-
-No heavy quiz logic.
-
----
-
-# 5.3 Shared Packages
-
-Location:
-
-```text
-packages/
-```
-
-Modules:
-
-```text
-ui/
-
-types/
-
-config/
-```
-
-Shared usage:
-
-```text
-Frontend + Backend
+```json
+{
+  "Effect": "Allow",
+  "Principal": {
+    "Federated":
+      "arn:aws:iam::<ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com"
+  },
+  "Action": "sts:AssumeRoleWithWebIdentity",
+  "Condition": {
+    "StringEquals": {
+      "token.actions.githubusercontent.com:aud":
+        "sts.amazonaws.com"
+    },
+    "StringLike": {
+      "token.actions.githubusercontent.com:sub":
+        "repo:kejepangdulu/*"
+    }
+  }
+}
 ```
 
 ---
 
-# 6. INFRASTRUCTURE CODE STRUCTURE
+## 6.4 Attach Permissions to Role
 
----
-
-Location:
+Required policies:
 
 ```text
-infrastructure/
+Terraform deployment permissions
+
+SAM deployment permissions
+
+CloudWatch permissions
+
+S3 permissions
 ```
 
-Contains:
+Use:
 
 ```text
-terraform/
-
-sam/
-```
-
----
-
-## 6.1 Terraform Modules
-
-```text
-modules/
-
-s3/
-
-dynamodb/
-
-cloudfront/
-
-cognito/
-
-route53/
-
-iam/
-```
-
----
-
-## 6.2 Terraform Environments
-
-```text
-environments/
-
-dev/
-
-prod/
-```
-
----
-
-## 6.3 Terraform State Management
-
-```text
-Backend: S3
-
-Locking: DynamoDB
+Least Privilege Principle
 ```
 
 ---
@@ -481,292 +371,226 @@ Locking: DynamoDB
 
 ---
 
-## 7.1 GitHub Actions Workflow
+## 7.1 Workflow Types
 
-Location:
-
-```text
-.github/workflows/
-```
-
-Required workflows:
+Required:
 
 ```text
-ci.yml
+lint
 
-deploy-dev.yml
+test
 
-deploy-prod.yml
-```
+build
 
----
+deploy-dev
 
-## 7.2 CI Pipeline Steps
-
-```text
-Install dependencies
-
-Lint code
-
-Run tests
-
-Build project
-
-Validate infrastructure
+deploy-prod
 ```
 
 ---
 
-## 7.3 Deployment Pipeline Steps
+## 7.2 CI Workflow Flow
 
 ```text
-Terraform Plan
-
-Terraform Apply
-
-SAM Build
-
-SAM Deploy
+Push Code
+    ↓
+Run Lint
+    ↓
+Run Tests
+    ↓
+Build Project
+    ↓
+Deploy Infrastructure
+    ↓
+Deploy Services
 ```
 
 ---
 
-## 7.4 Deployment Triggers
+# 7.3 Deployment Triggers
 
 ```text
-Push to dev → Deploy Dev
+dev branch → deploy DEV
 
-Push to main → Deploy Production
+main branch → deploy PROD
 ```
 
 ---
 
-# 8. CODE QUALITY ENFORCEMENT
+# 8. ENVIRONMENT STRATEGY
 
 ---
 
-## 8.1 Linting
+## 8.1 Environments
 
-Tool:
+```text
+dev
+prod
+```
+
+Later optional:
+
+```text
+staging
+```
+
+---
+
+## 8.2 Environment Naming Convention
+
+```text
+project-environment-resource
+```
+
+Example:
+
+```text
+kejepangdulu-dev-content-bucket
+
+kejepangdulu-prod-users-table
+```
+
+---
+
+# 9. SECRETS MANAGEMENT
+
+---
+
+## 9.1 Secret Storage Location
+
+Use:
+
+```text
+AWS Secrets Manager
+```
+
+---
+
+## 9.2 Required Secrets
+
+```text
+MIDTRANS_SERVER_KEY
+
+COGNITO_CLIENT_SECRET
+
+JWT_SECRET
+```
+
+---
+
+## 9.3 Environment Variables
+
+```text
+NODE_ENV
+
+API_BASE_URL
+
+CONTENT_BUCKET_NAME
+```
+
+---
+
+# 10. IAM ROLE STRATEGY
+
+---
+
+## 10.1 Role Types
+
+```text
+github-actions-role
+
+developer-role
+
+admin-role
+```
+
+---
+
+## 10.2 IAM Principles
+
+```text
+Least privilege
+
+Role separation
+
+Audit logging
+```
+
+---
+
+# 11. CODE QUALITY STANDARDS
+
+---
+
+## 11.1 Linting
+
+Use:
 
 ```text
 ESLint
-```
-
----
-
-## 8.2 Formatting
-
-Tool:
-
-```text
 Prettier
 ```
 
 ---
 
-## 8.3 Type Checking
+## 11.2 Formatting
 
-Tool:
+Automatic formatting required.
+
+---
+
+## 11.3 Testing Framework
+
+Recommended:
 
 ```text
-TypeScript
+Jest
 ```
 
 ---
 
-## 8.4 Pre-Commit Hooks
+# 12. MONITORING INTEGRATION
 
-Tool:
+---
 
-```text
-Husky
-```
-
-Checks:
+## 12.1 Logging
 
 ```text
-Lint
+GitHub Logs
 
-Format
-
-Type-check
+CloudWatch Logs
 ```
 
 ---
 
-# 9. DEVELOPMENT ENVIRONMENT SETUP
+## 12.2 Alerts
 
----
-
-## 9.1 Local Development Requirements
-
-Required tools:
+Configure:
 
 ```text
-Node.js 20+
-
-pnpm
-
-Docker (optional)
-
-AWS CLI
-
-Git
+Deployment failure alerts
 ```
 
 ---
 
-## 9.2 Local Environment Variables
-
-Stored in:
-
-```text
-.env.local
-```
-
-Never committed to Git.
-
----
-
-# 10. TESTING FRAMEWORK SETUP
-
----
-
-## 10.1 Unit Testing
-
-Tool:
-
-```text
-Vitest
-```
-
----
-
-## 10.2 API Testing
-
-Tool:
-
-```text
-Supertest
-```
-
----
-
-## 10.3 Frontend Testing
-
-Tool:
-
-```text
-Playwright (future)
-```
-
----
-
-# 11. DOCUMENTATION STRATEGY
-
----
-
-Location:
-
-```text
-docs/
-```
-
-Required documents:
-
-```text
-architecture.md
-
-api-spec.md
-
-deployment-guide.md
-
-runbook.md
-```
-
----
-
-# 12. ENVIRONMENT STRATEGY
-
----
-
-## 12.1 Development Environment
-
-```text
-dev
-```
-
-Used for:
-
-```text
-Testing new features
-```
-
----
-
-## 12.2 Production Environment
-
-```text
-prod
-```
-
-Used for:
-
-```text
-Live users
-```
-
----
-
-# 13. SECURITY BASELINE CHECKLIST
-
-Before moving to Phase 5:
-
-```text
-GitHub organization created
-
-Repository created
-
-Branch protection enabled
-
-Secrets configured
-
-IAM roles defined
-
-CI/CD pipelines created
-
-Security scanning enabled
-```
-
-All must be:
-
-```text
-Completed
-```
-
----
-
-# 14. DEVSECOPS ACCEPTANCE CRITERIA
+# 13. DEVSECOPS ACCEPTANCE CRITERIA
 
 Phase is complete when:
 
-```text
-Monorepo initialized
+```yaml
+repository_created: true
 
-Frontend skeleton created
+monorepo_structure_ready: true
 
-Backend skeleton created
+branch_protection_enabled: true
 
-Infrastructure repo initialized
+oidc_configured: true
 
-GitHub Actions working
+github_actions_workflow_created: true
 
-Secrets stored securely
+deployment_role_created: true
 
-Branch protection enabled
-
-CI pipeline passing
+ci_cd_pipeline_working: true
 ```
 
 ---
