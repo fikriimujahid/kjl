@@ -251,15 +251,15 @@ terraform init
 # What this does:
 # - Downloads AWS provider plugin
 # - Initializes backend (local for bootstrap)
-# - Downloads the dev, prod, and cicd-runner IAM submodules from ../../modules/iam-roles/*
+# - Downloads the shared terraform-env module twice plus the cicd-runner IAM submodule
 ```
 
 **Expected Output:**
 ```
 Initializing modules...
 - iam_role_cicd_runner in ../../modules/iam-roles/cicd-runner
-- iam_role_dev in ../../modules/iam-roles/dev
-- iam_role_prod in ../../modules/iam-roles/prod
+- iam_role_dev in ../../modules/iam-roles/terraform-env
+- iam_role_main in ../../modules/iam-roles/terraform-env
 
 Initializing the backend...
 
@@ -307,7 +307,7 @@ Do you want to perform these actions?
 
 aws_iam_openid_connect_provider.github: Creating...
 aws_iam_openid_connect_provider.github: Creation complete after 2s [id=arn:aws:iam::...]
-module.iam_role_prod.aws_iam_role.kjl_terraform_prod: Creating...
+module.iam_role_main.aws_iam_role.terraform_env: Creating...
 ...
 
 Apply complete! Resources: 15 added, 0 changed, 0 destroyed.
@@ -317,7 +317,7 @@ Outputs:
 cicd_runner_role_arn = "arn:aws:iam::731099197523:role/p1-serverless-web-app-cicd-runner-role"
 github_oidc_provider_arn = "arn:aws:iam::731099197523:oidc-provider/token.actions.githubusercontent.com"
 terraform_dev_role_arn = "arn:aws:iam::731099197523:role/p1-serverless-web-app-terraform-dev-role"
-terraform_prod_role_arn = "arn:aws:iam::731099197523:role/p1-serverless-web-app-terraform-prod-role"
+terraform_main_role_arn = "arn:aws:iam::731099197523:role/p1-serverless-web-app-terraform-main-role"
 ```
 
 ### Step 6: Save Output Values
@@ -334,7 +334,7 @@ terraform output > bootstrap-outputs.txt
 **Copy these values:**
 - `cicd_runner_role_arn`: Main role for GitHub Actions
 - `terraform_dev_role_arn`: Role for development deployments
-- `terraform_prod_role_arn`: Role for production deployments
+- `terraform_main_role_arn`: Role for main deployments
 - `github_oidc_provider_arn`: OIDC provider reference
 
 ---
@@ -352,7 +352,7 @@ Add the role ARNs to your GitHub repository secrets:
 |------------|-------|---------|
 | `AWS_ROLE_TO_ASSUME` | `<cicd_runner_role_arn>` | Main CI/CD role |
 | `AWS_ROLE_TO_ASSUME_DEV` | `<terraform_dev_role_arn>` | Development deployment role |
-| `AWS_ROLE_TO_ASSUME_PROD` | `<terraform_prod_role_arn>` | Production deployment role |
+| `AWS_ROLE_TO_ASSUME_MAIN` | `<terraform_main_role_arn>` | Main deployment role |
 | `AWS_REGION` | `ap-southeast-1` | Your AWS region |
 
 ### 2. Create GitHub Actions Workflow

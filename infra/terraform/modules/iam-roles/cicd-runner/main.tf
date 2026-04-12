@@ -2,7 +2,7 @@ data "aws_caller_identity" "current" {}
 
 locals {
   account_id = data.aws_caller_identity.current.account_id
-  
+
   tags = {
     project     = var.project
     environment = "shared"
@@ -29,13 +29,13 @@ data "aws_iam_policy_document" "cicd_runner_trust" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = [
-            "repo:${var.github_repo}:ref:refs/heads/dev",
-            "repo:${var.github_repo}:ref:refs/heads/pro",
-            "repo:${var.github_repo}:pull_request/*",
-            "repo:${var.github_repo}:environment:dev",
-            "repo:${var.github_repo}:environment:prod",
-        ]
+      values = [
+        "repo:${var.github_repo}:ref:refs/heads/dev",
+        "repo:${var.github_repo}:ref:refs/heads/main",
+        "repo:${var.github_repo}:pull_request/*",
+        "repo:${var.github_repo}:environment:dev",
+        "repo:${var.github_repo}:environment:main",
+      ]
     }
   }
 }
@@ -53,17 +53,6 @@ data "aws_iam_policy_document" "cicd_runner_policy_doc" {
     effect    = "Allow"
     actions   = ["sts:AssumeRole"]
     resources = var.assumable_role_arns
-  }
-
-  statement {
-    sid       = "WriteCloudWatchLogs"
-    effect    = "Allow"
-    actions   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
-    resources = [
-        "arn:aws:logs:*:${local.account_id}:log-group:*",
-        "arn:aws:logs:*:${local.account_id}:log-group:*:log-stream:*",
-        "arn:aws:logs:*:${local.account_id}:query-definition:*"
-    ]
   }
 }
 
