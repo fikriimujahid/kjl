@@ -1,16 +1,8 @@
-variable "lambda_log_group_names" {
-  description = "Lambda log group names to create."
-  type        = list(string)
-}
-
-variable "api_gateway_log_group_names" {
-  description = "API Gateway log group names to create."
-  type        = list(string)
-}
-
-variable "retention_in_days" {
-  description = "CloudWatch Logs retention in days."
-  type        = number
+variable "log_groups" {
+  description = "Map of log groups to create"
+  type = map(object({
+    retention_in_days = number
+  }))
 }
 
 variable "tags" {
