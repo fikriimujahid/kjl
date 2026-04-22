@@ -51,7 +51,7 @@ frontend_site_hosting = {
     # domain_name               = "fikri.dev"
     # subject_alternative_names = ["*.fikri.dev"]
     # zone_id                   = "Z019716819YT0PPFWXQPV"
-    existing_certificate_arn  = "arn:aws:acm:us-east-1:731099197523:certificate/adba9bcc-d4b9-4b1b-8bb7-204de0c57120"
+    existing_certificate_arn = "arn:aws:acm:us-east-1:731099197523:certificate/adba9bcc-d4b9-4b1b-8bb7-204de0c57120"
   }
 
   # CLOUDFRONT CONFIGURATION
@@ -60,7 +60,17 @@ frontend_site_hosting = {
   }
 }
 
-# Set explicit IAM principal ARNs if required by your org.
-terraform_execution_principal_arns = []
+# -------------------------------------------------------------------------
+# COGNITO AUTH MODULE
+# -------------------------------------------------------------------------
+auth_cognito = {
+  callback_urls = [
+    "https://dev.myapp.com/auth/callback"
+  ]
 
+  logout_urls = [
+    "https://dev.myapp.com/logout"
+  ]
 
+  enabled_identity_providers = ["COGNITO"]
+}

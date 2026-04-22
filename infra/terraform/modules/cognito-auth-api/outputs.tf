@@ -13,6 +13,21 @@ output "cognito_domain" {
   value       = module.base.cognito_domain
 }
 
+output "region" {
+  description = "AWS region where Cognito resources are deployed."
+  value       = module.base.region
+}
+
+output "cognito_api_endpoint" {
+  description = "Cognito Identity Provider API endpoint base URL."
+  value       = module.base.cognito_api_endpoint
+}
+
+output "cognito_uri" {
+  description = "Cognito API issuer URI for JWT/OIDC validation."
+  value       = module.base.cognito_uri
+}
+
 output "user_pool_arn" {
   description = "ARN of the Cognito user pool from the base module."
   value       = module.base.user_pool_arn

@@ -58,6 +58,21 @@ module "frontend_site_hosting" {
   tags = var.tags
 }
 
+module "cognito" {
+  source = "../../modules/cognito-auth-api"
+
+  project_name = var.project_name
+  environment  = var.environment
+
+  callback_urls = var.auth_cognito.callback_urls
+
+  logout_urls = var.auth_cognito.logout_urls
+
+  enabled_identity_providers = var.auth_cognito.enabled_identity_providers
+  google_client_id           = try(var.auth_cognito.google_client_id, null)
+  google_client_secret       = try(var.auth_cognito.google_client_secret, null)
+}
+
 # module "app_s3" {
 #   source = "./modules/s3"
 
@@ -93,20 +108,3 @@ module "frontend_site_hosting" {
 #   tags                           = local.app_tags
 # }
 
-# module "cognito" {
-#   source = "../../modules/cognito-auth-api"
-
-#   project_name = "myapp"
-#   environment  = "dev"
-
-#   callback_urls = [
-#     "https://dev.myapp.com/auth/callback"
-#   ]
-
-#   logout_urls = [
-#     "https://dev.myapp.com/logout"
-#   ]
-
-#   google_client_id     = var.google_client_id
-#   google_client_secret = var.google_client_secret
-# }

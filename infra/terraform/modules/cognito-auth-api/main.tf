@@ -1,3 +1,8 @@
+locals {
+  enabled_identity_providers = distinct(var.enabled_identity_providers)
+  google_enabled             = contains(local.enabled_identity_providers, "Google")
+}
+
 module "base" {
   source = "../cognito-base"
 
@@ -9,6 +14,8 @@ module "base" {
 }
 
 resource "aws_cognito_identity_provider" "google" {
+  count = local.google_enabled ? 1 : 0
+
   # Adds Google as an external identity provider to the shared user pool.
   user_pool_id  = module.base.user_pool_id
   provider_name = "Google"
@@ -44,10 +51,7 @@ resource "aws_cognito_user_pool_client" "api_google" {
   ]
 
   # Add Google after its IdP exists to ensure stable apply ordering.
-  supported_identity_providers = [
-    "COGNITO",
-    aws_cognito_identity_provider.google.provider_name
-  ]
+  supported_identity_providers = local.enabled_identity_providers
 
   # OAuth code flow for social login and secure token exchange.
   allowed_oauth_flows_user_pool_client = true
