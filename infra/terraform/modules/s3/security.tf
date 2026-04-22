@@ -23,23 +23,21 @@
 # relax specific settings via the public_access_block block in their
 # var.buckets entry, but this module defaults to maximum privacy.
 resource "aws_s3_bucket_public_access_block" "this" {
-  for_each = local.normalized_buckets
-
-  bucket = aws_s3_bucket.this[each.key].id
+  bucket = aws_s3_bucket.this.id
 
   # Prevent new public ACLs from being set on the bucket or any object.
-  block_public_acls = each.value.public_access_block.block_public_acls
+  block_public_acls = var.security.public_access_block.block_public_acls
 
   # Prevent a bucket policy that grants anonymous (public) access from
   # taking effect, even if someone writes such a policy.
-  block_public_policy = each.value.public_access_block.block_public_policy
+  block_public_policy = var.security.public_access_block.block_public_policy
 
   # Ignore existing public ACLs.  Past mistakes in ACLs will not grant access.
-  ignore_public_acls = each.value.public_access_block.ignore_public_acls
+  ignore_public_acls = var.security.public_access_block.ignore_public_acls
 
   # Block all access that would be granted to the public by any current or
   # future bucket policy or ACL.
-  restrict_public_buckets = each.value.public_access_block.restrict_public_buckets
+  restrict_public_buckets = var.security.public_access_block.restrict_public_buckets
 }
 
 
@@ -56,14 +54,12 @@ resource "aws_s3_bucket_public_access_block" "this" {
 # Exception: S3 access-log delivery requires BucketOwnerPreferred because
 # the Amazon logging service keeps object ownership via ACLs.
 resource "aws_s3_bucket_ownership_controls" "this" {
-  for_each = local.normalized_buckets
-
-  bucket = aws_s3_bucket.this[each.key].id
+  bucket = aws_s3_bucket.this.id
 
   rule {
     # object_ownership was resolved in locals.tf from the caller's "ownership"
     # field: BucketOwnerEnforced | BucketOwnerPreferred | ObjectWriter
-    object_ownership = each.value.object_ownership
+    object_ownership = var.security.object_ownership
   }
 }
 
@@ -84,12 +80,7 @@ resource "aws_s3_bucket_ownership_controls" "this" {
 #   are already in buckets_with_policy.  The inline for_each filter avoids
 #   creating documents for buckets that do not need them.
 data "aws_iam_policy_document" "tls_only" {
-  # Inline filter: iterate only over buckets in buckets_with_policy that
-  # also have attach_tls_only_policy = true.
-  for_each = {
-    for bucket_key, bucket in local.buckets_with_policy :
-    bucket_key => bucket if bucket.attach_tls_only_policy
-  }
+  count = var.security.attach_tls_only_policy ? 1 : 0
 
   statement {
     # sid is an optional identifier for the statement shown in the AWS console.
@@ -104,8 +95,8 @@ data "aws_iam_policy_document" "tls_only" {
 
     # Apply the deny to the bucket itself AND to every object inside it (/*)
     resources = [
-      aws_s3_bucket.this[each.key].arn,
-      "${aws_s3_bucket.this[each.key].arn}/*"
+      aws_s3_bucket.this.arn,
+      "${aws_s3_bucket.this.arn}/*"
     ]
 
     # Apply to everyone (any IAM principal, any AWS service, any anonymous user).
@@ -140,16 +131,14 @@ data "aws_iam_policy_document" "tls_only" {
 #
 # Only buckets in buckets_with_policy get this resource.
 data "aws_iam_policy_document" "bucket_policy" {
-  for_each = local.buckets_with_policy
+  count = length(concat(
+    var.security.attach_tls_only_policy ? [data.aws_iam_policy_document.tls_only[0].json] : [],
+    var.security.additional_policy_documents
+  )) > 0 ? 1 : 0
 
-  # Build the list of source documents to merge:
-  #   • If attach_tls_only_policy is true, include the TLS document JSON.
-  #     The ternary wraps it in a one-element list so concat() works.
-  #   • Append any additional policy JSON strings from the caller.
-  # concat() combines these two lists into a single flat list.
   source_policy_documents = concat(
-    each.value.attach_tls_only_policy ? [data.aws_iam_policy_document.tls_only[each.key].json] : [],
-    each.value.additional_policy_documents
+    var.security.attach_tls_only_policy ? [data.aws_iam_policy_document.tls_only[0].json] : [],
+    var.security.additional_policy_documents
   )
 }
 
@@ -166,16 +155,13 @@ data "aws_iam_policy_document" "bucket_policy" {
 #   the code because the policy resource only references aws_s3_bucket.this,
 #   not the other two resources.  depends_on makes it explicit.
 resource "aws_s3_bucket_policy" "tls_only" {
-  for_each = local.buckets_with_policy
+  count = length(data.aws_iam_policy_document.bucket_policy) > 0 ? 1 : 0
 
-  bucket = aws_s3_bucket.this[each.key].id
+  bucket = aws_s3_bucket.this.id
 
   # The final merged policy JSON from the data source above.
-  policy = data.aws_iam_policy_document.bucket_policy[each.key].json
+  policy = data.aws_iam_policy_document.bucket_policy[0].json
 
-  # Force Terraform to finish setting up public-access-block and ownership
-  # before trying to attach the policy.  Without this, the AWS API sometimes
-  # returns an error because those settings are still propagating.
   depends_on = [
     aws_s3_bucket_public_access_block.this,
     aws_s3_bucket_ownership_controls.this

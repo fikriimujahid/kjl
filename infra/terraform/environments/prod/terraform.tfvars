@@ -23,33 +23,37 @@ budget = {
 
 # ============================================================================
 # Frontend Site Hosting Variables
-# ============================================================================
+# ============================================================================ 
 frontend_site_hosting = {
-  buckets = {
-    frontend = {
-      bucket_name = "kejepangdulu-prod-frontend-bucket"
-    }
-    logs = {
-      log_prefix = "cloudfront/prod/"
-      bucket_name = "kejepangdulu-prod-cloudfront-logs"
-      lifecycle_rules = [
-        {
-          id      = "ExpireLogsAfter90Days"
-          enabled = true
-          prefix  = "cloudfront/prod/"
-          expiration = {
-            days = 90
-          }
+  zone_id = "Z0641160BIPE40MMNCVP"
+  # S3 STATIC HOSTING BUCKETS
+  s3_static_hosting = {
+    bucket_name = "kejepangdulu-prod-frontend-bucket"
+  }
+
+  # S3 CLOUDFRONT LOG
+  s3_cloudfront_log = {
+    bucket_name    = "kejepangdulu-prod-cloudfront-logs"
+    lifecycle_days = 90
+    lifecycle_rules = [
+      {
+        id      = "ExpireLogsAfter90Days"
+        enabled = true
+        expiration = {
+          days = 90
         }
-      ]
-    }
+      }
+    ]
   }
 
+  # ACM CONFIGURATION
   acm = {
-    domain_name = "kejepangdulu.click"
-    zone_id     = "Z0641160BIPE40MMNCVP"
+    domain_name               = "kejepangdulu.click"
+    subject_alternative_names = ["kejepangdulu.click"]
+    #existing_certificate_arn  = "arn:aws:acm:us-east-1:731099197523:certificate/adba9bcc-d4b9-4b1b-8bb7-204de0c57120"
   }
 
+  # CLOUDFRONT CONFIGURATION
   cloudfront = {
     aliases = ["kejepangdulu.click"]
   }

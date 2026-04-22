@@ -24,7 +24,9 @@
 # immediately — callers must be aware the certificate may still be PENDING.
 output "certificate_arn" {
   description = "ARN of the ACM certificate. When wait_for_validation is true, this output waits for issuance."
-  value       = local.certificate_arn
+  value = try(trimspace(var.existing_certificate_arn), "") == "" ? (
+    var.wait_for_validation ? aws_acm_certificate_validation.this[0].certificate_arn : aws_acm_certificate.this[0].arn
+  ) : var.existing_certificate_arn
 }
 
 # The primary domain name exactly as stored inside the certificate.
@@ -32,7 +34,7 @@ output "certificate_arn" {
 # or for displaying in a dashboard / notification.
 output "certificate_domain_name" {
   description = "Primary domain name attached to the ACM certificate."
-  value       = aws_acm_certificate.this.domain_name
+  value       = try(trimspace(var.existing_certificate_arn), "") == "" ? aws_acm_certificate.this[0].domain_name : null
 }
 
 # The current lifecycle state of the certificate.
@@ -44,7 +46,7 @@ output "certificate_domain_name" {
 # Reading this output in the console/CI can save time debugging stuck deploys.
 output "certificate_status" {
   description = "Current ACM certificate status."
-  value       = aws_acm_certificate.this.status
+  value       = try(trimspace(var.existing_certificate_arn), "") == "" ? aws_acm_certificate.this[0].status : null
 }
 
 # The list of Subject Alternative Names as ACM stored them on the certificate.
@@ -52,19 +54,22 @@ output "certificate_status" {
 # domains the caller requested, including any that were deduplicated.
 output "subject_alternative_names" {
   description = "Deduplicated SAN list attached to the ACM certificate."
-  value       = aws_acm_certificate.this.subject_alternative_names
+  value       = try(trimspace(var.existing_certificate_arn), "") == "" ? aws_acm_certificate.this[0].subject_alternative_names : []
 }
 
 # The FQDNs of the DNS validation records used to prove domain ownership.
 # When DNS is managed here, these are the FQDNs of the Route53 records
-# created in aws_route53_record.this.
+# created through module.route53_validation.
 # When DNS is external, these include the values supplied via
 # var.validation_record_fqdns.
 # A downstream module that manages its own certificate rotation can feed
 # this list back into another aws_acm_certificate_validation resource.
 output "validation_record_fqdns" {
   description = "FQDNs used for ACM DNS validation."
-  value       = local.validation_record_fqdns
+  value = try(trimspace(var.existing_certificate_arn), "") == "" ? distinct(concat(
+    values(module.route53_validation.record_fqdns),
+    var.validation_record_fqdns
+  )) : []
 }
 
 # A structured map of everything a caller needs to create validation records
@@ -87,5 +92,12 @@ output "validation_record_fqdns" {
 #   value    = each.value.record_value
 output "validation_options" {
   description = "DNS validation record details returned by ACM, keyed by domain name."
-  value       = local.validation_options
+  value = try(trimspace(var.existing_certificate_arn), "") == "" ? {
+    for dvo in aws_acm_certificate.this[0].domain_validation_options :
+    dvo.domain_name => {
+      record_name  = dvo.resource_record_name
+      record_type  = dvo.resource_record_type
+      record_value = dvo.resource_record_value
+    }
+  } : {}
 }

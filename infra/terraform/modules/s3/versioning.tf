@@ -20,13 +20,8 @@
 # ------------------------------
 # One versioning configuration per bucket.
 resource "aws_s3_bucket_versioning" "this" {
-  # Create one resource for every normalized bucket, using the same map keys
-  # as aws_s3_bucket.this so that each.key always refers to the same bucket.
-  for_each = local.normalized_buckets
-
-  # Link to the bucket created in main.tf (see encryption.tf for why we
-  # reference .id instead of interpolating the name string directly).
-  bucket = aws_s3_bucket.this[each.key].id
+  # Link to the bucket created in main.tf.
+  bucket = aws_s3_bucket.this.id
 
   versioning_configuration {
     # Convert the boolean versioning_enabled flag into the string value
@@ -39,6 +34,6 @@ resource "aws_s3_bucket_versioning" "this" {
     # Note: you can go from Enabled → Suspended without data loss.
     # You cannot go from Suspended → "off" (AWS has no way to fully disable
     # versioning once it has been enabled on a bucket).
-    status = each.value.versioning_enabled ? "Enabled" : "Suspended"
+    status = var.versioning_enabled ? "Enabled" : "Suspended"
   }
 }

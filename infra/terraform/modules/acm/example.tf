@@ -19,9 +19,9 @@ module "frontend_certificate" {
     "static.example.com" = "Z0987654321XYZ"
   }
 
-  # Keep Route53 management enabled for the common case.
-  create_route53_records = true
-  validation_record_ttl  = 60
+  # Route53 DNS validation records are managed automatically when
+  # existing_certificate_arn is not set.
+  validation_record_ttl = 60
 
   # CloudFront certificates must be created in us-east-1.
   certificate_region = "us-east-1"
@@ -35,15 +35,14 @@ module "frontend_certificate" {
   }
 }
 
-Example for external DNS validation:
+Example for using an existing certificate (no new ACM/Route53 resources):
 
 module "regional_api_certificate" {
   source = "./modules/acm"
 
-  domain_name            = "api.example.net"
-  create_route53_records = false
-  wait_for_validation    = false
-  certificate_region     = "ap-southeast-1"
+  existing_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/11111111-2222-3333-4444-555555555555"
+  domain_name             = "api.example.net"
+  certificate_region      = "ap-southeast-1"
 
   tags = {
     Project     = "shared-platform"

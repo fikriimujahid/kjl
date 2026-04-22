@@ -26,53 +26,35 @@ module "budget_alert" {
 # -------------------------------------------------------------------------
 module "frontend_site_hosting" {
   source = "../../modules/static-hosting"
-  # -------------------------------------------------------------------------
-  # BUCKET CONFIGURATION
-  # -------------------------------------------------------------------------
-  buckets = {
-    frontend = {
-      bucket_name = var.frontend_site_hosting.buckets.frontend.bucket_name
-    }
-
-    logs = {
-      log_prefix = var.frontend_site_hosting.buckets.logs.log_prefix
-      bucket_name = var.frontend_site_hosting.buckets.logs.bucket_name
-      lifecycle_rules = [
-        {
-          id      = "ExpireLogsAfter90Days"
-          enabled = true
-          prefix  = var.frontend_site_hosting.buckets.logs.log_prefix
-          expiration = {
-            days = 90
-          }
-        }
-      ]
-    }
+  # S3 STATIC HOSTING BUCKETS
+  s3_static_hosting = {
+    bucket_name = var.frontend_site_hosting.s3_static_hosting.bucket_name
   }
 
-  # -------------------------------------------------------------------------
+  # S3 CLOUDFRONT LOG
+  s3_cloudfront_log = {
+    bucket_name     = var.frontend_site_hosting.s3_cloudfront_log.bucket_name
+    lifecycle_days  = var.frontend_site_hosting.s3_cloudfront_log.lifecycle_days
+    lifecycle_rules = var.frontend_site_hosting.s3_cloudfront_log.lifecycle_rules
+  }
+
   # ACM CONFIGURATION
-  # -------------------------------------------------------------------------
   acm = {
-    domain_name = var.frontend_site_hosting.acm.domain_name
-    subject_alternative_names = [
-      "${var.frontend_site_hosting.acm.domain_name}"
-    ]
-    zone_id = var.frontend_site_hosting.acm.zone_id
+    domain_name               = try(var.frontend_site_hosting.acm.domain_name, null)
+    subject_alternative_names = try(var.frontend_site_hosting.acm.subject_alternative_names, [])
+    zone_id                   = try(var.frontend_site_hosting.zone_id, null)
+    existing_certificate_arn  = try(var.frontend_site_hosting.acm.existing_certificate_arn, null)
   }
 
-  # -------------------------------------------------------------------------
   # CLOUDFRONT CONFIGURATION
-  # -------------------------------------------------------------------------
   cloudfront = {
     project_name = var.project_name
     environment  = var.environment
     aliases      = var.frontend_site_hosting.cloudfront.aliases
+    zone_id      = var.frontend_site_hosting.zone_id
   }
 
-  # -------------------------------------------------------------------------
   # OPTIONAL: Extra resource tags
-  # -------------------------------------------------------------------------
   tags = var.tags
 }
 
@@ -111,19 +93,20 @@ module "frontend_site_hosting" {
 #   tags                           = local.app_tags
 # }
 
-# module "app_apigateway" {
-#   source = "./modules/apigateway"
+# module "cognito" {
+#   source = "../../modules/cognito-auth-api"
 
-#   project_name         = var.project_name
-#   environment          = var.environment
-#   rest_api_name        = var.api_gateway_name
-#   stage_name           = var.api_stage_name
-#   cors_allow_origins   = var.api_cors_allow_origins
-#   cors_allow_methods   = var.api_cors_allow_methods
-#   cors_allow_headers   = var.api_cors_allow_headers
-#   logging_level        = var.api_logging_level
-#   enable_data_trace    = var.api_enable_data_trace
-#   xray_tracing_enabled = var.api_xray_tracing_enabled
-#   log_retention_days   = var.log_retention_days
-#   tags                 = local.app_tags
+#   project_name = "myapp"
+#   environment  = "dev"
+
+#   callback_urls = [
+#     "https://dev.myapp.com/auth/callback"
+#   ]
+
+#   logout_urls = [
+#     "https://dev.myapp.com/logout"
+#   ]
+
+#   google_client_id     = var.google_client_id
+#   google_client_secret = var.google_client_secret
 # }

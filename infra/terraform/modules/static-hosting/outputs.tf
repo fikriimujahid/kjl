@@ -27,7 +27,10 @@
 # advance which specific keys exist (e.g., in a for_each loop downstream).
 output "bucket_names" {
   description = "Map of logical bucket keys to bucket names created by this module."
-  value       = module.s3.bucket_names_by_key
+  value = {
+    frontend = module.s3_static_hosting.bucket_name
+    logs     = module.s3_logs.bucket_name
+  }
 }
 
 # Map of every S3 bucket ARN, keyed by the logical name.
@@ -36,7 +39,10 @@ output "bucket_names" {
 # to a specific bucket (e.g., allowing a Lambda to read website assets).
 output "bucket_arns" {
   description = "Map of logical bucket keys to S3 bucket ARNs."
-  value       = module.s3.bucket_arns
+  value = {
+    frontend = module.s3_static_hosting.bucket_arn
+    logs     = module.s3_logs.bucket_arn
+  }
 }
 
 # Map of every S3 bucket ID, keyed by the logical name.
@@ -44,21 +50,24 @@ output "bucket_arns" {
 # Some Terraform resources and data sources require an "id" rather than a name.
 output "bucket_ids" {
   description = "Map of logical bucket keys to bucket IDs."
-  value       = module.s3.bucket_ids
+  value = {
+    frontend = module.s3_static_hosting.bucket_id
+    logs     = module.s3_logs.bucket_id
+  }
 }
 
 # Convenience shortcut to just the frontend bucket name as a plain string.
 # Avoids the need to write: module.hosting.bucket_names["frontend"]
 output "frontend_bucket_name" {
   description = "Frontend origin bucket name."
-  value       = module.s3.buckets["frontend"].name
+  value       = module.s3_static_hosting.bucket_name
 }
 
 # Convenience shortcut to just the log bucket name as a plain string.
 # try() safely returns null when logging was disabled and no log bucket exists.
 output "log_bucket_name" {
   description = "CloudFront log bucket name when logging is enabled."
-  value       = try(module.s3.buckets["logs"].name, null)
+  value       = module.s3_logs.bucket_name
 }
 
 # Full structured metadata object for the frontend S3 bucket.
@@ -67,7 +76,7 @@ output "log_bucket_name" {
 # instead of referencing individual outputs one at a time.
 output "frontend_bucket" {
   description = "Structured metadata for the frontend S3 bucket."
-  value       = module.s3.buckets["frontend"]
+  value       = module.s3_static_hosting.bucket
 }
 
 # Full structured metadata for the CloudFront log bucket.
@@ -75,7 +84,7 @@ output "frontend_bucket" {
 # so callers can use try(module.hosting.logging_bucket.name, null) safely.
 output "logging_bucket" {
   description = "Structured metadata for the CloudFront logging bucket when enabled."
-  value       = try(module.s3.buckets["logs"], null)
+  value       = module.s3_logs.bucket
 }
 
 # =============================================================================

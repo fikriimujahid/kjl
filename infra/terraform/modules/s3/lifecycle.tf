@@ -20,11 +20,8 @@
 # Only created for buckets that have lifecycle_rules.length > 0
 # (enforced by using buckets_with_lifecycle as the for_each source).
 resource "aws_s3_bucket_lifecycle_configuration" "this" {
-  # buckets_with_lifecycle is a filtered map (defined in locals.tf)
-  # containing only buckets that have at least one lifecycle rule.
-  for_each = local.buckets_with_lifecycle
-
-  bucket = aws_s3_bucket.this[each.key].id
+  count  = length(try(var.lifecycle_config.lifecycle_rules, [])) > 0 ? 1 : 0
+  bucket = aws_s3_bucket.this.id
 
   # -------------------------------------------------------------------------
   # dynamic "rule"
@@ -35,7 +32,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
   # rule.value is the current entry from each.value.lifecycle_rules.
   # Inside the content block, every field is accessed via rule.value.*
   dynamic "rule" {
-    for_each = each.value.lifecycle_rules
+    for_each = try(var.lifecycle_config.lifecycle_rules, [])
 
     content {
       # AWS requires a unique ID per rule.  Set by the caller or auto-generated

@@ -9,29 +9,22 @@
 # bad values are caught immediately, before any API call is made.
 # ---------------------------------------------------------------------------
 
-# ---------------------------------------------------------------------------
-# REQUIRED — must be provided by the caller, no default exists
-# ---------------------------------------------------------------------------
-
 # The primary domain name that will appear on the certificate.
 # Examples: "app.example.com", "*.example.com" (wildcard), "example.com".
 # ACM uses this as the "Common Name" of the certificate.
 variable "domain_name" {
   description = "Primary domain name for the ACM certificate."
   type        = string
+  default     = ""
 
   # Guard against typos such as "app.example" (missing TLD) or an empty string.
   # The regex allows an optional leading "*." for wildcard certificates, then
   # requires at least one subdomain label and a TLD of two or more letters.
   validation {
-    condition     = can(regex("^(\\*\\.)?([A-Za-z0-9-]+\\.)+[A-Za-z]{2,}$", trimspace(var.domain_name)))
+    condition     = try(trimspace(var.existing_certificate_arn), "") != "" || can(regex("^(\\*\\.)?([A-Za-z0-9-]+\\.)+[A-Za-z]{2,}$", trimspace(var.domain_name)))
     error_message = "domain_name must be a valid DNS name, such as app.example.com or *.example.com."
   }
 }
-
-# ---------------------------------------------------------------------------
-# OPTIONAL — sensible defaults are provided
-# ---------------------------------------------------------------------------
 
 # Subject Alternative Names extend the certificate to cover more hostnames.
 # A single ACM certificate can protect up to 10 domain names (1 primary + 9 SANs).
@@ -61,11 +54,54 @@ variable "subject_alternative_names" {
   }
 }
 
+variable "tags" {
+  description = "Tags applied to ACM and Route53 resources created by this module."
+  type        = map(string)
+  default     = {}
+}
+
+# Certificate Transparency (CT) is a public log of every certificate ever
+# issued. It was introduced to detect mis-issuance.  Most browsers require
+# certificates to be logged here or they show a warning to users.
+# Keep this enabled (default) unless you have a specific compliance reason
+# to opt out — opting out itself raises security questions.
+variable "certificate_transparency_logging_enabled" {
+  description = "Enable certificate transparency logging for the ACM certificate."
+  type        = bool
+  default     = true
+}
+
+# The cryptographic algorithm used to generate the certificate's key pair.
+# RSA_2048 is the AWS-recommended default and is compatible with all clients.
+# EC (Elliptic Curve) certificates are smaller and faster but require a client
+# that supports ECC — most modern browsers do.
+# RSA_1024 is deprecated and should be avoided for new certificates.
+variable "key_algorithm" {
+  description = "Key algorithm for the ACM certificate."
+  type        = string
+  default     = "RSA_2048"
+
+  # Allow only the algorithms that ACM actually supports for public certificates.
+  # Any other string would be rejected by AWS; this validation gives a clearer
+  # error message than the raw API response.
+  validation {
+    condition = contains([
+      "RSA_1024",
+      "RSA_2048",
+      "RSA_3072",
+      "RSA_4096",
+      "EC_prime256v1",
+      "EC_secp384r1",
+      "EC_secp521r1"
+    ], var.key_algorithm)
+    error_message = "key_algorithm must be a supported ACM public certificate key algorithm."
+  }
+}
+
 # The Route53 hosted zone that owns domain_name.
 # This module creates DNS TXT/CNAME validation records inside this zone so
 # that ACM can confirm you control the domain.
 # Format: "Z1234567890ABCDEFGHIJK"
-# Leave null only when create_route53_records is false (external DNS workflow).
 variable "zone_id" {
   description = "Default Route53 hosted zone ID used for DNS validation records."
   type        = string
@@ -76,6 +112,11 @@ variable "zone_id" {
   validation {
     condition     = var.zone_id == null || can(regex("^Z[0-9A-Z]+$", var.zone_id))
     error_message = "zone_id must be a valid Route53 hosted zone ID when provided."
+  }
+
+  validation {
+    condition     = try(trimspace(var.existing_certificate_arn), "") != "" || var.zone_id != null
+    error_message = "zone_id must be provided when existing_certificate_arn is not set."
   }
 }
 
@@ -101,22 +142,31 @@ variable "validation_zone_ids" {
   }
 }
 
-# When true (default), this module creates the Route53 validation records
-# automatically. The only time you set this to false is when DNS is managed
-# outside of Terraform — for example, in a third-party DNS provider or a
-# separate Terraform root module that you do not want to touch.
-variable "create_route53_records" {
-  description = "If true, create Route53 DNS validation records inside this module."
-  type        = bool
-  default     = true
+
+
+
+
+
+
+
+variable "existing_certificate_arn" {
+  description = "Existing ACM certificate ARN. When set, this module reuses it and skips creating a new certificate."
+  type        = string
+  default     = null
+
+  validation {
+    condition = (
+      var.existing_certificate_arn == null ||
+      strcontains(var.existing_certificate_arn, ":certificate/")
+    )
+    error_message = "existing_certificate_arn must be a valid ACM certificate ARN when provided."
+  }
 }
 
-# Used ONLY when create_route53_records is false.
-# Provide the list of FQDN strings that the external DNS system has already
-# created. ACM checks these values to confirm domain ownership.
-# Example: ["_abc123.app.example.com"]
+# Optional extra validation record FQDNs to include alongside records
+# managed by this module.
 variable "validation_record_fqdns" {
-  description = "External validation record FQDNs to use when DNS records are managed outside this module."
+  description = "Additional ACM validation record FQDNs to include."
   type        = list(string)
   default     = []
 
@@ -176,55 +226,7 @@ variable "certificate_region" {
   }
 }
 
-# The cryptographic algorithm used to generate the certificate's key pair.
-# RSA_2048 is the AWS-recommended default and is compatible with all clients.
-# EC (Elliptic Curve) certificates are smaller and faster but require a client
-# that supports ECC — most modern browsers do.
-# RSA_1024 is deprecated and should be avoided for new certificates.
-variable "key_algorithm" {
-  description = "Key algorithm for the ACM certificate."
-  type        = string
-  default     = "RSA_2048"
 
-  # Allow only the algorithms that ACM actually supports for public certificates.
-  # Any other string would be rejected by AWS; this validation gives a clearer
-  # error message than the raw API response.
-  validation {
-    condition = contains([
-      "RSA_1024",
-      "RSA_2048",
-      "RSA_3072",
-      "RSA_4096",
-      "EC_prime256v1",
-      "EC_secp384r1",
-      "EC_secp521r1"
-    ], var.key_algorithm)
-    error_message = "key_algorithm must be a supported ACM public certificate key algorithm."
-  }
-}
 
-# Certificate Transparency (CT) is a public log of every certificate ever
-# issued. It was introduced to detect mis-issuance.  Most browsers require
-# certificates to be logged here or they show a warning to users.
-# Keep this enabled (default) unless you have a specific compliance reason
-# to opt out — opting out itself raises security questions.
-variable "certificate_transparency_logging_enabled" {
-  description = "Enable certificate transparency logging for the ACM certificate."
-  type        = bool
-  default     = true
-}
 
-# Tags are key-value metadata that AWS attaches to resources.
-# They are used for cost allocation, access control, and filtering in the
-# AWS Console.  Pass at minimum {"Project", "Environment", "ManagedBy"}.
-# Example:
-#   tags = {
-#     Project     = "my-app"
-#     Environment = "prod"
-#     ManagedBy   = "Terraform"
-#   }
-variable "tags" {
-  description = "Tags applied to ACM and Route53 resources created by this module."
-  type        = map(string)
-  default     = {}
-}
+

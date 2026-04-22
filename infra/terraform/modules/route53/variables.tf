@@ -161,7 +161,7 @@ variable "health_checks" {
         "HTTP_STR_MATCH",
         "HTTPS_STR_MATCH",
         "TCP"
-      ], upper(trimspace(health_check.type))) || (
+        ], upper(trimspace(health_check.type))) || (
         try(length(trimspace(health_check.fqdn)), 0) > 0 ||
         try(length(trimspace(health_check.ip_address)), 0) > 0
       )
@@ -188,7 +188,7 @@ variable "health_checks" {
         "HTTPS",
         "HTTP_STR_MATCH",
         "HTTPS_STR_MATCH"
-      ], upper(trimspace(health_check.type))) || (
+        ], upper(trimspace(health_check.type))) || (
         try(health_check.resource_path, null) == null || startswith(trimspace(health_check.resource_path), "/")
       )
     ])
@@ -328,7 +328,7 @@ variable "health_checks" {
     condition = alltrue([
       for key, health_check in var.health_checks : length(distinct([
         for child_key in try(health_check.child_health_check_keys, []) : trimspace(child_key)
-      ])) == length(try(health_check.child_health_check_keys, [])) && !contains([
+        ])) == length(try(health_check.child_health_check_keys, [])) && !contains([
         for child_key in try(health_check.child_health_check_keys, []) : trimspace(child_key)
       ], trimspace(key))
     ])

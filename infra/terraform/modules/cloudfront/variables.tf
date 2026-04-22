@@ -191,23 +191,23 @@ variable "origins" {
     # TCP and TLS configuration for non-S3 (custom) origins.
     # Only used when origin_type = "custom"; ignored for S3 origins.
     custom_origin_config = optional(object({
-      http_port                = optional(number, 80)
-      https_port               = optional(number, 443)
+      http_port  = optional(number, 80)
+      https_port = optional(number, 443)
       # "https-only" means CloudFront only connects to the origin over HTTPS.
-      origin_protocol_policy   = optional(string, "https-only")
+      origin_protocol_policy = optional(string, "https-only")
       # TLS versions CloudFront accepts from the origin's server cert.
-      origin_ssl_protocols     = optional(list(string), ["TLSv1.2"])
+      origin_ssl_protocols = optional(list(string), ["TLSv1.2"])
       # Seconds an idle keep-alive connection stays open. Range: 1–60.
       origin_keepalive_timeout = optional(number, 5)
       # Seconds CloudFront waits for origin to respond. Range: 1–60.
-      origin_read_timeout      = optional(number, 30)
+      origin_read_timeout = optional(number, 30)
     }))
 
     # Origin Shield is an optional extra caching tier. When enabled, CloudFront
     # routes cache misses from all edge locations through one Shield region,
     # reducing requests that reach the actual origin.
     origin_shield = optional(object({
-      enabled              = optional(bool, false)
+      enabled = optional(bool, false)
       # AWS region for Origin Shield, e.g. "ap-southeast-1".
       origin_shield_region = optional(string)
     }), {})
@@ -401,13 +401,13 @@ variable "default_cache_behavior" {
     trusted_signers = optional(list(string), [])
     # Lambda@Edge functions to invoke at specific request/response lifecycle events.
     lambda_function_associations = optional(list(object({
-      event_type   = string           # viewer-request, origin-request, etc.
-      lambda_arn   = string           # versioned Lambda ARN
+      event_type   = string                # viewer-request, origin-request, etc.
+      lambda_arn   = string                # versioned Lambda ARN
       include_body = optional(bool, false) # pass request body to Lambda
     })), [])
     # CloudFront Functions (lightweight JS) to invoke at viewer events.
     function_associations = optional(list(object({
-      event_type   = string  # viewer-request or viewer-response only
+      event_type   = string # viewer-request or viewer-response only
       function_arn = string
     })), [])
   })
@@ -705,7 +705,7 @@ variable "origin_access_control" {
     # Optional display name. Auto-generated if not set.
     name = optional(string)
     # Description stored with the OAC in AWS.
-    description      = optional(string, "Origin access control for CloudFront S3 origins.")
+    description = optional(string, "Origin access control for CloudFront S3 origins.")
     # "always" = sign every request (recommended and most secure).
     signing_behavior = optional(string, "always")
     # "sigv4" is the only supported signing protocol for S3.

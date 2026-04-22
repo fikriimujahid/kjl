@@ -5,7 +5,7 @@
 # publicly-trusted TLS certificate:
 #
 #   1. aws_acm_certificate        — requests the certificate from ACM
-#   2. aws_route53_record         — proves domain ownership via DNS
+#   2. module.route53_validation  — proves domain ownership via DNS
 #   3. aws_acm_certificate_validation — waits for ACM to confirm issuance
 #
 # Read in this order to understand the full flow.
@@ -44,31 +44,13 @@ provider "aws" {
 # After creation it is in "PENDING_VALIDATION" status.
 # ACM will not issue the certificate until it sees the validation DNS record.
 resource "aws_acm_certificate" "this" {
-  # Explicitly route this resource through the aliased provider so it is
-  # created in the correct region (see provider block above).
-  provider = aws.certificate
+  count = try(trimspace(var.existing_certificate_arn), "") == "" ? 1 : 0
 
-  # The primary domain for the certificate.
-  # This value is computed in locals.tf (primary_domain_name) and has
-  # whitespace stripped.
-  domain_name = local.primary_domain_name
-
-  # Additional domains protected by the same certificate.
-  # Also computed in locals.tf (subject_alternative_names), which removes any
-  # duplicates and removes the primary domain if it was accidentally included.
-  subject_alternative_names = local.subject_alternative_names
-
-  # DNS validation is the only method used here.
-  # Alternative: EMAIL, where ACM emails links to whois contacts.
-  # DNS validation is preferred because:
-  #   • It can be fully automated (no human clicks required).
-  #   • The validation record only needs to be created once; future renewals
-  #     are handled automatically while the record stays in place.
-  validation_method = "DNS"
-
-  # Propagate the caller's tags to this resource so the certificate appears
-  # in cost reports and AWS Console filters alongside related resources.
-  tags = var.tags
+  provider                  = aws.certificate
+  domain_name               = trimspace(var.domain_name)
+  subject_alternative_names = var.subject_alternative_names
+  validation_method         = "DNS"
+  tags                      = var.tags
 
   # options block — certificate-level settings
   options {
@@ -100,79 +82,51 @@ resource "aws_acm_certificate" "this" {
     #
     # This check ensures every domain on the certificate has a Route53 zone
     # assigned to it (via var.zone_id or var.validation_zone_ids).
-    # If any domain is missing a zone, the list local.missing_validation_zone_domains
+    # If any domain is missing a zone, the derived missing domain list
     # will be non-empty and the condition evaluates to false.
     #
-    # Only runs when create_route53_records is true because that is the only
-    # case where zone IDs are needed.
+    # This runs when existing_certificate_arn is not provided, because DNS
+    # validation records are managed by this module only in that mode.
     precondition {
-      condition     = !var.create_route53_records || length(local.missing_validation_zone_domains) == 0
-      error_message = "When create_route53_records is true, zone_id or validation_zone_ids must provide a hosted zone ID for every requested domain."
-    }
-
-    # Precondition 2 — external DNS validation safety check
-    # When the caller disables Route53 management (create_route53_records =
-    # false), they must either:
-    #   (a) supply the already-created FQDNs via validation_record_fqdns, OR
-    #   (b) accept that Terraform will not wait for issuance (wait_for_validation = false).
-    # Without this check a plan would succeed but the apply would hang
-    # indefinitely waiting for validation records that were never created.
-    precondition {
-      condition     = var.create_route53_records || length(var.validation_record_fqdns) > 0 || !var.wait_for_validation
-      error_message = "When create_route53_records is false, provide validation_record_fqdns or set wait_for_validation to false."
+      condition = try(trimspace(var.existing_certificate_arn), "") != "" || length([
+        for domain_name, zone_id in {
+          for domain_name in distinct(compact(concat(
+            [trimspace(var.domain_name)],
+            [for san in var.subject_alternative_names : trimspace(san)]
+          ))) :
+          domain_name => lookup(var.validation_zone_ids, domain_name, var.zone_id)
+          if try(trimspace(var.existing_certificate_arn), "") == ""
+        } : domain_name
+        if zone_id == null
+      ]) == 0
+      error_message = "When existing_certificate_arn is not set, zone_id or validation_zone_ids must provide a hosted zone ID for every requested domain."
     }
   }
 }
 
 # ---------------------------------------------------------------------------
-# Resource: aws_route53_record
+# Module: route53_validation
 # ---------------------------------------------------------------------------
 # After ACM creates the certificate request it provides a unique CNAME record
 # value per domain.  Publishing this record in DNS proves to ACM that we
 # control the domain.
 #
-# for_each explained:
-#   for_each iterates over a map and creates one resource instance per entry.
-#   In this case local.validation_records is a map keyed by domain name.
-#   For a certificate with domain_name="app.example.com" and one SAN
-#   "www.example.com", for_each creates two Route53 records — one for each.
-#
-#   Inside the resource block:
-#     each.key   → the domain name (e.g. "app.example.com")
-#     each.value → the object {name, record, type, zone_id} from the map
-#
-# When create_route53_records is false, local.validation_records is an empty
-# map {} and no records are created at all.
-resource "aws_route53_record" "this" {
-  # One record per validated domain.
-  for_each = local.validation_records
+# When existing_certificate_arn is set, the records map is empty and the
+# route53 module creates no records.
+module "route53_validation" {
+  source = "../route53"
 
-  # allow_overwrite = true lets Terraform update the record if it already
-  # exists.  This is important when multiple related certificates share the
-  # same CNAME record — the second apply would otherwise fail with a conflict.
-  allow_overwrite = true
-
-  # The subdomain label that ACM tells us to create.
-  # Example: "_abc123def456.app.example.com"
-  name = each.value.name
-
-  # The CNAME value — the address ACM monitors for the challenge response.
-  # Wrapped in a list because Route53 allows multiple values per record (for
-  # round-robin), even though ACM only ever needs one.
-  records = [each.value.record]
-
-  # How long DNS resolvers cache this record.
-  # 60 seconds (default) means ACM can detect the record quickly after it
-  # is published.
-  ttl = var.validation_record_ttl
-
-  # ACM always uses CNAME for DNS validation.
-  type = each.value.type
-
-  # The hosted zone that contains this domain.
-  # Comes from local.resolved_validation_zone_ids which respects per-domain
-  # overrides (var.validation_zone_ids) with a fallback to var.zone_id.
-  zone_id = each.value.zone_id
+  records = try(trimspace(var.existing_certificate_arn), "") == "" ? {
+    for dvo in aws_acm_certificate.this[0].domain_validation_options :
+    dvo.domain_name => {
+      allow_overwrite = true
+      name            = dvo.resource_record_name
+      type            = dvo.resource_record_type
+      ttl             = var.validation_record_ttl
+      records         = [dvo.resource_record_value]
+      zone_id         = lookup(var.validation_zone_ids, dvo.domain_name, var.zone_id)
+    }
+  } : {}
 }
 
 # ---------------------------------------------------------------------------
@@ -197,19 +151,22 @@ resource "aws_acm_certificate_validation" "this" {
   # count controls whether this resource exists at all.
   # When wait_for_validation is false, Terraform creates 0 instances and
   # returns the certificate ARN without waiting.
-  count = var.wait_for_validation ? 1 : 0
+  count = try(trimspace(var.existing_certificate_arn), "") == "" && var.wait_for_validation ? 1 : 0
 
   # Must use the same region as the certificate itself.
   provider = aws.certificate
 
   # The ARN of the certificate to watch.
-  certificate_arn = aws_acm_certificate.this.arn
+  certificate_arn = aws_acm_certificate.this[0].arn
 
   # The complete list of FQDNs for which validation records exist.
   # ACM polls each FQDN until it sees the correct CNAME value.
   # Terraform waits for ACM to mark each one "validated" before this
   # resource is considered complete.
-  # The local merges records created in this module with any external records
+  # This expression merges records created in this module with any external records
   # supplied via var.validation_record_fqdns.
-  validation_record_fqdns = local.validation_record_fqdns
+  validation_record_fqdns = distinct(concat(
+    values(module.route53_validation.record_fqdns),
+    var.validation_record_fqdns
+  ))
 }

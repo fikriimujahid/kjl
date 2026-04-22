@@ -31,32 +31,34 @@ variable "budget" {
 
 # -------------------------------------------------------------------------
 # FRONTEND SITE HOSTING MODULE
-# -------------------------------------------------------------------------
+# ------------------------------------------------------------------------- 
 variable "frontend_site_hosting" {
   description = "CloudFront distribution settings exposed by the hosting wrapper."
   type = object({
-    buckets = object({
-      frontend = object({
-        bucket_name = string
-      })
+    zone_id = string
+    # S3 STATIC HOSTING BUCKETS
+    s3_static_hosting = object({
+      bucket_name = string
+    })
 
-      logs = object({
-        log_prefix = string
-        bucket_name = string
-        lifecycle_rules = list(object({
-          id      = string
-          enabled = bool
-          prefix  = string
-          expiration = object({
-            days = number
-          })
-        }))
-      })
+    # S3 CLOUDFRONT LOG
+    s3_cloudfront_log = object({
+      bucket_name    = string
+      lifecycle_days = optional(number)
+      lifecycle_rules = optional(list(object({
+        id      = string
+        enabled = bool
+        prefix  = optional(string)
+        expiration = object({
+          days = optional(number)
+        })
+      })), [])
     })
 
     acm = object({
-      domain_name               = string
-      zone_id                   = string
+      domain_name               = optional(string)
+      subject_alternative_names = optional(list(string), [])
+      existing_certificate_arn  = optional(string)
     })
 
     cloudfront = object({

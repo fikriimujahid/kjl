@@ -25,33 +25,38 @@ budget = {
 # Frontend Site Hosting Variables
 # ============================================================================
 frontend_site_hosting = {
-  buckets = {
-    frontend = {
-      bucket_name = "kejepangdulu-dev-frontend-bucket"
-    }
-    logs = {
-      log_prefix = "cloudfront/dev/"
-      bucket_name = "kejepangdulu-dev-cloudfront-logs"
-      lifecycle_rules = [
-        {
-          id      = "ExpireLogsAfter90Days"
-          enabled = true
-          prefix  = "cloudfront/dev/"
-          expiration = {
-            days = 90
-          }
+  zone_id = "Z019716819YT0PPFWXQPV"
+  # S3 STATIC HOSTING BUCKETS
+  s3_static_hosting = {
+    bucket_name = "kejepangdulu-dev-frontend-bucket"
+  }
+
+  # S3 CLOUDFRONT LOG
+  s3_cloudfront_log = {
+    bucket_name    = "kejepangdulu-dev-cloudfront-logs"
+    lifecycle_days = 90
+    lifecycle_rules = [
+      {
+        id      = "ExpireLogsAfter90Days"
+        enabled = true
+        expiration = {
+          days = 90
         }
-      ]
-    }
+      }
+    ]
   }
 
+  # ACM CONFIGURATION
   acm = {
-    domain_name = "dev.kejepangdulu.click"
-    zone_id     = "Z0641160BIPE40MMNCVP"
+    # domain_name               = "fikri.dev"
+    # subject_alternative_names = ["*.fikri.dev"]
+    # zone_id                   = "Z019716819YT0PPFWXQPV"
+    existing_certificate_arn  = "arn:aws:acm:us-east-1:731099197523:certificate/adba9bcc-d4b9-4b1b-8bb7-204de0c57120"
   }
 
+  # CLOUDFRONT CONFIGURATION
   cloudfront = {
-    aliases = ["dev.kejepangdulu.click"]
+    aliases = ["kjl.fikri.dev"]
   }
 }
 

@@ -1,56 +1,47 @@
 # -----------------------------------------------------------------------------
-# S3 BUCKETS
+# S3 STATIC HOSTING BUCKETS
 # -----------------------------------------------------------------------------
-variable "buckets" {
-  description = "Combined S3 bucket configuration for frontend hosting and CloudFront access logging."
+variable "s3_static_hosting" {
+  description = "S3 bucket configuration for static website hosting."
   type = object({
-    frontend = object({
-      bucket_name = string
-      lifecycle_rules = optional(list(object({
-        id      = string
-        enabled = bool
-        prefix  = optional(string)
-        expiration = object({
-          days = optional(number)
-        })
-      })), [])
-    })
-    logs = object({
-      enabled    = optional(bool, true)
-      log_prefix = string
-      bucket_name = string
-      lifecycle_rules = optional(list(object({
-        id      = string
-        enabled = bool
-        prefix  = optional(string)
-        expiration = object({
-          days = optional(number)
-        })
-      })), [])
-    })
+    bucket_name = string
   })
 
   validation {
-    condition = try(var.buckets.frontend.bucket_name, null) == null || (
-      can(regex("^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$", var.buckets.frontend.bucket_name)) &&
-      length(regexall("\\.\\.", var.buckets.frontend.bucket_name)) == 0 &&
-      length(regexall("^\\d+\\.\\d+\\.\\d+\\.\\d+$", var.buckets.frontend.bucket_name)) == 0
+    condition = try(var.s3_static_hosting.bucket_name, null) == null || (
+      can(regex("^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$", var.s3_static_hosting.bucket_name)) &&
+      length(regexall("\\.\\.", var.s3_static_hosting.bucket_name)) == 0 &&
+      length(regexall("^\\d+\\.\\d+\\.\\d+\\.\\d+$", var.s3_static_hosting.bucket_name)) == 0
     )
-    error_message = "buckets.frontend.bucket_name must be a valid S3 bucket name when provided."
+    error_message = "s3_static_hosting.bucket_name must be a valid S3 bucket name when provided."
   }
+}
+
+# -----------------------------------------------------------------------------
+# S3 CLOUDFRONT LOG
+# -----------------------------------------------------------------------------
+variable "s3_cloudfront_log" {
+  description = "S3 bucket configuration for CloudFront access logging."
+  type = object({
+    bucket_name    = string
+    lifecycle_days = optional(number)
+    lifecycle_rules = optional(list(object({
+      id      = string
+      enabled = bool
+      prefix  = optional(string)
+      expiration = object({
+        days = optional(number)
+      })
+    })), [])
+  })
 
   validation {
-    condition     = try(var.buckets.logs.log_prefix, "cloudfront/") == "" || !startswith(try(var.buckets.logs.log_prefix, "cloudfront/"), "/")
-    error_message = "buckets.logs.log_prefix must be empty or must not start with '/'."
-  }
-
-  validation {
-    condition = try(var.buckets.logs.bucket_name, null) == null || (
-      can(regex("^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$", var.buckets.logs.bucket_name)) &&
-      length(regexall("\\.\\.", var.buckets.logs.bucket_name)) == 0 &&
-      length(regexall("^\\d+\\.\\d+\\.\\d+\\.\\d+$", var.buckets.logs.bucket_name)) == 0
+    condition = try(var.s3_cloudfront_log.bucket_name, null) == null || (
+      can(regex("^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$", var.s3_cloudfront_log.bucket_name)) &&
+      length(regexall("\\.\\.", var.s3_cloudfront_log.bucket_name)) == 0 &&
+      length(regexall("^\\d+\\.\\d+\\.\\d+\\.\\d+$", var.s3_cloudfront_log.bucket_name)) == 0
     )
-    error_message = "buckets.logs.bucket_name must be a valid S3 bucket name when provided."
+    error_message = "s3_cloudfront_log.bucket_name must be a valid S3 bucket name when provided."
   }
 }
 
@@ -62,17 +53,22 @@ variable "buckets" {
 variable "acm" {
   description = "ACM certificate settings exposed by the hosting wrapper."
   type = object({
-    domain_name             = string
+    domain_name               = optional(string, null)
     subject_alternative_names = optional(list(string), [])
-    zone_id                 = string
-    create_route53_records  = optional(bool, true)
-    validation_zone_ids     = optional(map(string), {})
-    validation_record_fqdns = optional(list(string), [])
+    zone_id                   = optional(string, null)
+    existing_certificate_arn  = optional(string, null)
+    validation_zone_ids       = optional(map(string), {})
+    validation_record_fqdns   = optional(list(string), [])
   })
 
   validation {
-    condition     = !try(var.acm.create_route53_records, true) || var.acm.zone_id != null
-    error_message = "zone_id must be set when acm.create_route53_records is true."
+    condition     = try(var.acm.existing_certificate_arn, null) != null || try(var.acm.domain_name, null) != null
+    error_message = "acm.domain_name is required when acm.existing_certificate_arn is not provided."
+  }
+
+  validation {
+    condition     = try(var.acm.existing_certificate_arn, null) != null || try(var.acm.zone_id, null) != null
+    error_message = "acm.zone_id is required when acm.existing_certificate_arn is not provided."
   }
 }
 
@@ -82,9 +78,10 @@ variable "acm" {
 variable "cloudfront" {
   description = "CloudFront distribution settings exposed by the hosting wrapper."
   type = object({
-    project_name = string
-    environment  = string
-    aliases = list(string)
+    project_name                    = string
+    environment                     = string
+    aliases                         = list(string)
+    zone_id                         = string
     continuous_deployment_policy_id = optional(string, null)
     ordered_cache_behaviors = optional(list(object({
       path_pattern               = string
@@ -107,9 +104,9 @@ variable "cloudfront" {
       restriction_type = optional(string, "none")
       locations        = optional(list(string), [])
     }), {})
-    price_class = optional(string, "PriceClass_100")
+    price_class         = optional(string, "PriceClass_100")
     default_root_object = optional(string, "index.html")
-    web_acl_id = optional(string)
+    web_acl_id          = optional(string)
     # Additional CloudFront settings can be added here as needed.
   })
 }

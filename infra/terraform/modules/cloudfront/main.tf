@@ -442,21 +442,19 @@ resource "aws_cloudfront_distribution" "this" {
 
       # -----------------------------------------------------------------------
       # dynamic "s3_origin_config"
-      # Required by the AWS provider whenever the origin is an S3 bucket,
-      # even when using OAC (the modern approach).
+      # Used for S3 origins only when OAC is not attached.
       #
       # Historically this block held an Origin Access Identity string.
-      # With OAC, the identity string is intentionally left empty — OAC
-      # supersedes it — but the AWS provider still requires the block to be
-      # present for S3 origins.
+      # When OAC is in use, rendering an empty s3_origin_config can create
+      # provider normalization drift in some AWS provider versions.
       #
       # for_each = [1] creates one block; for_each = [] creates none.
       # The ternary chooses which list to pass.
       # -----------------------------------------------------------------------
       dynamic "s3_origin_config" {
-        # Generate this block only for S3 origins; skip for custom origins.
+        # Render only when the origin is S3 and OAC is not attached.
         # [1] is a one-element list — it forces exactly one block to appear.
-        for_each = origin.value.origin_type == "s3" ? [1] : []
+        for_each = origin.value.origin_type == "s3" && local.origin_access_control_id == null ? [1] : []
 
         content {
           # Empty string: OAC is used instead of the legacy OAI string.
@@ -650,11 +648,11 @@ resource "aws_cloudfront_distribution" "this" {
       target_origin_id = ordered_cache_behavior.value.target_origin_id
 
       # Same semantics as in default_cache_behavior above.
-      viewer_protocol_policy = ordered_cache_behavior.value.viewer_protocol_policy
-      allowed_methods        = ordered_cache_behavior.value.allowed_methods
-      cached_methods         = ordered_cache_behavior.value.cached_methods
-      compress               = ordered_cache_behavior.value.compress
-      cache_policy_id        = ordered_cache_behavior.value.cache_policy_id
+      viewer_protocol_policy     = ordered_cache_behavior.value.viewer_protocol_policy
+      allowed_methods            = ordered_cache_behavior.value.allowed_methods
+      cached_methods             = ordered_cache_behavior.value.cached_methods
+      compress                   = ordered_cache_behavior.value.compress
+      cache_policy_id            = ordered_cache_behavior.value.cache_policy_id
       origin_request_policy_id   = ordered_cache_behavior.value.origin_request_policy_id
       response_headers_policy_id = ordered_cache_behavior.value.response_headers_policy_id
       realtime_log_config_arn    = ordered_cache_behavior.value.realtime_log_config_arn
@@ -843,7 +841,7 @@ data "aws_iam_policy_document" "s3_origin_bucket_policy" {
   # ---------------------------------------------------------------------------
   statement {
     # A human-readable label shown in CloudTrail logs and the IAM console.
-    sid    = "AllowCloudFrontServicePrincipalReadOnly"
+    sid = "AllowCloudFrontServicePrincipalReadOnly"
     # "Allow" — this statement grants access.
     effect = "Allow"
 
@@ -904,7 +902,7 @@ data "aws_iam_policy_document" "s3_origin_bucket_policy" {
   # ---------------------------------------------------------------------------
   statement {
     # Human-readable label for audit logs.
-    sid    = "DenyInsecureTransport"
+    sid = "DenyInsecureTransport"
     # "Deny" — this statement BLOCKS access.
     # In IAM, Deny always wins over Allow, regardless of other statements.
     effect = "Deny"
