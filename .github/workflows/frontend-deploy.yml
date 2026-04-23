@@ -68,7 +68,7 @@ jobs:
           if [ -f package-lock.json ]; then npm ci; else npm install; fi
       
       # STEP 6: Build the frontend (creates optimized static files)
-      # Outputs to 'out' directory as configured in next.config.ts (output: export)
+      # Vite outputs to 'dist' by default.
       - name: Build static site
         run: npm run build
 
@@ -82,13 +82,18 @@ jobs:
       # STEP 8: Upload built files to AWS S3 bucket
       - name: Sync to S3
         run: |
-          # --delete removes files from S3 that are no longer in 'out' directory
-          aws s3 sync out "s3://${BUCKET_NAME}" --delete
+          if [ ! -d dist ]; then
+            echo "Build output directory 'dist' not found."
+            exit 1
+          fi
+
+          # --delete removes files from S3 that are no longer in 'dist' directory
+          aws s3 sync dist "s3://${BUCKET_NAME}" --delete
 
       # STEP 9: Ensure HTML is not cached aggressively (faster visible updates)
       - name: Set cache-control for HTML
         run: |
-          aws s3 cp out "s3://${BUCKET_NAME}" \
+          aws s3 cp dist "s3://${BUCKET_NAME}" \
             --recursive \
             --exclude "*" \
             --include "*.html" \

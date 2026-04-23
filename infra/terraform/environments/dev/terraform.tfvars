@@ -57,6 +57,20 @@ frontend_site_hosting = {
   # CLOUDFRONT CONFIGURATION
   cloudfront = {
     aliases = ["kjl.fikri.dev"]
+    custom_error_responses = [
+      {
+        error_code            = 403
+        response_code         = 200
+        response_page_path    = "/index.html"
+        error_caching_min_ttl = 0
+      },
+      {
+        error_code            = 404
+        response_code         = 200
+        response_page_path    = "/index.html"
+        error_caching_min_ttl = 0
+      }
+    ]
   }
 }
 
