@@ -48,10 +48,11 @@ module "frontend_site_hosting" {
 
   # CLOUDFRONT CONFIGURATION
   cloudfront = {
-    project_name = var.project_name
-    environment  = var.environment
-    aliases      = var.frontend_site_hosting.cloudfront.aliases
-    zone_id      = var.frontend_site_hosting.zone_id
+    project_name           = var.project_name
+    environment            = var.environment
+    aliases                = var.frontend_site_hosting.cloudfront.aliases
+    zone_id                = var.frontend_site_hosting.zone_id
+    custom_error_responses = var.frontend_site_hosting.cloudfront.custom_error_responses
   }
 
   # OPTIONAL: Extra resource tags

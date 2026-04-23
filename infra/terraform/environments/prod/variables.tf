@@ -63,6 +63,12 @@ variable "frontend_site_hosting" {
 
     cloudfront = object({
       aliases = list(string)
+      custom_error_responses = optional(list(object({
+        error_code            = number
+        response_code         = optional(number)
+        response_page_path    = optional(string)
+        error_caching_min_ttl = optional(number)
+      })), [])
     })
   })
 }
