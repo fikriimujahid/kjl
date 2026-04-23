@@ -8,7 +8,7 @@ on:
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
   PROJECT_NAME: ${{ secrets.PROJECT_NAME }}
-  DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
+  CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
 
 # CONCURRENCY: Prevents multiple deployments from running simultaneously
 # If a new deployment starts, it cancels any previously running deployments
@@ -98,4 +98,10 @@ jobs:
       # STEP 10: Invalidate CloudFront so users see latest deployment immediately
       - name: Invalidate CloudFront cache
         run: |
+          if [ -z "${CLOUDFRONT_DISTRIBUTION_ID}" ]; then
+            echo "CLOUDFRONT_DISTRIBUTION_ID secret is empty or not set"
+            exit 1
+          fi
+
+          aws cloudfront get-distribution --id "${CLOUDFRONT_DISTRIBUTION_ID}" > /dev/null
           aws cloudfront create-invalidation --distribution-id "${CLOUDFRONT_DISTRIBUTION_ID}" --paths "/*"
