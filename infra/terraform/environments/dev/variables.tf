@@ -83,3 +83,17 @@ variable "auth_cognito" {
   })
 }
 
+
+# -------------------------------------------------------------------------
+# GITHUB CICD MODULE
+# -------------------------------------------------------------------------
+variable "github_cicd" {
+  description = "GitHub OIDC settings for CI/CD module."
+  type = object({
+    github_repo = string
+    branches = list(string)
+    github_oidc_provider_arn = string
+    role_name = string
+    managed_policy_arns = list(string)
+  })
+}

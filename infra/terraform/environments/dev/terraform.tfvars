@@ -74,3 +74,16 @@ auth_cognito = {
 
   enabled_identity_providers = ["COGNITO"]
 }
+
+# ============================================================================
+# GitHub CICD Variables
+# ============================================================================
+github_cicd = {
+  github_repo = "fikriimujahid/kjl"
+  branches = ["dev"]
+  github_oidc_provider_arn = "arn:aws:iam::731099197523:oidc-provider/token.actions.githubusercontent.com"
+  role_name = "kejepangdulu-dev-github-oidc-role"
+  managed_policy_arns = [
+    "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+  ]
+}

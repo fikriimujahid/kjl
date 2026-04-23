@@ -58,6 +58,9 @@ module "frontend_site_hosting" {
   tags = var.tags
 }
 
+# -------------------------------------------------------------------------
+# COGNITO AUTH MODULE
+# -------------------------------------------------------------------------
 module "cognito" {
   source = "../../modules/cognito-auth-api"
 
@@ -72,6 +75,23 @@ module "cognito" {
   google_client_id           = try(var.auth_cognito.google_client_id, null)
   google_client_secret       = try(var.auth_cognito.google_client_secret, null)
 }
+
+# -------------------------------------------------------------------------
+# GITHUB CICD MODULE
+# -------------------------------------------------------------------------
+module "github_cicd" {
+  source = "../../modules/iam-role-github-oidc"
+
+  github_repo = var.github_cicd.github_repo
+  branches = var.github_cicd.branches
+  github_oidc_provider_arn = var.github_cicd.github_oidc_provider_arn
+  role_name = var.github_cicd.role_name
+  managed_policy_arns = var.github_cicd.managed_policy_arns
+
+  tags = var.tags
+}
+
+
 
 # module "app_s3" {
 #   source = "./modules/s3"
