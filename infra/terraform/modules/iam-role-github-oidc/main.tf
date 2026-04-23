@@ -25,10 +25,19 @@ data "aws_iam_policy_document" "github_oidc" {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
 
-      values = [
-        for branch in var.branches :
-        "repo:${var.github_repo}:ref:refs/heads/${branch}"
-      ]
+      # Support both GitHub OIDC subject formats:
+      # - ref:refs/heads/<branch> when no job environment is set
+      # - environment:<name> when jobs use the "environment" key
+      values = concat(
+        [
+          for branch in var.branches :
+          "repo:${var.github_repo}:ref:refs/heads/${branch}"
+        ],
+        [
+          for branch in var.branches :
+          "repo:${var.github_repo}:environment:${branch}"
+        ]
+      )
     }
   }
 }
