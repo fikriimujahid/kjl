@@ -1,18 +1,20 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { mockProducts, mockTopics, mockSessions, formatIDR } from "@/lib/mock-data";
+import { mockProducts, mockTopics, mockSessions } from "@/lib/mock-data";
 import ProductDetailClient from "./ProductDetailClient";
 
 interface PageProps {
-  params: { productId: string };
+  params: Promise<{ productId: string }>;
 }
 
 export function generateStaticParams() {
   return mockProducts.map((p) => ({ productId: p.slug }));
 }
 
-export default function ProductDetailPage({ params }: PageProps) {
-  const product = mockProducts.find((p) => p.slug === params.productId);
+export default async function ProductDetailPage({ params }: PageProps) {
+  const { productId } = await params;
+
+  const product = mockProducts.find((p) => p.slug === productId);
   if (!product) notFound();
 
   const topics = mockTopics.filter((t) => t.productId === product.id);

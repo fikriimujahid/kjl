@@ -24,9 +24,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest                        # Run on Ubuntu (GitHub-hosted runner)
     
-    # ENVIRONMENT SELECTION: Choose environment based on branch
-    # main branch → prod | staging branch → staging | other branches → dev
-    environment: ${{ github.ref_name == 'prod' || 'dev' }}
+    # ENVIRONMENT SELECTION: map branch names to explicit environment names
+    environment: ${{ github.ref_name == 'prod' && 'prod' || 'dev' }}
     
     # PERMISSIONS: Allow this workflow to assume AWS roles (OIDC authentication)
     permissions:

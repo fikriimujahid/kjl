@@ -4,11 +4,11 @@ import { mockProducts, mockTopics, mockSessions, mockQuizData } from "@/lib/mock
 import QuizViewer from "@/components/learning/QuizViewer";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     productId: string;
     topicId: string;
     sessionId: string;
-  };
+  }>;
 }
 
 export function generateStaticParams() {
@@ -19,10 +19,12 @@ export function generateStaticParams() {
   }));
 }
 
-export default function LearningSessionPage({ params }: PageProps) {
-  const product = mockProducts.find((p) => p.id === params.productId);
-  const topic = mockTopics.find((t) => t.id === params.topicId);
-  const session = mockSessions.find((s) => s.id === params.sessionId);
+export default async function LearningSessionPage({ params }: PageProps) {
+  const { productId, topicId, sessionId } = await params;
+
+  const product = mockProducts.find((p) => p.id === productId);
+  const topic = mockTopics.find((t) => t.id === topicId);
+  const session = mockSessions.find((s) => s.id === sessionId);
 
   if (!product || !topic || !session) notFound();
 
