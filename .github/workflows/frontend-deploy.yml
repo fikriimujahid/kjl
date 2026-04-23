@@ -1,9 +1,4 @@
-# GitHub Actions Workflow: Frontend Deployment
-# This workflow automatically builds and deploys the frontend application to AWS S3 whenever
-# changes are pushed to the frontend folder on dev/prod branches.
-
 name: Frontend Deploy
-
 on:
   push:
     branches: [dev, prod]
