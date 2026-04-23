@@ -59,7 +59,32 @@ frontend_site_hosting = {
   }
 }
 
-# Set explicit IAM principal ARNs if required by your org.
-terraform_execution_principal_arns = []
+# -------------------------------------------------------------------------
+# COGNITO AUTH MODULE
+# -------------------------------------------------------------------------
+auth_cognito = {
+  callback_urls = [
+    "https://dev.myapp.com/auth/callback"
+  ]
+
+  logout_urls = [
+    "https://dev.myapp.com/logout"
+  ]
+
+  enabled_identity_providers = ["COGNITO"]
+}
+
+# ============================================================================
+# GitHub CICD Variables
+# ============================================================================
+github_cicd = {
+  github_repo = "fikriimujahid/kjl"
+  branches = ["prod"]
+  github_oidc_provider_arn = "arn:aws:iam::731099197523:oidc-provider/token.actions.githubusercontent.com"
+  role_name = "kejepangdulu-prod-github-oidc-role"
+  managed_policy_arns = [
+    "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+  ]
+}
 
 

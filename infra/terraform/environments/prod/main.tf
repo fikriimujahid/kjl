@@ -58,6 +58,41 @@ module "frontend_site_hosting" {
   tags = var.tags
 }
 
+# -------------------------------------------------------------------------
+# COGNITO AUTH MODULE
+# -------------------------------------------------------------------------
+module "cognito" {
+  source = "../../modules/cognito-auth-api"
+
+  project_name = var.project_name
+  environment  = var.environment
+
+  callback_urls = var.auth_cognito.callback_urls
+
+  logout_urls = var.auth_cognito.logout_urls
+
+  enabled_identity_providers = var.auth_cognito.enabled_identity_providers
+  google_client_id           = try(var.auth_cognito.google_client_id, null)
+  google_client_secret       = try(var.auth_cognito.google_client_secret, null)
+}
+
+# -------------------------------------------------------------------------
+# GITHUB CICD MODULE
+# -------------------------------------------------------------------------
+module "github_cicd" {
+  source = "../../modules/iam-role-github-oidc"
+
+  github_repo = var.github_cicd.github_repo
+  branches = var.github_cicd.branches
+  github_oidc_provider_arn = var.github_cicd.github_oidc_provider_arn
+  role_name = var.github_cicd.role_name
+  managed_policy_arns = var.github_cicd.managed_policy_arns
+
+  tags = var.tags
+}
+
+
+
 # module "app_s3" {
 #   source = "./modules/s3"
 
@@ -93,20 +128,3 @@ module "frontend_site_hosting" {
 #   tags                           = local.app_tags
 # }
 
-# module "cognito" {
-#   source = "../../modules/cognito-auth-api"
-
-#   project_name = "myapp"
-#   environment  = "prod"
-
-#   callback_urls = [
-#     "https://prod.myapp.com/auth/callback"
-#   ]
-
-#   logout_urls = [
-#     "https://prod.myapp.com/logout"
-#   ]
-
-#   google_client_id     = var.google_client_id
-#   google_client_secret = var.google_client_secret
-# }
