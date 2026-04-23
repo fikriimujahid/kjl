@@ -4,22 +4,20 @@
 
 name: Frontend Deploy
 
-# TRIGGER CONDITIONS: When does this workflow run?
 on:
   push:
-    branches: [dev, prod]              # Only run on main branch
-    paths:                        # Only run if these paths are modified
+    branches: [dev, prod]
+    paths:
       - frontend/web/**
 
-# ENVIRONMENT VARIABLES: Shared values available to all steps
 env:
-  AWS_REGION: ${{ vars.AWS_REGION }}           # AWS region (e.g., us-east-1)
-  PROJECT_NAME: ${{ secrets.PROJECT_NAME }}       # Project name (used in S3 bucket names)
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  PROJECT_NAME: ${{ secrets.PROJECT_NAME }}
 
 # CONCURRENCY: Prevents multiple deployments from running simultaneously
 # If a new deployment starts, it cancels any previously running deployments
 concurrency:
-  group: frontend-${{ github.ref_name }}         # Group by branch name
+  group: deploy-frontend-${{ github.ref_name }}         # Group by branch name
   cancel-in-progress: true                       # Cancel old jobs in this group
 
 jobs:
@@ -28,7 +26,7 @@ jobs:
     
     # ENVIRONMENT SELECTION: Choose environment based on branch
     # main branch → prod | staging branch → staging | other branches → dev
-    environment: ${{ github.ref_name == 'prod' || 'dev') }}
+    environment: ${{ github.ref_name == 'prod' || 'dev' }}
     
     # PERMISSIONS: Allow this workflow to assume AWS roles (OIDC authentication)
     permissions:
@@ -38,7 +36,7 @@ jobs:
     # DEFAULTS: Apply to all steps in this job unless overridden
     defaults:
       run:
-        working-directory: frontend               # All commands run in /frontend directory
+        working-directory: frontend/web               # All commands run in /frontend/web directory
     steps:
       # STEP 1: Clone the repository code onto the runner
       - uses: actions/checkout@v4
@@ -83,23 +81,6 @@ jobs:
       # The bucket name is: {PROJECT_NAME}-{ENVIRONMENT}-website
       # Example: my-notes-prod-website
       - name: Sync to S3
-        env:
-          # Convert branch name to environment name for S3 bucket
-          ENV_NAME: ${{ github.ref_name == 'prod' && 'prod' || (github.ref_name == 'staging' && 'staging' || 'dev') }}
         run: |
           # --delete removes files from S3 that are no longer in 'out' directory
-          aws s3 sync out s3://${{ env.PROJECT_NAME }}-${ENV_NAME}-frontend-bucket --delete
-      
-      # STEP 8: Invalidate CloudFront cache (optional, only if distribution ID is set)
-      # CloudFront caches files globally. This tells it to fetch fresh copies.
-      # - name: Optional CloudFront invalidation
-      #   env:
-      #     # Convert branch to environment for CloudFront distribution ID
-      #     ENV_NAME: ${{ github.ref_name == 'main' && 'main' || (github.ref_name == 'staging' && 'staging' || 'dev') }}
-      #     # Select CloudFront distribution ID based on environment
-      #     CF_DIST_ID: ${{ github.ref_name == 'main' && secrets.CF_DIST_ID_PROD || (github.ref_name == 'staging' && secrets.CF_DIST_ID_STAGING || secrets.CF_DIST_ID_DEV) }}
-      #   # Only run this step if CF_DIST_ID is configured (not empty)
-      #   if: env.CF_DIST_ID != ''
-      #   run: |
-      #     # "/*" means invalidate all paths (entire cache)
-      #     aws cloudfront create-invalidation --distribution-id "$CF_DIST_ID" --paths "/*"
+          aws s3 sync out s3://${{ env.PROJECT_NAME }}-${{ github.ref_name }}-frontend-bucket --delete
