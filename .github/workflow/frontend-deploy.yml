@@ -7,7 +7,7 @@ name: Frontend Deploy
 # TRIGGER CONDITIONS: When does this workflow run?
 on:
   push:
-    branches: [main]              # Only run on main branch
+    branches: [dev, prod]              # Only run on main branch
     paths:                        # Only run if these paths are modified
       - frontend/web/**
 
