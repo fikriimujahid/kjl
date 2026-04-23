@@ -1,6 +1,6 @@
 # GitHub Actions Workflow: Frontend Deployment
 # This workflow automatically builds and deploys the frontend application to AWS S3 whenever
-# changes are pushed to the frontend folder on the main branch.
+# changes are pushed to the frontend folder on dev/prod branches.
 
 name: Frontend Deploy
 
@@ -13,6 +13,7 @@ on:
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
   PROJECT_NAME: ${{ secrets.PROJECT_NAME }}
+  DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
 
 # CONCURRENCY: Prevents multiple deployments from running simultaneously
 # If a new deployment starts, it cancels any previously running deployments
@@ -72,14 +73,34 @@ jobs:
           if [ -f package-lock.json ]; then npm ci; else npm install; fi
       
       # STEP 6: Build the frontend (creates optimized static files)
-      # Outputs to 'out' directory as configured in vite.config.ts → build.outDir
+      # Outputs to 'out' directory as configured in next.config.ts (output: export)
       - name: Build static site
         run: npm run build
+
+      # STEP 7: Resolve deployment target and fail fast if bucket is wrong/missing
+      - name: Resolve deploy target
+        run: |
+          BUCKET_NAME="${PROJECT_NAME}-${GITHUB_REF_NAME}-frontend-bucket"
+          echo "BUCKET_NAME=$BUCKET_NAME" >> "$GITHUB_ENV"
+          aws s3api head-bucket --bucket "$BUCKET_NAME"
       
-      # STEP 7: Upload built files to AWS S3 bucket
-      # The bucket name is: {PROJECT_NAME}-{ENVIRONMENT}-website
-      # Example: my-notes-prod-website
+      # STEP 8: Upload built files to AWS S3 bucket
       - name: Sync to S3
         run: |
           # --delete removes files from S3 that are no longer in 'out' directory
-          aws s3 sync out s3://${{ env.PROJECT_NAME }}-${{ github.ref_name }}-frontend-bucket --delete
+          aws s3 sync out "s3://${BUCKET_NAME}" --delete
+
+      # STEP 9: Ensure HTML is not cached aggressively (faster visible updates)
+      - name: Set cache-control for HTML
+        run: |
+          aws s3 cp out "s3://${BUCKET_NAME}" \
+            --recursive \
+            --exclude "*" \
+            --include "*.html" \
+            --cache-control "no-cache, no-store, must-revalidate" \
+            --content-type "text/html"
+
+      # STEP 10: Invalidate CloudFront so users see latest deployment immediately
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation --distribution-id "${CLOUDFRONT_DISTRIBUTION_ID}" --paths "/*"
