@@ -4,6 +4,19 @@ output "region" {
 }
 
 # -------------------------------------------------------------------------
+# FRONTEND SITE HOSTING
+# -------------------------------------------------------------------------
+output "frontend_site_hosting_bucket_name" {
+  description = "S3 bucket name for frontend static hosting in the dev environment."
+  value       = module.frontend_site_hosting.frontend_bucket_name
+}
+
+output "cloudfront_distribution_id" {
+  description = "CloudFront distribution ID for the frontend site in the dev environment."
+  value       = module.frontend_site_hosting.distribution_id
+}
+
+# -------------------------------------------------------------------------
 # COGNITO AUTH
 # -------------------------------------------------------------------------
 output "user_pool_id" {
