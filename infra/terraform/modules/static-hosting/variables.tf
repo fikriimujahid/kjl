@@ -1,0 +1,118 @@
+# -----------------------------------------------------------------------------
+# S3 STATIC HOSTING BUCKETS
+# -----------------------------------------------------------------------------
+variable "s3_static_hosting" {
+  description = "S3 bucket configuration for static website hosting."
+  type = object({
+    bucket_name = string
+  })
+
+  validation {
+    condition = try(var.s3_static_hosting.bucket_name, null) == null || (
+      can(regex("^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$", var.s3_static_hosting.bucket_name)) &&
+      length(regexall("\\.\\.", var.s3_static_hosting.bucket_name)) == 0 &&
+      length(regexall("^\\d+\\.\\d+\\.\\d+\\.\\d+$", var.s3_static_hosting.bucket_name)) == 0
+    )
+    error_message = "s3_static_hosting.bucket_name must be a valid S3 bucket name when provided."
+  }
+}
+
+# -----------------------------------------------------------------------------
+# S3 CLOUDFRONT LOG
+# -----------------------------------------------------------------------------
+variable "s3_cloudfront_log" {
+  description = "S3 bucket configuration for CloudFront access logging."
+  type = object({
+    bucket_name    = string
+    lifecycle_days = optional(number)
+    lifecycle_rules = optional(list(object({
+      id      = string
+      enabled = bool
+      prefix  = optional(string)
+      expiration = object({
+        days = optional(number)
+      })
+    })), [])
+  })
+
+  validation {
+    condition = try(var.s3_cloudfront_log.bucket_name, null) == null || (
+      can(regex("^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$", var.s3_cloudfront_log.bucket_name)) &&
+      length(regexall("\\.\\.", var.s3_cloudfront_log.bucket_name)) == 0 &&
+      length(regexall("^\\d+\\.\\d+\\.\\d+\\.\\d+$", var.s3_cloudfront_log.bucket_name)) == 0
+    )
+    error_message = "s3_cloudfront_log.bucket_name must be a valid S3 bucket name when provided."
+  }
+}
+
+# -----------------------------------------------------------------------------
+# ACM CERTIFICATE
+# -----------------------------------------------------------------------------
+# ACM (AWS Certificate Manager) certificate issuance and validation settings.
+# All fields are optional — the defaults work correctly in most cases.
+variable "acm" {
+  description = "ACM certificate settings exposed by the hosting wrapper."
+  type = object({
+    domain_name               = optional(string, null)
+    subject_alternative_names = optional(list(string), [])
+    zone_id                   = optional(string, null)
+    existing_certificate_arn  = optional(string, null)
+    validation_zone_ids       = optional(map(string), {})
+    validation_record_fqdns   = optional(list(string), [])
+  })
+
+  validation {
+    condition     = try(var.acm.existing_certificate_arn, null) != null || try(var.acm.domain_name, null) != null
+    error_message = "acm.domain_name is required when acm.existing_certificate_arn is not provided."
+  }
+
+  validation {
+    condition     = try(var.acm.existing_certificate_arn, null) != null || try(var.acm.zone_id, null) != null
+    error_message = "acm.zone_id is required when acm.existing_certificate_arn is not provided."
+  }
+}
+
+# -----------------------------------------------------------------------------
+# CLOUDFRONT
+# -----------------------------------------------------------------------------
+variable "cloudfront" {
+  description = "CloudFront distribution settings exposed by the hosting wrapper."
+  type = object({
+    project_name                    = string
+    environment                     = string
+    aliases                         = list(string)
+    zone_id                         = string
+    continuous_deployment_policy_id = optional(string, null)
+    ordered_cache_behaviors = optional(list(object({
+      path_pattern               = string
+      target_origin_id           = string
+      viewer_protocol_policy     = optional(string, "redirect-to-https")
+      allowed_methods            = optional(list(string), ["GET", "HEAD", "OPTIONS"])
+      cached_methods             = optional(list(string), ["GET", "HEAD", "OPTIONS"])
+      compress                   = optional(bool, true)
+      cache_policy_id            = optional(string, "658327ea-f89d-4fab-a63d-7e88639e58f6")
+      origin_request_policy_id   = optional(string)
+      response_headers_policy_id = optional(string)
+    })), [])
+    custom_error_responses = optional(list(object({
+      error_code            = number
+      response_code         = optional(number)
+      response_page_path    = optional(string)
+      error_caching_min_ttl = optional(number, 0)
+    })), [])
+    geo_restriction = optional(object({
+      restriction_type = optional(string, "none")
+      locations        = optional(list(string), [])
+    }), {})
+    price_class         = optional(string, "PriceClass_100")
+    default_root_object = optional(string, "index.html")
+    web_acl_id          = optional(string)
+    # Additional CloudFront settings can be added here as needed.
+  })
+}
+
+variable "tags" {
+  description = "Additional tags merged on top of the module's default Project, Environment, ManagedBy, and Module tags."
+  type        = map(string)
+  default     = {}
+}

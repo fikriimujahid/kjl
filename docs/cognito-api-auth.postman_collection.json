@@ -1,0 +1,236 @@
+{
+  "info": {
+    "_postman_id": "0d19325b-f924-4f7a-b7bc-1805ae61df05",
+    "name": "Cognito API Authentication",
+    "description": "AWS Cognito API-based authentication flow using Cognito Identity Provider endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1 - SignUp",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-amz-json-1.1"
+          },
+          {
+            "key": "X-Amz-Target",
+            "value": "AWSCognitoIdentityProviderService.SignUp"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"ClientId\": \"{{user_pool_client_id}}\",\n  \"Username\": \"{{username}}\",\n  \"Password\": \"{{password}}\",\n  \"UserAttributes\": [\n    {\n      \"Name\": \"email\",\n      \"Value\": \"{{username}}\"\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{cognito_api_endpoint}}"
+      },
+      "response": []
+    },
+    {
+      "name": "2 - ConfirmSignUp",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-amz-json-1.1"
+          },
+          {
+            "key": "X-Amz-Target",
+            "value": "AWSCognitoIdentityProviderService.ConfirmSignUp"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"ClientId\": \"{{user_pool_client_id}}\",\n  \"Username\": \"{{username}}\",\n  \"ConfirmationCode\": \"{{confirmation_code}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{cognito_api_endpoint}}"
+      },
+      "response": []
+    },
+    {
+      "name": "3 - Login (InitiateAuth)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "var data = pm.response.json();",
+              "if (data && data.AuthenticationResult) {",
+              "  if (data.AuthenticationResult.AccessToken) {",
+              "    pm.collectionVariables.set(\"access_token\", data.AuthenticationResult.AccessToken);",
+              "  }",
+              "  if (data.AuthenticationResult.RefreshToken) {",
+              "    pm.collectionVariables.set(\"refresh_token\", data.AuthenticationResult.RefreshToken);",
+              "  }",
+              "  if (data.AuthenticationResult.IdToken) {",
+              "    pm.collectionVariables.set(\"id_token\", data.AuthenticationResult.IdToken);",
+              "  }",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-amz-json-1.1"
+          },
+          {
+            "key": "X-Amz-Target",
+            "value": "AWSCognitoIdentityProviderService.InitiateAuth"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"AuthFlow\": \"USER_PASSWORD_AUTH\",\n  \"ClientId\": \"{{user_pool_client_id}}\",\n  \"AuthParameters\": {\n    \"USERNAME\": \"{{username}}\",\n    \"PASSWORD\": \"{{password}}\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{cognito_api_endpoint}}"
+      },
+      "response": []
+    },
+    {
+      "name": "4 - Get User Info",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-amz-json-1.1"
+          },
+          {
+            "key": "X-Amz-Target",
+            "value": "AWSCognitoIdentityProviderService.GetUser"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"AccessToken\": \"{{access_token}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{cognito_api_endpoint}}"
+      },
+      "response": []
+    },
+    {
+      "name": "5 - Refresh Token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "var data = pm.response.json();",
+              "if (data && data.AuthenticationResult) {",
+              "  if (data.AuthenticationResult.AccessToken) {",
+              "    pm.collectionVariables.set(\"access_token\", data.AuthenticationResult.AccessToken);",
+              "  }",
+              "  if (data.AuthenticationResult.IdToken) {",
+              "    pm.collectionVariables.set(\"id_token\", data.AuthenticationResult.IdToken);",
+              "  }",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-amz-json-1.1"
+          },
+          {
+            "key": "X-Amz-Target",
+            "value": "AWSCognitoIdentityProviderService.InitiateAuth"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"AuthFlow\": \"REFRESH_TOKEN_AUTH\",\n  \"ClientId\": \"{{user_pool_client_id}}\",\n  \"AuthParameters\": {\n    \"REFRESH_TOKEN\": \"{{refresh_token}}\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{cognito_api_endpoint}}"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "region",
+      "value": "ap-southeast-1"
+    },
+    {
+      "key": "cognito_api_endpoint",
+      "value": "https://cognito-idp.{{region}}.amazonaws.com/"
+    },
+    {
+      "key": "user_pool_id",
+      "value": ""
+    },
+    {
+      "key": "user_pool_client_id",
+      "value": ""
+    },
+    {
+      "key": "username",
+      "value": ""
+    },
+    {
+      "key": "password",
+      "value": ""
+    },
+    {
+      "key": "confirmation_code",
+      "value": ""
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "refresh_token",
+      "value": ""
+    },
+    {
+      "key": "id_token",
+      "value": ""
+    }
+  ]
+}

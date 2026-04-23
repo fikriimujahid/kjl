@@ -1,0 +1,89 @@
+# ============================================================================
+# Common Variables
+# ============================================================================
+project_name = "kejepangdulu"
+environment  = "dev"
+tags = {
+  Owner       = "platform-team"
+  CostCenter  = "kjl"
+  Project     = "kejepangdulu"
+  Environment = "dev"
+  ManagedBy   = "Terraform"
+}
+
+# ============================================================================
+# Budget Module Variables
+# ============================================================================
+budget = {
+  budget_name            = "kejepangdulu-dev-monthly-budget"
+  monthly_budget_limit   = 10
+  budget_alert_threshold = 80
+  budget_alert_email     = "itsmefikri@gmail.com"
+}
+
+# ============================================================================
+# Frontend Site Hosting Variables
+# ============================================================================
+frontend_site_hosting = {
+  zone_id = "Z019716819YT0PPFWXQPV"
+  # S3 STATIC HOSTING BUCKETS
+  s3_static_hosting = {
+    bucket_name = "kejepangdulu-dev-frontend-bucket"
+  }
+
+  # S3 CLOUDFRONT LOG
+  s3_cloudfront_log = {
+    bucket_name    = "kejepangdulu-dev-cloudfront-logs"
+    lifecycle_days = 90
+    lifecycle_rules = [
+      {
+        id      = "ExpireLogsAfter90Days"
+        enabled = true
+        expiration = {
+          days = 90
+        }
+      }
+    ]
+  }
+
+  # ACM CONFIGURATION
+  acm = {
+    # domain_name               = "fikri.dev"
+    # subject_alternative_names = ["*.fikri.dev"]
+    # zone_id                   = "Z019716819YT0PPFWXQPV"
+    existing_certificate_arn = "arn:aws:acm:us-east-1:731099197523:certificate/adba9bcc-d4b9-4b1b-8bb7-204de0c57120"
+  }
+
+  # CLOUDFRONT CONFIGURATION
+  cloudfront = {
+    aliases = ["kjl.fikri.dev"]
+  }
+}
+
+# -------------------------------------------------------------------------
+# COGNITO AUTH MODULE
+# -------------------------------------------------------------------------
+auth_cognito = {
+  callback_urls = [
+    "https://dev.myapp.com/auth/callback"
+  ]
+
+  logout_urls = [
+    "https://dev.myapp.com/logout"
+  ]
+
+  enabled_identity_providers = ["COGNITO"]
+}
+
+# ============================================================================
+# GitHub CICD Variables
+# ============================================================================
+github_cicd = {
+  github_repo = "fikriimujahid/kjl"
+  branches = ["dev"]
+  github_oidc_provider_arn = "arn:aws:iam::731099197523:oidc-provider/token.actions.githubusercontent.com"
+  role_name = "kejepangdulu-dev-github-oidc-role"
+  managed_policy_arns = [
+    "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+  ]
+}
