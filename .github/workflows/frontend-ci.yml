@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
-      - name: Create .env.local
+      #- name: Create .env.local
         # run: |
         #   cat <<'EOF' > .env.local
         #   VITE_COGNITO_USER_POOL_ID=${{ secrets.VITE_COGNITO_USER_POOL_ID }}
