@@ -1,53 +1,59 @@
-# IAM Roles Modules
+# iam-roles
 
-This directory now contains three focused Terraform modules instead of one monolithic IAM module:
+Reusable Terraform module that creates two GitHub OIDC-assumable IAM roles:
 
-- `dev`: creates the development Terraform role and its policies
-- `prod`: creates the production Terraform role and its policies
-- `cicd-runner`: creates the GitHub Actions entry role that can assume the environment roles
+- Terraform deploy role (`terraform_role_arn`)
+- CI/CD runner role (`cicd_runner_role_arn`)
 
-## Structure
+Both roles trust the same GitHub OIDC provider and are restricted to explicit GitHub branch refs.
 
-```text
-iam-roles/
-  dev/
-  prod/
-  cicd-runner/
-```
-
-## Bootstrap Usage
+## Usage
 
 ```hcl
-module "iam_role_dev" {
-  source                    = "../../modules/iam-roles/dev"
-  project                   = var.project
-  github_repo               = var.github_repo
-  github_oidc_provider_arn  = aws_iam_openid_connect_provider.github.arn
-  terraform_state_bucket_arn = "arn:aws:s3:::${var.terraform_state_bucket}"
-}
+module "iam_roles" {
+  source = "../iam-roles"
 
-module "iam_role_prod" {
-  source                    = "../../modules/iam-roles/prod"
-  project                   = var.project
-  github_repo               = var.github_repo
-  github_oidc_provider_arn  = aws_iam_openid_connect_provider.github.arn
-  terraform_state_bucket_arn = "arn:aws:s3:::${var.terraform_state_bucket}"
-}
+  project                  = "kejepangdulu"
+  environment              = "staging"
+  github_oidc_provider_arn = "arn:aws:iam::123456789012:oidc-provider/token.actions.githubusercontent.com"
+  github_repo              = "kejepangdulu/platform"
 
-module "iam_role_cicd_runner" {
-  source                   = "../../modules/iam-roles/cicd-runner"
-  project                  = var.project
-  github_repo              = var.github_repo
-  github_oidc_provider_arn = aws_iam_openid_connect_provider.github.arn
-  assumable_role_arns = [
-    module.iam_role_dev.terraform_dev_role_arn,
-    module.iam_role_prod.terraform_prod_role_arn,
+  terraform_branches = [
+    "main",
+    "release"
   ]
+
+  cicd_branches = [
+    "dev",
+    "main"
+  ]
+
+  tags = {
+    Project     = "kejepangdulu"
+    Environment = "staging"
+  }
 }
 ```
 
-## Notes
+## Inputs
 
-- The bootstrap environment now owns the composition of the three submodules.
-- Resource names are preserved so AWS-side names stay stable.
-- Terraform state moves are required when migrating from the old `module.iam_roles` address to the new module addresses.
+- `project` (string, required): Project prefix for role names.
+- `environment` (string, required): Environment segment for role names.
+- `github_oidc_provider_arn` (string, required): IAM OIDC provider ARN.
+- `github_repo` (string, required): GitHub repository in `owner/repo` format.
+- `terraform_branches` (list(string), required): Allowed branches for Terraform role OIDC trust.
+- `cicd_branches` (list(string), optional): Allowed branches for CI/CD runner role OIDC trust. Defaults to `dev`.
+- `terraform_role_name` (string, optional): Explicit deploy role name override.
+- `cicd_runner_role_name` (string, optional): Explicit runner role name override.
+- `terraform_managed_policy_arns` (list(string), optional): Managed policies for deploy role. Default includes `AdministratorAccess`.
+- `cicd_runner_managed_policy_arns` (list(string), optional): Managed policies for runner role. Default includes `ReadOnlyAccess`.
+- `terraform_inline_policy_json` (string, optional): Inline JSON policy for deploy role.
+- `cicd_runner_inline_policy_json` (string, optional): Inline JSON policy for runner role.
+- `tags` (map(string), optional): IAM role tags.
+
+## Outputs
+
+- `terraform_role_name`
+- `terraform_role_arn`
+- `cicd_runner_role_name`
+- `cicd_runner_role_arn`
