@@ -83,7 +83,8 @@ github_cicd = {
   github_oidc_provider_arn = "arn:aws:iam::731099197523:oidc-provider/token.actions.githubusercontent.com"
   role_name = "kejepangdulu-prod-github-oidc-role"
   managed_policy_arns = [
-    "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+    "arn:aws:iam::aws:policy/AmazonS3FullAccess",
+    "arn:aws:iam::aws:policy/CloudFrontFullAccess"
   ]
 }
 
