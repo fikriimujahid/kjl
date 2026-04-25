@@ -111,17 +111,30 @@ module "cloudfront" {
   retain_on_delete                = false
   continuous_deployment_policy_id = try(var.cloudfront.continuous_deployment_policy_id, null)
   http_version                    = "http2and3"
-  origins = {
-    frontend = {
-      domain_name = module.s3_static_hosting.bucket_regional_domain_name
-      origin_type = "s3"
+  origins = merge(
+    {
+      frontend = {
+        domain_name = module.s3_static_hosting.bucket_regional_domain_name
+        origin_type = "s3"
 
-      s3_config = {
-        bucket_name          = module.s3_static_hosting.bucket_name
-        manage_bucket_policy = true
+        s3_config = {
+          bucket_name          = module.s3_static_hosting.bucket_name
+          manage_bucket_policy = true
+        }
       }
-    }
-  }
+    },
+    try(var.cloudfront.public_origin.enabled, false) ? {
+      public = {
+        domain_name = var.cloudfront.public_origin.bucket_regional_domain_name
+        origin_type = "s3"
+
+        s3_config = {
+          bucket_name          = var.cloudfront.public_origin.bucket_name
+          manage_bucket_policy = try(var.cloudfront.public_origin.manage_bucket_policy, true)
+        }
+      }
+    } : {}
+  )
   # The default cache behavior — how CloudFront handles ALL requests
   # that do not match any ordered_cache_behaviors path pattern.
   # Built in locals.tf with secure defaults (HTTPS redirect, compression, etc.).
@@ -139,7 +152,21 @@ module "cloudfront" {
     lambda_function_associations = []
     function_associations        = []
   }
-  ordered_cache_behaviors = try(var.cloudfront.ordered_cache_behaviors, [])
+  ordered_cache_behaviors = concat(
+    try(var.cloudfront.public_origin.enabled, false) ? [
+      {
+        path_pattern               = "/public-data/*"
+        target_origin_id           = "public"
+        viewer_protocol_policy     = "redirect-to-https"
+        allowed_methods            = ["GET", "HEAD", "OPTIONS"]
+        cached_methods             = ["GET", "HEAD", "OPTIONS"]
+        compress                   = true
+        cache_policy_id            = "658327ea-f89d-4fab-a63d-7e88639e58f6"
+        response_headers_policy_id = "67f7725c-6f97-4210-82d7-5512b31e9d03"
+      }
+    ] : [],
+    try(var.cloudfront.ordered_cache_behaviors, [])
+  )
   custom_error_responses  = try(var.cloudfront.custom_error_responses, [])
   geo_restriction = try(var.cloudfront.geo_restriction, {
     restriction_type = "none"

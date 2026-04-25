@@ -1,11 +1,55 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { ArrowRight, Zap, Lock, Smartphone, CheckCircle } from 'lucide-react';
-import { MOCK_PRODUCTS } from '@/src/data';
 import { ProductCard } from '@/src/components/ProductCard';
+import { Product } from '@/src/types';
+
+const CATALOG_URL = 'https://kjl.fikri.dev/public-data/catalog.json';
+
+type CatalogItem = Product & {
+  featuredProducts?: boolean;
+};
 
 export default function Home() {
-  const featuredProducts = MOCK_PRODUCTS.slice(0, 4);
+  const [catalogItems, setCatalogItems] = useState<CatalogItem[]>([]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function fetchCatalog() {
+      try {
+        const response = await fetch(CATALOG_URL, { signal: controller.signal });
+        if (!response.ok) {
+          throw new Error(`Failed to fetch catalog: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const catalog = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.catalog)
+            ? data.catalog
+            : [];
+
+        setCatalogItems(catalog as CatalogItem[]);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
+
+        console.error('Failed to load catalog data for Home page.', error);
+        setCatalogItems([]);
+      }
+    }
+
+    fetchCatalog();
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
+
+  const featuredCatalog = catalogItems.filter((catalog) => catalog.featuredProducts === true);
 
   return (
     <div className="overflow-hidden bg-white">
@@ -132,8 +176,8 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+            {featuredCatalog.map((catalog) => (
+              <ProductCard key={catalog.id} product={catalog} />
             ))}
           </div>
 

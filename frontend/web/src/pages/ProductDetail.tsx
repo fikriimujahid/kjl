@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate, Navigate } from 'react-router-dom';
-import { MOCK_PRODUCTS, MOCK_USER } from '@/src/data';
+import { MOCK_PRODUCTS_PUBLIC, MOCK_USER } from '@/src/data';
 import {
   ChevronLeft, Check, ShoppingCart, BookOpen, Clock, Globe,
   ChevronDown, FileText, Headphones, Image as ImageIcon, HelpCircle,
@@ -39,7 +39,7 @@ export default function ProductDetail() {
   const { productId } = useParams();
   const navigate = useNavigate();
   const [openTopicId, setOpenTopicId] = useState<string | null>(null);
-  const product = MOCK_PRODUCTS.find(p => p.id === productId);
+  const product = MOCK_PRODUCTS_PUBLIC.find(p => p.id === productId);
 
   if (!product) {
     return <Navigate to="/not-found" />;

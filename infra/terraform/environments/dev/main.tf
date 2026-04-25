@@ -22,6 +22,41 @@ module "budget_alert" {
 }
 
 # -------------------------------------------------------------------------
+# PRODUCT CATALOG BUCKET (PUBLIC VIA CLOUDFRONT)
+# -------------------------------------------------------------------------
+module "catalog_public_bucket" {
+  source = "../../modules/s3"
+
+  bucket_name        = "${var.project_name}-${var.environment}-public"
+  force_destroy      = false
+  tags               = var.tags
+  versioning_enabled = false
+
+  encryption = {
+    sse_algorithm      = "AES256"
+    kms_master_key_id  = null
+    bucket_key_enabled = true
+  }
+
+  lifecycle_config = {
+    lifecycle_days  = null
+    lifecycle_rules = []
+  }
+
+  security = {
+    public_access_block = {
+      block_public_acls       = true
+      block_public_policy     = true
+      ignore_public_acls      = true
+      restrict_public_buckets = true
+    }
+    object_ownership            = "BucketOwnerEnforced"
+    attach_tls_only_policy      = false
+    additional_policy_documents = []
+  }
+}
+
+# -------------------------------------------------------------------------
 # FRONTEND SITE HOSTING MODULE
 # -------------------------------------------------------------------------
 module "frontend_site_hosting" {
@@ -52,6 +87,12 @@ module "frontend_site_hosting" {
     environment            = var.environment
     aliases                = var.frontend_site_hosting.cloudfront.aliases
     zone_id                = var.frontend_site_hosting.zone_id
+    public_origin = {
+      enabled                     = true
+      bucket_name                 = module.catalog_public_bucket.bucket_name
+      bucket_regional_domain_name = module.catalog_public_bucket.bucket_regional_domain_name
+      manage_bucket_policy        = true
+    }
     custom_error_responses = var.frontend_site_hosting.cloudfront.custom_error_responses
   }
 
