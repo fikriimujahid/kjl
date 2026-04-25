@@ -5,51 +5,47 @@ import { ArrowRight, Zap, Lock, Smartphone, CheckCircle } from 'lucide-react';
 import { ProductCard } from '@/src/components/ProductCard';
 import { Product } from '@/src/types';
 
-const CATALOG_URL = 'https://kjl.fikri.dev/public-data/catalog.json';
-
-type CatalogItem = Product & {
-  featuredProducts?: boolean;
-};
+const PRODUCT_URL = (import.meta as ImportMeta & { env: { VITE_PRODUCT_URL: string } }).env.VITE_PRODUCT_URL;
 
 export default function Home() {
-  const [catalogItems, setCatalogItems] = useState<CatalogItem[]>([]);
+  const [productItems, setProductItems] = useState<Product[]>([]);
 
   useEffect(() => {
     const controller = new AbortController();
 
-    async function fetchCatalog() {
+    async function fetchProducts() {
       try {
-        const response = await fetch(CATALOG_URL, { signal: controller.signal });
+        const response = await fetch(PRODUCT_URL, { signal: controller.signal });
         if (!response.ok) {
-          throw new Error(`Failed to fetch catalog: ${response.status}`);
+          throw new Error(`Failed to fetch products: ${response.status}`);
         }
 
         const data = await response.json();
-        const catalog = Array.isArray(data)
+        const products = Array.isArray(data)
           ? data
           : Array.isArray(data?.catalog)
             ? data.catalog
             : [];
 
-        setCatalogItems(catalog as CatalogItem[]);
+        setProductItems(products as Product[]);
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') {
           return;
         }
 
-        console.error('Failed to load catalog data for Home page.', error);
-        setCatalogItems([]);
+        console.error('Failed to load product data for Home page.', error);
+        setProductItems([]);
       }
     }
 
-    fetchCatalog();
+    fetchProducts();
 
     return () => {
       controller.abort();
     };
   }, []);
 
-  const featuredCatalog = catalogItems.filter((catalog) => catalog.featuredProducts === true);
+  const featuredProducts = productItems.filter((product) => product.featuredProducts === true);
 
   return (
     <div className="overflow-hidden bg-white">
@@ -176,8 +172,8 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {featuredCatalog.map((catalog) => (
-              <ProductCard key={catalog.id} product={catalog} />
+            {featuredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
 
