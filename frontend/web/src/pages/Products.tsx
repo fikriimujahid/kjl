@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { Search, Filter, BookOpen } from 'lucide-react';
-import { MOCK_PRODUCTS } from '@/src/data';
+import { MOCK_PRODUCTS_PUBLIC } from '@/src/data';
 import { ProductCard } from '@/src/components/ProductCard';
 import { motion } from 'motion/react';
 
@@ -13,9 +13,9 @@ export default function Products() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLevel, setSelectedLevel] = useState<string>('All');
 
-  const levels = ['All', 'JFT', 'N5', 'N4', 'N3', 'N2', 'N1'];
+  const levels = ['All', 'JFT', 'Beginner'];
 
-  const filteredProducts = MOCK_PRODUCTS.filter(product => {
+  const filteredProducts = MOCK_PRODUCTS_PUBLIC.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesLevel = selectedLevel === 'All' || product.level === selectedLevel;
     return matchesSearch && matchesLevel;

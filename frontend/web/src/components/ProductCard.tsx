@@ -29,10 +29,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, isOwned }) =>
         </div>
       </div>
 
-      <div className="p-6 md:p-8 flex-grow space-y-6">
+      <div className="p-6 md:p-8 flex-grow flex flex-col">
         <div className="pt-2">
           <span className="inline-flex items-center justify-center px-2.5 py-1 mb-4 rounded-md text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 uppercase tracking-widest">
-            {product.level} Platform
+            {product.level}
           </span>
           <h3 className="text-xl font-bold text-slate-900 mb-2 leading-tight pr-6">
             {product.name}
@@ -42,7 +42,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, isOwned }) =>
           </p>
         </div>
         
-        <div className="flex flex-wrap items-center gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+        <div className="flex flex-wrap items-center gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-auto pt-6">
            <div className="flex items-center gap-1.5">
              <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
              {product.topicsCount} Modul
@@ -53,7 +53,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, isOwned }) =>
            </div>
         </div>
 
-        <div className="flex items-center justify-between pt-6 border-t border-slate-100 mt-auto">
+        <div className="flex items-center justify-between pt-6 border-t border-slate-100 mt-6">
           <div>
             <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest block mb-1 lg:mb-0">Akses Penuh</span>
             <span className="text-lg font-bold text-slate-900 tracking-tight">{formatPrice(product.price)}</span>

@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Instagram, Twitter, Mail, HelpCircle } from 'lucide-react';
+import { Globe, MessageCircle, Mail, HelpCircle } from 'lucide-react';
 
 export const Footer = () => {
   return (
@@ -19,8 +19,8 @@ export const Footer = () => {
             Misi kami adalah membantu Anda meraih skor impian di ujian JLPT & JFT dengan materi yang terstruktur dan metode belajar yang modern.
           </p>
           <div className="flex space-x-5">
-            <a href="#" className="hover:text-indigo-400 transition-colors"><Instagram size={20} /></a>
-            <a href="#" className="hover:text-indigo-400 transition-colors"><Twitter size={20} /></a>
+            <a href="#" className="hover:text-indigo-400 transition-colors"><Globe size={20} /></a>
+            <a href="#" className="hover:text-indigo-400 transition-colors"><MessageCircle size={20} /></a>
             <a href="#" className="hover:text-indigo-400 transition-colors"><Mail size={20} /></a>
           </div>
         </div>
