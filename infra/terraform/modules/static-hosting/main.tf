@@ -73,6 +73,40 @@ module "s3_logs" {
 }
 
 # -----------------------------------------------------------------------------
+# RESOURCE: CloudFront Function
+# -----------------------------------------------------------------------------
+# Rewrites extensionless requests like /login to /login/index.html so static
+# Next.js export routes work correctly behind a private S3 origin.
+resource "aws_cloudfront_function" "directory_index_rewrite" {
+  name    = "${var.cloudfront.project_name}-${var.cloudfront.environment}-directory-index-rewrite"
+  runtime = "cloudfront-js-1.0"
+  comment = "Rewrite extensionless routes to directory index.html objects."
+  publish = true
+
+  code = <<-EOF
+    function handler(event) {
+      var request = event.request;
+      var uri = request.uri;
+
+      if (uri === "/") {
+        return request;
+      }
+
+      if (uri.endsWith("/")) {
+        request.uri = uri + "index.html";
+        return request;
+      }
+
+      if (!uri.includes(".")) {
+        request.uri = uri + "/index.html";
+      }
+
+      return request;
+    }
+  EOF
+}
+
+# -----------------------------------------------------------------------------
 # MODULE: acm
 # -----------------------------------------------------------------------------
 # Requests an AWS Certificate Manager (ACM) TLS certificate for your domain
@@ -150,7 +184,12 @@ module "cloudfront" {
     trusted_key_groups           = []
     trusted_signers              = []
     lambda_function_associations = []
-    function_associations        = []
+    function_associations = [
+      {
+        event_type   = "viewer-request"
+        function_arn = aws_cloudfront_function.directory_index_rewrite.arn
+      }
+    ]
   }
   ordered_cache_behaviors = concat(
     try(var.cloudfront.public_origin.enabled, false) ? [
