@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, BookOpen } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Product } from '@/lib/types';
 import { formatPrice, cn } from '@/lib/utils';
@@ -25,10 +25,8 @@ export function ProductCard({ product, isOwned }: ProductCardProps) {
       </div>
 
       <div className="p-6 md:p-8 flex-grow flex flex-col">
-      <div className="p-6 md:p-8 flex-grow flex flex-col">
         <div className="pt-2">
           <span className="inline-flex items-center justify-center px-2.5 py-1 mb-4 rounded-md text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 uppercase tracking-widest">
-            {product.level}
             {product.level}
           </span>
           <h3 className="text-xl font-bold text-slate-900 mb-2 leading-tight pr-6">
@@ -50,7 +48,6 @@ export function ProductCard({ product, isOwned }: ProductCardProps) {
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-6 border-t border-slate-100 mt-6">
         <div className="flex items-center justify-between pt-6 border-t border-slate-100 mt-6">
           <div>
             <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest block mb-1 lg:mb-0">Akses Penuh</span>
