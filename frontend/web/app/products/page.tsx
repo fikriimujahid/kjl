@@ -17,6 +17,7 @@ export default function ProductsPage() {
   const [selectedLevel, setSelectedLevel] = useState<string>('All');
 
   const levels = ['All', 'JFT', 'Beginner'];
+  const levels = ['All', 'JFT', 'Beginner'];
 
   const filteredProducts = MOCK_PRODUCTS_PUBLIC.filter((product) => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());

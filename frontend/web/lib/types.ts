@@ -23,6 +23,7 @@ export interface Session {
   id: string;
   title: string;
   type: 'quiz' | 'pdf' | 'audio' | 'image' | 'video';
+  type: 'quiz' | 'pdf' | 'audio' | 'image' | 'video';
   contentUrl?: string;
   questions?: Question[];
 }
@@ -39,6 +40,7 @@ export interface Product {
   price: number;
   description: string;
   shortDescription: string;
+  level: 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | 'JFT' | 'Beginner';
   level: 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | 'JFT' | 'Beginner';
   topicsCount: number;
   featuredProducts?: boolean;

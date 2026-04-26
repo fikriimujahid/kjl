@@ -15,6 +15,8 @@ export function Footer() {
           <div className="flex space-x-5">
             <a href="#" className="hover:text-indigo-400 transition-colors"><Globe size={20} /></a>
             <a href="#" className="hover:text-indigo-400 transition-colors"><MessageCircle size={20} /></a>
+            <a href="#" className="hover:text-indigo-400 transition-colors"><Globe size={20} /></a>
+            <a href="#" className="hover:text-indigo-400 transition-colors"><MessageCircle size={20} /></a>
             <a href="#" className="hover:text-indigo-400 transition-colors"><Mail size={20} /></a>
           </div>
         </div>
