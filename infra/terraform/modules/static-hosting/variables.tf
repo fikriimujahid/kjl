@@ -83,6 +83,12 @@ variable "cloudfront" {
     aliases                         = list(string)
     zone_id                         = string
     continuous_deployment_policy_id = optional(string, null)
+    public_origin = optional(object({
+      enabled                     = optional(bool, false)
+      bucket_name                 = optional(string)
+      bucket_regional_domain_name = optional(string)
+      manage_bucket_policy        = optional(bool, true)
+    }), {})
     ordered_cache_behaviors = optional(list(object({
       path_pattern               = string
       target_origin_id           = string
@@ -109,6 +115,14 @@ variable "cloudfront" {
     web_acl_id          = optional(string)
     # Additional CloudFront settings can be added here as needed.
   })
+
+  validation {
+    condition = !try(var.cloudfront.public_origin.enabled, false) || (
+      try(var.cloudfront.public_origin.bucket_name, null) != null &&
+      try(var.cloudfront.public_origin.bucket_regional_domain_name, null) != null
+    )
+    error_message = "When cloudfront.public_origin.enabled is true, cloudfront.public_origin.bucket_name and cloudfront.public_origin.bucket_regional_domain_name are required."
+  }
 }
 
 variable "tags" {

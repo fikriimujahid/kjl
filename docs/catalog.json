@@ -1,0 +1,170 @@
+[
+  {
+    "id": "p0",
+    "name": "Japanese Beginner Basic (Pemula)",
+    "price": 1100,
+    "shortDescription": "Belajar bahasa Jepang dari nol untuk pemula.",
+    "description": "Paket dasar untuk pemula yang belum pernah belajar bahasa Jepang. Fokus pada huruf Hiragana, salam dasar, dan pengucapan sederhana.",
+    "level": "Beginner",
+    "topicsCount": 3,
+    "featuredProducts": true,
+    "topics": [
+      {
+        "id": "t0",
+        "title": "Hiragana Dasar",
+        "sessions": [
+          { "id": "s0", "title": "Video Pengenalan Hiragana", "type": "video" },
+          { "id": "s0b", "title": "Tabel Hiragana Lengkap (PDF)", "type": "pdf" },
+          { "id": "s0c", "title": "Audio Pelafalan Hiragana", "type": "audio" },
+          { "id": "s0d", "title": "Quiz Hiragana Dasar", "type": "quiz" }
+        ]
+      },
+      {
+        "id": "t1",
+        "title": "Salam Dasar",
+        "sessions": [
+          { "id": "s1", "title": "Video Salam Dasar", "type": "video" },
+          { "id": "s1b", "title": "Daftar Salam Dasar (PDF)", "type": "pdf" },
+          { "id": "s1c", "title": "Audio Salam Dasar", "type": "audio" },
+          { "id": "s1d", "title": "Quiz Salam Dasar", "type": "quiz" }
+        ]
+      },
+      {
+        "id": "t2",
+        "title": "Perkenalan Diri Sederhana",
+        "sessions": [
+          { "id": "s2", "title": "Video Perkenalan Diri", "type": "video" },
+          { "id": "s2b", "title": "Contoh Perkenalan (PDF)", "type": "pdf" },
+          { "id": "s2c", "title": "Audio Perkenalan", "type": "audio" },
+          { "id": "s2d", "title": "Quiz Perkenalan", "type": "quiz" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p1",
+    "name": "Katakana & Kosakata Dasar",
+    "price": 1500,
+    "shortDescription": "Belajar huruf Katakana dan kosakata dasar sehari-hari.",
+    "description": "Paket ini membantu siswa menguasai Katakana dan memahami kosakata dasar seperti angka, waktu, dan benda sehari-hari.",
+    "level": "Beginner",
+    "topicsCount": 3,
+    "featuredProducts": true,
+    "topics": [
+      {
+        "id": "t0",
+        "title": "Katakana Dasar",
+        "sessions": [
+          { "id": "s0", "title": "Video Pengenalan Katakana", "type": "video" },
+          { "id": "s0b", "title": "Tabel Katakana Lengkap (PDF)", "type": "pdf" },
+          { "id": "s0c", "title": "Audio Pelafalan Katakana", "type": "audio" },
+          { "id": "s0d", "title": "Quiz Katakana Dasar", "type": "quiz" }
+        ]
+      },
+      {
+        "id": "t1",
+        "title": "Angka & Waktu",
+        "sessions": [
+          { "id": "s1", "title": "Video Angka Jepang", "type": "video" },
+          { "id": "s1b", "title": "Daftar Angka (PDF)", "type": "pdf" },
+          { "id": "s1c", "title": "Audio Angka", "type": "audio" },
+          { "id": "s1d", "title": "Quiz Angka", "type": "quiz" }
+        ]
+      },
+      {
+        "id": "t2",
+        "title": "Benda Sehari-hari",
+        "sessions": [
+          { "id": "s2", "title": "Video Kosakata Benda", "type": "video" },
+          { "id": "s2b", "title": "Kosakata Benda (PDF)", "type": "pdf" },
+          { "id": "s2c", "title": "Audio Kosakata", "type": "audio" },
+          { "id": "s2d", "title": "Quiz Kosakata", "type": "quiz" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p2",
+    "name": "Grammar Dasar N5",
+    "price": 2000,
+    "shortDescription": "Memahami tata bahasa dasar bahasa Jepang.",
+    "description": "Paket ini mengajarkan struktur kalimat dasar bahasa Jepang termasuk partikel dan kata kerja sederhana.",
+    "level": "Beginner",
+    "topicsCount": 3,
+    "featuredProducts": true,
+    "topics": [
+      {
+        "id": "t0",
+        "title": "Struktur Kalimat Dasar",
+        "sessions": [
+          { "id": "s0", "title": "Video Struktur Kalimat", "type": "video" },
+          { "id": "s0b", "title": "Contoh Kalimat (PDF)", "type": "pdf" },
+          { "id": "s0c", "title": "Audio Contoh Kalimat", "type": "audio" },
+          { "id": "s0d", "title": "Quiz Struktur Kalimat", "type": "quiz" }
+        ]
+      },
+      {
+        "id": "t1",
+        "title": "Partikel Dasar (は、が、を)",
+        "sessions": [
+          { "id": "s1", "title": "Video Partikel Dasar", "type": "video" },
+          { "id": "s1b", "title": "Penjelasan Partikel (PDF)", "type": "pdf" },
+          { "id": "s1c", "title": "Audio Contoh", "type": "audio" },
+          { "id": "s1d", "title": "Quiz Partikel", "type": "quiz" }
+        ]
+      },
+      {
+        "id": "t2",
+        "title": "Kata Kerja Dasar",
+        "sessions": [
+          { "id": "s2", "title": "Video Kata Kerja", "type": "video" },
+          { "id": "s2b", "title": "Daftar Kata Kerja (PDF)", "type": "pdf" },
+          { "id": "s2c", "title": "Audio Kata Kerja", "type": "audio" },
+          { "id": "s2d", "title": "Quiz Kata Kerja", "type": "quiz" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "p3",
+    "name": "Listening & Percakapan Dasar",
+    "price": 2200,
+    "shortDescription": "Latihan mendengarkan dan percakapan dasar.",
+    "description": "Paket ini fokus pada pemahaman percakapan sehari-hari melalui latihan listening dan dialog sederhana.",
+    "level": "Beginner",
+    "topicsCount": 3,
+    "featuredProducts": false,
+    "topics": [
+      {
+        "id": "t0",
+        "title": "Percakapan Salam",
+        "sessions": [
+          { "id": "s0", "title": "Video Percakapan Salam", "type": "video" },
+          { "id": "s0b", "title": "Transkrip Percakapan (PDF)", "type": "pdf" },
+          { "id": "s0c", "title": "Audio Percakapan", "type": "audio" },
+          { "id": "s0d", "title": "Quiz Listening Salam", "type": "quiz" }
+        ]
+      },
+      {
+        "id": "t1",
+        "title": "Percakapan di Tempat Umum",
+        "sessions": [
+          { "id": "s1", "title": "Video Percakapan Umum", "type": "video" },
+          { "id": "s1b", "title": "Transkrip Percakapan (PDF)", "type": "pdf" },
+          { "id": "s1c", "title": "Audio Percakapan", "type": "audio" },
+          { "id": "s1d", "title": "Quiz Listening", "type": "quiz" }
+        ]
+      },
+      {
+        "id": "t2",
+        "title": "Percakapan di Toko",
+        "sessions": [
+          { "id": "s2", "title": "Video Percakapan di Toko", "type": "video" },
+          { "id": "s2b", "title": "Transkrip Percakapan (PDF)", "type": "pdf" },
+          { "id": "s2c", "title": "Audio Percakapan", "type": "audio" },
+          { "id": "s2d", "title": "Quiz Listening", "type": "quiz" }
+        ]
+      }
+    ]
+  }
+]

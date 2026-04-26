@@ -11,6 +11,11 @@ output "frontend_site_hosting_bucket_name" {
   value       = module.frontend_site_hosting.frontend_bucket_name
 }
 
+output "catalog_public_bucket_name" {
+  description = "S3 bucket name for the product catalog in the dev environment."
+  value       = module.catalog_public_bucket.bucket_name
+}
+
 output "cloudfront_distribution_id" {
   description = "CloudFront distribution ID for the frontend site in the dev environment."
   value       = module.frontend_site_hosting.distribution_id
