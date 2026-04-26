@@ -4,6 +4,7 @@ on:
     branches: [dev, prod]
     paths:
       - frontend/web/**
+      - .github/workflows/frontend-deploy.yml
 
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
@@ -40,16 +41,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*                    # Use latest Long-Term Support version
-      
+
       # STEP 3: Create .env.local file with secrets from GitHub
       # These secrets are sensitive values stored in GitHub (not committed to git)
-      # - name: Create .env.local
-      #   run: |
-      #     cat <<'EOF' > .env.local
-      #     VITE_COGNITO_USER_POOL_ID=${{ secrets.VITE_COGNITO_USER_POOL_ID }}
-      #     VITE_COGNITO_USER_POOL_CLIENT_ID=${{ secrets.VITE_COGNITO_USER_POOL_CLIENT_ID }}
-      #     VITE_API_URL=${{ secrets.VITE_API_URL }}
-      #     EOF
+      - name: Create .env.local
+        run: |
+          cat <<'EOF' > .env.local
+          NEXT_PUBLIC_PRODUCT_URL=${{ secrets.NEXT_PUBLIC_PRODUCT_URL }}
+          EOF
       
       # STEP 4: Authenticate with AWS using OIDC (OpenID Connect)
       # This is more secure than storing AWS keys in secrets
@@ -57,8 +56,8 @@ jobs:
         with:
           aws-region: ${{ env.AWS_REGION }}
           # Select AWS role based on environment (branch)
-          # prod → prod role | staging → staging role | others → dev role
-          role-to-assume: ${{ github.ref_name == 'prod' && secrets.AWS_PROD_ROLE_ARN || (github.ref_name == 'staging' && secrets.AWS_STAGING_ROLE_ARN || secrets.AWS_DEV_ROLE_ARN) }}
+          # prod → prod role | others → dev role
+          role-to-assume: ${{ github.ref_name == 'prod' && secrets.AWS_PROD_ROLE_ARN || secrets.AWS_DEV_ROLE_ARN }}
       
       # STEP 5: Install project dependencies
       # Uses npm ci (clean install) if lock file exists (recommended for CI)
@@ -67,10 +66,10 @@ jobs:
         run: |
           if [ -f package-lock.json ]; then npm ci; else npm install; fi
       
-      # STEP 6: Build the frontend (creates optimized static files)
-      # Vite outputs to 'dist' by default.
+      # STEP 6: Build the frontend as a static Next.js export
+      # Next writes static export output to 'out'.
       - name: Build static site
-        run: npm run build
+        run: npm run export
 
       # STEP 7: Resolve deployment target and fail fast if bucket is wrong/missing
       - name: Resolve deploy target
@@ -82,18 +81,18 @@ jobs:
       # STEP 8: Upload built files to AWS S3 bucket
       - name: Sync to S3
         run: |
-          if [ ! -d dist ]; then
-            echo "Build output directory 'dist' not found."
+          if [ ! -d out ]; then
+            echo "Build output directory 'out' not found."
             exit 1
           fi
 
-          # --delete removes files from S3 that are no longer in 'dist' directory
-          aws s3 sync dist "s3://${BUCKET_NAME}" --delete
+          # --delete removes files from S3 that are no longer in the export output
+          aws s3 sync out "s3://${BUCKET_NAME}" --delete
 
       # STEP 9: Ensure HTML is not cached aggressively (faster visible updates)
       - name: Set cache-control for HTML
         run: |
-          aws s3 cp dist "s3://${BUCKET_NAME}" \
+          aws s3 cp out "s3://${BUCKET_NAME}" \
             --recursive \
             --exclude "*" \
             --include "*.html" \
