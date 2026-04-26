@@ -2,7 +2,10 @@ name: Frontend CI
 on:
   pull_request:
     branches: [dev, prod]
-    paths: ["frontend/web/**"]
+    paths:
+      - frontend/web/**
+      - .github/workflows/frontend-ci.yml
+      - .github/workflows/frontend-deploy.yml
   # push:
   #   branches: ["feature/**"]
   #   paths: ["frontend/**"]
@@ -17,14 +20,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
-      #- name: Create .env.local
-        # run: |
-        #   cat <<'EOF' > .env.local
-        #   VITE_COGNITO_USER_POOL_ID=${{ secrets.VITE_COGNITO_USER_POOL_ID }}
-        #   VITE_COGNITO_USER_POOL_CLIENT_ID=${{ secrets.VITE_COGNITO_USER_POOL_CLIENT_ID }}
-        #   VITE_API_URL=${{ secrets.VITE_API_URL }}
-        #   EOF
-      - run: |
+      - name: Create .env.local
+        run: |
+          PRODUCT_URL="${{ secrets.NEXT_PUBLIC_PRODUCT_URL }}"
+          
+          cat <<EOF > .env.local
+          NEXT_PUBLIC_PRODUCT_URL=$PRODUCT_URL
+          EOF
+      - name: Install deps
+        run: |
           if [ -f package-lock.json ]; then npm ci; else npm install; fi
+      - name: Validate static export
+        run: npm run export
       #- run: npm run lint
       #- run: npm run test
