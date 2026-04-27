@@ -236,10 +236,11 @@ Each entry in the `origins` map is an object with these fields:
 
 | Name | Type | Required / Default | Description |
 |---|---|---|---|
-| `aliases` | `list(string)` | `[]` | Custom CNAMEs, e.g. `["app.example.com"]`. Requires `acm_certificate_arn`. |
-| `acm_certificate_arn` | `string` | `null` | ACM certificate ARN. **Must be in `us-east-1`.** |
+| `aliases` | `list(string)` | `[]` | Custom CNAMEs, e.g. `["app.example.com"]`. |
+| `acm_certificate_arn` | `string` | **Required** | ACM certificate ARN. **Must be in `us-east-1`.** |
 | `ssl_support_method` | `string` | `"sni-only"` | `"sni-only"` (recommended), `"vip"`, or `"static-ip"`. |
-| `minimum_protocol_version` | `string` | `"TLSv1.2_2021"` | Minimum viewer TLS version. See valid values in `variables.tf`. |
+
+This module enforces a fixed viewer TLS policy of `TLSv1.2_2021`.
 
 ### Content and Security
 

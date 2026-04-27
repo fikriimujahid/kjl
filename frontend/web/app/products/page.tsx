@@ -1,24 +1,57 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Search, BookOpen } from 'lucide-react';
-import { MOCK_PRODUCTS_PUBLIC } from '@/lib/mock-data';
 import { ProductCard } from '@/components/ProductCard';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
+import { Product } from '@/lib/types';
+
+const PRODUCT_URL = process.env.NEXT_PUBLIC_PRODUCT_URL ?? '';
 
 export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLevel, setSelectedLevel] = useState<string>('All');
+  const [productItems, setProductItems] = useState<Product[]>([]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function fetchProducts() {
+      try {
+        const response = await fetch(PRODUCT_URL, { signal: controller.signal });
+        if (!response.ok) {
+          throw new Error(`Failed to fetch products: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const products = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.catalog)
+            ? data.catalog
+            : [];
+
+        setProductItems(products as Product[]);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
+
+        console.error('Failed to load product data for Products page.', error);
+        setProductItems([]);
+      }
+    }
+
+    fetchProducts();
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
 
   const levels = ['All', 'JFT', 'Beginner'];
 
-  const filteredProducts = MOCK_PRODUCTS_PUBLIC.filter((product) => {
+  const filteredProducts = productItems.filter((product) => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesLevel = selectedLevel === 'All' || product.level === selectedLevel;
     return matchesSearch && matchesLevel;

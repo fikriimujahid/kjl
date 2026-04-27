@@ -747,39 +747,32 @@ variable "origin_access_control" {
 # aliases
 # Optional list of custom domain names (CNAMEs) for the distribution.
 # Example: ["app.example.com", "www.example.com"]
-# Requires a matching ACM certificate in us-east-1 (see acm_certificate_arn).
-# Without aliases, the distribution is only reachable via *.cloudfront.net.
+# This module requires a matching ACM certificate in us-east-1.
 variable "aliases" {
   description = "Optional alternate domain names (CNAMEs) for the distribution."
   type        = list(string)
   default     = []
-
-  # Aliases require a certificate. Without one, CloudFront would reject the
-  # request because it cannot present a valid TLS cert for your custom domain.
-  validation {
-    condition     = length(var.aliases) == 0 || var.acm_certificate_arn != null
-    error_message = "aliases require acm_certificate_arn to be set."
-  }
 }
 
 # acm_certificate_arn
-# Optional.  The ARN of an ACM TLS certificate for your custom domains.
+# Required.  The ARN of an ACM TLS certificate for your custom domains.
 # IMPORTANT: The certificate MUST be in the us-east-1 region.
 # CloudFront is a global service and only reads certificates from us-east-1.
 # Example: "arn:aws:acm:us-east-1:123456789012:certificate/abc-123"
 variable "acm_certificate_arn" {
-  description = "Optional ACM certificate ARN for custom domains. The certificate must be in us-east-1."
+  description = "ACM certificate ARN for CloudFront. The certificate must be in us-east-1."
   type        = string
-  default     = null
+
+  validation {
+    condition     = length(trimspace(var.acm_certificate_arn)) > 0
+    error_message = "acm_certificate_arn must not be empty."
+  }
 
   # Enforce the us-east-1 requirement. strcontains() checks whether the
   # ARN string contains ":us-east-1:". A certificate in any other region
   # would cause a silent failure or a confusing AWS error during apply.
   validation {
-    condition = (
-      var.acm_certificate_arn == null ||
-      strcontains(var.acm_certificate_arn, ":us-east-1:")
-    )
+    condition = strcontains(var.acm_certificate_arn, ":us-east-1:")
     error_message = "CloudFront ACM certificates must be created in us-east-1."
   }
 }
@@ -799,32 +792,6 @@ variable "ssl_support_method" {
   validation {
     condition     = contains(["sni-only", "vip", "static-ip"], var.ssl_support_method)
     error_message = "ssl_support_method must be sni-only, vip, or static-ip."
-  }
-}
-
-# minimum_protocol_version
-# The oldest TLS version CloudFront will accept from viewers.
-# Default: "TLSv1.2_2021" — blocks TLS 1.0, 1.1, and weak ciphers.
-# This is the AWS-recommended setting for new distributions.
-# Only configurable when using a custom ACM certificate.
-variable "minimum_protocol_version" {
-  description = "Minimum TLS protocol version when using an ACM certificate."
-  type        = string
-  default     = "TLSv1.2_2021"
-
-  # Must be one of the exact strings the CloudFront API accepts.
-  # TLSv1.2_2021 gives you the best security; SSLv3 / TLSv1 are insecure legacies.
-  validation {
-    condition = contains([
-      "SSLv3",
-      "TLSv1",
-      "TLSv1_2016",
-      "TLSv1.1_2016",
-      "TLSv1.2_2018",
-      "TLSv1.2_2019",
-      "TLSv1.2_2021"
-    ], var.minimum_protocol_version)
-    error_message = "minimum_protocol_version must be a valid CloudFront TLS policy value."
   }
 }
 

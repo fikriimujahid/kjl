@@ -1,21 +1,18 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   ChevronLeft, Check, ShoppingCart, BookOpen, Clock, Globe,
   ChevronDown, FileText, Headphones, Image as ImageIcon, HelpCircle,
 } from 'lucide-react';
-import { MOCK_PRODUCTS_PUBLIC, MOCK_USER } from '@/lib/mock-data';
+import { MOCK_USER } from '@/lib/mock-data';
 import { formatPrice } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
-import { Session } from '@/lib/types';
+import { Product, Session } from '@/lib/types';
+
+const PRODUCT_URL = process.env.NEXT_PUBLIC_PRODUCT_URL ?? '';
 
 function sessionTypeLabel(type: Session['type']): string {
   switch (type) {
@@ -56,7 +53,43 @@ interface ProductDetailClientProps {
 export default function ProductDetailClient({ productId }: ProductDetailClientProps) {
   const router = useRouter();
   const [openTopicId, setOpenTopicId] = useState<string | null>(null);
-  const product = MOCK_PRODUCTS_PUBLIC.find((item) => item.id === productId);
+  const [product, setProduct] = useState<Product | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function fetchProduct() {
+      try {
+        const response = await fetch(PRODUCT_URL, { signal: controller.signal });
+        if (!response.ok) {
+          throw new Error(`Failed to fetch products: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const products = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.catalog)
+            ? data.catalog
+            : [];
+
+        const matchedProduct = (products as Product[]).find((item) => item.id === productId) ?? null;
+        setProduct(matchedProduct);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
+
+        console.error('Failed to load product data for Product Detail page.', error);
+        setProduct(null);
+      }
+    }
+
+    fetchProduct();
+
+    return () => {
+      controller.abort();
+    };
+  }, [productId]);
 
   if (!product) {
     return null;
@@ -156,7 +189,7 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
             <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
               <Clock className="text-orange-500 mb-3" size={22} />
               <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Akses</p>
-              <p className="text-xl font-black text-gray-900">Selamanya</p>
+              <p className="text-xl font-black text-gray-900">{product.accessDurationDays} Hari</p>
             </div>
             <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
               <Globe className="text-teal-500 mb-3" size={22} />

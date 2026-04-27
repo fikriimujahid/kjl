@@ -22,10 +22,11 @@ jobs:
           node-version: lts/*
       - name: Create .env.local
         run: |
-          PRODUCT_URL="${{ secrets.NEXT_PUBLIC_PRODUCT_URL }}"
-          
-          cat <<EOF > .env.local
-          NEXT_PUBLIC_PRODUCT_URL=$PRODUCT_URL
+          cat <<'EOF' > .env.local
+          NEXT_PUBLIC_PRODUCT_URL=${{ secrets.NEXT_PUBLIC_PRODUCT_URL }}
+          NEXT_PUBLIC_COGNITO_API_ENDPOINT=${{ secrets.NEXT_PUBLIC_COGNITO_API_ENDPOINT }}
+          NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID=${{ secrets.NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID }}
+          NEXT_PUBLIC_AUTH_STORAGE_KEY=${{ secrets.NEXT_PUBLIC_AUTH_STORAGE_KEY }}
           EOF
       - name: Install deps
         run: |

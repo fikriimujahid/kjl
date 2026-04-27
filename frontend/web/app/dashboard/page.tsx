@@ -1,11 +1,5 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
 import {
   PlayCircle, Flame, Target, Mail, Calendar, BarChart3,
@@ -15,6 +9,8 @@ import {
 import { MOCK_USER, MOCK_PRODUCTS } from '@/lib/mock-data';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
+import { RequireAuth } from '@/components/RequireAuth';
+import { useAuth } from '@/components/AuthProvider';
 
 const STREAK_DAYS = 7;
 const DAILY_GOAL_XP = 80;
@@ -40,6 +36,7 @@ function daysUntil(date: Date) {
 }
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   const ownedProducts = MOCK_PRODUCTS.filter((product) =>
     MOCK_USER.purchasedProductIds.includes(product.id),
   );
@@ -48,7 +45,8 @@ export default function DashboardPage() {
   const today = new Date().getDay();
 
   return (
-    <div className="flex flex-col xl:flex-row min-h-[calc(100vh-4rem-2.5rem)] bg-slate-50 overflow-hidden">
+    <RequireAuth>
+      <div className="flex flex-col xl:flex-row min-h-[calc(100vh-4rem-2.5rem)] bg-slate-50 overflow-hidden">
       <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
         <div className="max-w-5xl mx-auto space-y-6">
           <motion.header
@@ -64,7 +62,7 @@ export default function DashboardPage() {
                 {STREAK_DAYS} Hari Berturut-turut 🔥
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-1">
-                Selamat datang kembali, <span className="text-indigo-600">{MOCK_USER.displayName}</span>!
+                Selamat datang kembali, <span className="text-indigo-600">{user?.name ?? MOCK_USER.displayName}</span>!
               </h1>
               <p className="text-slate-500 text-sm font-medium">Streakmu sedang on-fire — jangan putus hari ini!</p>
             </div>
@@ -334,6 +332,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </aside>
-    </div>
+      </div>
+    </RequireAuth>
   );
 }

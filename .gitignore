@@ -75,3 +75,6 @@ test-results/
 # Security Reports
 security/dependency-check-data/*
 security/result/*
+security/.secrets.baseline
+security/sample-result/*
+security/scripts/zap-urls.txt

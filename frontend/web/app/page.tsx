@@ -224,9 +224,9 @@ export default function HomePage() {
           <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
             {[
               { icon: <Zap size={22} />, title: 'Akses Instan', desc: 'Setelah pembayaran berhasil, materi langsung tersedia tanpa perlu menunggu konfirmasi manual.' },
-              { icon: <Lock size={22} />, title: 'Konten Terlindungi', desc: 'Semua materi tersimpan aman dan hanya dapat diakses oleh pengguna yang telah melakukan pembelian.' },
+              { icon: <Lock size={22} />, title: 'Materi Terstruktur & Terpercaya', desc: 'Semua materi disusun secara sistematis dan mengikuti standar ujian terbaru, sehingga kamu belajar dengan arah yang jelas.' },
               { icon: <Smartphone size={22} />, title: 'Mobile-Friendly', desc: 'Tampilan dioptimalkan untuk semua perangkat. Belajar kapan saja dan di mana saja tanpa hambatan.' },
-              { icon: <CheckCircle size={22} />, title: 'Akses Seumur Hidup', desc: 'Beli sekali, akses selamanya. Tidak perlu berlangganan bulanan — materi selalu bisa diulang kapan pun.' },
+              { icon: <CheckCircle size={22} />, title: 'Akses Fleksibel', desc: 'Durasi akses disesuaikan dengan paket yang dipilih, sehingga kamu bisa belajar sesuai kebutuhan.' },
             ].map((feature, index) => (
               <div key={index} className="bg-white/5 backdrop-blur-sm p-8 rounded-3xl border border-white/10 hover:bg-white/10 hover:border-indigo-400/30 hover:-translate-y-1 transition-all duration-300">
                 <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl text-white flex items-center justify-center mb-6 shadow-lg shadow-indigo-500/20">

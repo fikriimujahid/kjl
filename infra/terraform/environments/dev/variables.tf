@@ -83,6 +83,14 @@ variable "auth_cognito" {
     logout_urls   = list(string)
 
     enabled_identity_providers = optional(list(string), ["COGNITO"])
+    verification_message_template = optional(object({
+      default_email_option  = optional(string)
+      email_message         = optional(string)
+      email_message_by_link = optional(string)
+      email_subject         = optional(string)
+      email_subject_by_link = optional(string)
+      sms_message           = optional(string)
+    }))
 
     google_client_id     = optional(string)
     google_client_secret = optional(string)

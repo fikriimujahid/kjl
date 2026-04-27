@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { AuthProvider } from '@/components/AuthProvider';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -12,11 +13,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="id">
       <body>
-        <div className="flex flex-col min-h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
-          <Navbar />
-          <main className="flex-1 overflow-auto">{children}</main>
-          <Footer />
-        </div>
+        <AuthProvider>
+          <div className="flex flex-col min-h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
+            <Navbar />
+            <main className="flex-1 overflow-auto">{children}</main>
+            <Footer />
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );

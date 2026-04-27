@@ -59,3 +59,16 @@ variable "google_client_secret" {
     error_message = "google_client_secret is required when enabled_identity_providers includes Google."
   }
 }
+
+variable "verification_message_template" {
+  description = "Optional verification message template passed to the underlying Cognito user pool."
+  type = object({
+    default_email_option  = optional(string)
+    email_message         = optional(string)
+    email_message_by_link = optional(string)
+    email_subject         = optional(string)
+    email_subject_by_link = optional(string)
+    sms_message           = optional(string)
+  })
+  default = null
+}

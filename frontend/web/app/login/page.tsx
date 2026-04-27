@@ -1,7 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
 
 'use client';
 
@@ -10,22 +6,134 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useAuth } from '@/components/AuthProvider';
+import { getAuthUserFromIdToken } from '@/lib/auth';
+
+const COGNITO_API_ENDPOINT = process.env.NEXT_PUBLIC_COGNITO_API_ENDPOINT ?? '';
+const COGNITO_USER_POOL_CLIENT_ID = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID ?? '';
+
+function getLoginErrorMessage(errorType?: string, fallbackMessage?: string): string {
+  switch (errorType) {
+    case 'UserNotFoundException':
+    case 'NotAuthorizedException':
+      return 'Email atau password salah. Silakan coba lagi.';
+    case 'UserNotConfirmedException':
+      return 'Akun kamu belum terverifikasi. Silakan cek email dan klik tautan verifikasi.';
+    case 'TooManyRequestsException':
+      return 'Terlalu banyak percobaan login. Coba lagi beberapa saat lagi.';
+    case 'InvalidParameterException':
+      return fallbackMessage ?? 'Data login tidak valid. Periksa kembali input kamu.';
+    default:
+      return fallbackMessage ?? 'Login gagal. Silakan coba lagi.';
+  }
+}
+
+function normalizeNextPath(nextPath: string | null): string {
+  if (!nextPath) {
+    return '/dashboard';
+  }
+
+  if (!nextPath.startsWith('/') || nextPath.startsWith('//')) {
+    return '/dashboard';
+  }
+
+  return nextPath;
+}
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [nextPath, setNextPath] = useState('/dashboard');
+  const { login, status } = useAuth();
   const router = useRouter();
 
-  const handleLogin = (e: React.FormEvent) => {
+  React.useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    setNextPath(normalizeNextPath(params.get('next')));
+  }, []);
+
+  React.useEffect(() => {
+    if (status !== 'authenticated') {
+      return;
+    }
+
+    router.replace(nextPath);
+  }, [nextPath, router, status]);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
 
-    // Simulate login
-    setTimeout(() => {
+    if (!COGNITO_API_ENDPOINT || !COGNITO_USER_POOL_CLIENT_ID) {
+      setError('Konfigurasi autentikasi belum tersedia. Hubungi admin untuk melengkapi environment variable frontend.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(COGNITO_API_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-amz-json-1.1',
+          'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth',
+        },
+        body: JSON.stringify({
+          AuthFlow: 'USER_PASSWORD_AUTH',
+          ClientId: COGNITO_USER_POOL_CLIENT_ID,
+          AuthParameters: {
+            USERNAME: email,
+            PASSWORD: password,
+          },
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const errorType = typeof data?.__type === 'string' ? data.__type.split('#').pop() : undefined;
+        throw new Error(getLoginErrorMessage(errorType, data?.message));
+      }
+
+      if (data?.ChallengeName) {
+        throw new Error('Akun memerlukan challenge tambahan. Flow ini belum mendukung challenge tersebut.');
+      }
+
+      const accessToken = data?.AuthenticationResult?.AccessToken;
+      const idToken = data?.AuthenticationResult?.IdToken;
+
+      if (!accessToken || !idToken) {
+        throw new Error('Respons login tidak lengkap. Token autentikasi tidak ditemukan.');
+      }
+
+      const userFromToken = getAuthUserFromIdToken(idToken);
+      const safeUser = userFromToken ?? {
+        id: email,
+        email,
+        name: email.split('@')[0] || 'Pengguna',
+      };
+
+      login({
+        accessToken,
+        idToken,
+        refreshToken: data?.AuthenticationResult?.RefreshToken,
+        expiresIn: data?.AuthenticationResult?.ExpiresIn,
+        tokenType: data?.AuthenticationResult?.TokenType,
+        user: safeUser,
+      });
+
       setLoading(false);
-      router.push('/dashboard');
-    }, 1500);
+      router.push(nextPath);
+    } catch (loginError) {
+      setLoading(false);
+      setError(loginError instanceof Error ? loginError.message : 'Login gagal. Silakan coba lagi.');
+    }
   };
 
   return (
@@ -56,6 +164,8 @@ export default function LoginPage() {
                   type="email"
                   required
                   placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all font-medium text-gray-900"
                 />
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -72,6 +182,8 @@ export default function LoginPage() {
                   type="password"
                   required
                   placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all font-medium text-gray-900"
                 />
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />

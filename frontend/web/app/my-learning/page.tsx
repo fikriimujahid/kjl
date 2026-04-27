@@ -1,7 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
 
 'use client';
 
@@ -13,6 +9,7 @@ import { Product, Session } from '@/lib/types';
 import { motion, AnimatePresence } from 'motion/react';
 import QuizViewer from '@/components/QuizViewer';
 import { cn } from '@/lib/utils';
+import { RequireAuth } from '@/components/RequireAuth';
 
 export default function MyLearningPage() {
   const ownedProducts = MOCK_PRODUCTS.filter((product) => MOCK_USER.purchasedProductIds.includes(product.id));
@@ -22,13 +19,15 @@ export default function MyLearningPage() {
 
   if (ownedProducts.length === 0) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-24 text-center">
-        <h1 className="text-3xl font-bold text-slate-800 mb-4 tracking-tight">Kamu Belum Punya Produk</h1>
-        <p className="text-slate-500 mb-8 font-medium">Silakan beli produk pembelajaran pertama kamu untuk memulai.</p>
-        <Link href="/products" className="bg-indigo-600 text-white px-8 py-4 rounded-xl font-bold transition-all shadow-sm">
-          Cari Produk
-        </Link>
-      </div>
+      <RequireAuth>
+        <div className="max-w-7xl mx-auto px-4 py-24 text-center">
+          <h1 className="text-3xl font-bold text-slate-800 mb-4 tracking-tight">Kamu Belum Punya Produk</h1>
+          <p className="text-slate-500 mb-8 font-medium">Silakan beli produk pembelajaran pertama kamu untuk memulai.</p>
+          <Link href="/products" className="bg-indigo-600 text-white px-8 py-4 rounded-xl font-bold transition-all shadow-sm">
+            Cari Produk
+          </Link>
+        </div>
+      </RequireAuth>
     );
   }
 
@@ -51,7 +50,8 @@ export default function MyLearningPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <RequireAuth>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="flex flex-col lg:grid lg:grid-cols-12 gap-10">
         <div className="lg:col-span-4 space-y-8 order-2 lg:order-1 overflow-visible">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 overflow-x-auto whitespace-nowrap lg:whitespace-normal no-scrollbar">
@@ -191,6 +191,7 @@ export default function MyLearningPage() {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </RequireAuth>
   );
 }

@@ -36,6 +36,19 @@ resource "aws_cognito_user_pool" "this" {
     require_symbols   = false
   }
 
+  dynamic "verification_message_template" {
+    for_each = var.verification_message_template == null ? [] : [var.verification_message_template]
+
+    content {
+      default_email_option  = try(verification_message_template.value.default_email_option, null)
+      email_message         = try(verification_message_template.value.email_message, null)
+      email_message_by_link = try(verification_message_template.value.email_message_by_link, null)
+      email_subject         = try(verification_message_template.value.email_subject, null)
+      email_subject_by_link = try(verification_message_template.value.email_subject_by_link, null)
+      sms_message           = try(verification_message_template.value.sms_message, null)
+    }
+  }
+
   tags = local.tags
 }
 

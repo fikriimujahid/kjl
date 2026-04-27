@@ -42,6 +42,7 @@ export interface Product {
   level: 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | 'JFT' | 'Beginner';
   topicsCount: number;
   featuredProducts?: boolean;
+  accessDurationDays: number;
   topics: Topic[];
 }
 

@@ -1,26 +1,135 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Mail, Lock, Loader2, CheckCircle2, User } from 'lucide-react';
+import { Mail, Lock, Loader2, CheckCircle2, User, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
+
+const COGNITO_API_ENDPOINT = process.env.NEXT_PUBLIC_COGNITO_API_ENDPOINT ?? '';
+const COGNITO_USER_POOL_CLIENT_ID = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID ?? '';
+
+function getPasswordStrength(password: string): {
+  score: number;
+  label: string;
+  toneClassName: string;
+} {
+  if (!password) {
+    return {
+      score: 0,
+      label: 'Masukkan password',
+      toneClassName: 'text-gray-400',
+    };
+  }
+
+  let score = 0;
+
+  if (password.length >= 8) score += 1;
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score += 1;
+  if (/\d/.test(password)) score += 1;
+  if (/[^A-Za-z0-9]/.test(password) || password.length >= 12) score += 1;
+
+  if (score <= 1) {
+    return {
+      score,
+      label: 'Password lemah. Tambahkan huruf besar, angka, atau simbol.',
+      toneClassName: 'text-red-500',
+    };
+  }
+
+  if (score === 2) {
+    return {
+      score,
+      label: 'Password cukup, tapi masih bisa diperkuat.',
+      toneClassName: 'text-amber-500',
+    };
+  }
+
+  if (score === 3) {
+    return {
+      score,
+      label: 'Password kuat.',
+      toneClassName: 'text-emerald-500',
+    };
+  }
+
+  return {
+    score,
+    label: 'Password sangat kuat.',
+    toneClassName: 'text-emerald-600',
+  };
+}
+
+function getSignupErrorMessage(errorType?: string, fallbackMessage?: string): string {
+  switch (errorType) {
+    case 'UsernameExistsException':
+      return 'Email ini sudah terdaftar. Silakan gunakan email lain.';
+    case 'InvalidPasswordException':
+      return 'Password belum memenuhi aturan Cognito. Gunakan minimal 8 karakter dengan kombinasi huruf dan angka.';
+    case 'InvalidParameterException':
+      return fallbackMessage ?? 'Data pendaftaran tidak valid. Periksa kembali form kamu.';
+    case 'TooManyRequestsException':
+      return 'Terlalu banyak percobaan. Coba lagi beberapa saat lagi.';
+    default:
+      return fallbackMessage ?? 'Pendaftaran gagal. Silakan coba lagi.';
+  }
+}
 
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const passwordStrength = getPasswordStrength(password);
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+
+    if (!COGNITO_API_ENDPOINT || !COGNITO_USER_POOL_CLIENT_ID) {
+      setError('Konfigurasi autentikasi belum tersedia. Hubungi admin untuk melengkapi environment variable frontend.');
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => {
+
+    try {
+      const response = await fetch(COGNITO_API_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-amz-json-1.1',
+          'X-Amz-Target': 'AWSCognitoIdentityProviderService.SignUp',
+        },
+        body: JSON.stringify({
+          ClientId: COGNITO_USER_POOL_CLIENT_ID,
+          Username: email,
+          Password: password,
+          UserAttributes: [
+            {
+              Name: 'email',
+              Value: email,
+            },
+            {
+              Name: 'name',
+              Value: fullName,
+            },
+          ],
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        const errorType = typeof data?.__type === 'string' ? data.__type.split('#').pop() : undefined;
+        throw new Error(getSignupErrorMessage(errorType, data?.message));
+      }
+
       setLoading(false);
       setSuccess(true);
-    }, 2000);
+    } catch (signupError) {
+      setLoading(false);
+      setError(signupError instanceof Error ? signupError.message : 'Pendaftaran gagal. Silakan coba lagi.');
+    }
   };
 
   if (success) {
@@ -51,6 +160,13 @@ export default function RegisterPage() {
             <p className="text-gray-500 font-medium">Bergabunglah dengan ribuan siswa lainnya.</p>
           </div>
 
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-start gap-3 text-red-600 text-sm">
+              <AlertCircle size={18} className="shrink-0 mt-0.5" />
+              <p className="font-medium">{error}</p>
+            </div>
+          )}
+
           <form onSubmit={handleRegister} className="space-y-6">
             <div className="space-y-2">
               <label className="text-sm font-bold text-gray-700 ml-1">Nama Lengkap</label>
@@ -59,6 +175,8 @@ export default function RegisterPage() {
                   type="text"
                   required
                   placeholder="Masukkan nama kamu"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
                   className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all font-medium text-gray-900"
                 />
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -72,6 +190,8 @@ export default function RegisterPage() {
                   type="email"
                   required
                   placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all font-medium text-gray-900"
                 />
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -84,15 +204,35 @@ export default function RegisterPage() {
                 <input
                   type="password"
                   required
+                  minLength={8}
                   placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all font-medium text-gray-900"
                 />
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
               </div>
               <div className="mt-2 flex gap-1">
-                {[1, 2, 3, 4].map((value) => <div key={value} className="h-1 flex-grow bg-gray-100 rounded-full" />)}
+                {[1, 2, 3, 4].map((value) => {
+                  const isActive = value <= passwordStrength.score;
+                  const activeClassName =
+                    passwordStrength.score <= 1
+                      ? 'bg-red-400'
+                      : passwordStrength.score === 2
+                        ? 'bg-amber-400'
+                        : 'bg-emerald-500';
+
+                  return (
+                    <div
+                      key={value}
+                      className={`h-1 flex-grow rounded-full transition-colors ${isActive ? activeClassName : 'bg-gray-100'}`}
+                    />
+                  );
+                })}
               </div>
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider ml-1">Minimal 8 karakter</p>
+              <p className={`text-[10px] font-bold uppercase tracking-wider ml-1 ${passwordStrength.toneClassName}`}>
+                {passwordStrength.label}
+              </p>
             </div>
 
             <button disabled={loading} type="submit" className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-lg hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-2">
