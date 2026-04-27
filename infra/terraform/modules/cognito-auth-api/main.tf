@@ -9,8 +9,9 @@ module "base" {
   project_name = var.project_name
   environment  = var.environment
 
-  callback_urls = var.callback_urls
-  logout_urls   = var.logout_urls
+  callback_urls                  = var.callback_urls
+  logout_urls                    = var.logout_urls
+  verification_message_template  = var.verification_message_template
 }
 
 resource "aws_cognito_identity_provider" "google" {

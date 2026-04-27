@@ -16,6 +16,7 @@ export const MOCK_PRODUCTS: Product[] = [
     description: 'Paket lengkap persiapan JFT-Basic yang mencakup tata bahasa, kosakata, pendengaran, dan percakapan sehari-hari sesuai standar ujan terbaru 2026.',
     level: 'JFT',
     topicsCount: 12,
+    accessDurationDays: 30,
     featuredProducts: true,
     topics: [
       {
@@ -91,6 +92,7 @@ export const MOCK_PRODUCTS: Product[] = [
     description: 'Dapatkan rangkuman eksklusif materi JFT yang disusun berdasarkan statistik soal yang paling sering muncul dalam 3 tahun terakhir.',
     level: 'JFT',
     topicsCount: 8,
+    accessDurationDays: 30,
     topics: [],
   },
   {
@@ -101,6 +103,7 @@ export const MOCK_PRODUCTS: Product[] = [
     description: 'Belajar Kanji N4 menjadi lebih menyenangkan dengan gambar dan cerita mnemonik yang memudahkan ingatan jangka panjang.',
     level: 'N4',
     topicsCount: 15,
+    accessDurationDays: 30,
     featuredProducts: true,
     topics: [
       {
@@ -132,6 +135,7 @@ export const MOCK_PRODUCTS: Product[] = [
     description: 'Panduan interaktif membaca dan menulis Hiragana dan Katakana dalam waktu kurang dari seminggu.',
     level: 'N5',
     topicsCount: 5,
+    accessDurationDays: 30,
     topics: [],
   },
   {
@@ -142,6 +146,7 @@ export const MOCK_PRODUCTS: Product[] = [
     description: 'Uji kemampuanmu sebelum hari H dengan simulasi yang memiliki durasi dan tingkat kesulitan yang sama dengan ujian asli.',
     level: 'N3',
     topicsCount: 10,
+    accessDurationDays: 30,
     topics: [],
   },
   {
@@ -152,6 +157,7 @@ export const MOCK_PRODUCTS: Product[] = [
     description: 'Buku digital yang merangkum seluruh tata bahasa level N2 dengan penjelasan bahasa Indonesia yang mudah dimengerti.',
     level: 'N2',
     topicsCount: 20,
+    accessDurationDays: 30,
     topics: [],
   },
 ];
@@ -165,6 +171,7 @@ export const MOCK_PRODUCTS_PUBLIC: Product[] = [
     description: 'Paket dasar untuk pemula yang belum pernah belajar bahasa Jepang. Fokus pada huruf Hiragana, salam dasar, dan pengucapan sederhana.',
     level: 'Beginner',
     topicsCount: 3,
+    accessDurationDays: 30,
     featuredProducts: true,
     topics: [
       {
@@ -207,6 +214,7 @@ export const MOCK_PRODUCTS_PUBLIC: Product[] = [
     description: 'Paket ini membantu siswa menguasai Katakana dan memahami kosakata dasar seperti angka, waktu, dan benda sehari-hari.',
     level: 'Beginner',
     topicsCount: 3,
+    accessDurationDays: 30,
     featuredProducts: true,
     topics: [
       {
@@ -249,6 +257,7 @@ export const MOCK_PRODUCTS_PUBLIC: Product[] = [
     description: 'Paket ini mengajarkan struktur kalimat dasar bahasa Jepang termasuk partikel dan kata kerja sederhana.',
     level: 'Beginner',
     topicsCount: 3,
+    accessDurationDays: 30,
     topics: [
       {
         id: 't0',
@@ -290,6 +299,7 @@ export const MOCK_PRODUCTS_PUBLIC: Product[] = [
     description: 'Paket ini fokus pada pemahaman percakapan sehari-hari melalui latihan listening dan dialog sederhana.',
     level: 'Beginner',
     topicsCount: 3,
+    accessDurationDays: 30,
     topics: [
       {
         id: 't0',

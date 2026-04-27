@@ -114,9 +114,10 @@ module "cognito" {
   logout_urls = var.auth_cognito.logout_urls
 
   enabled_identity_providers = var.auth_cognito.enabled_identity_providers
+  verification_message_template = try(var.auth_cognito.verification_message_template, null)
   google_client_id           = try(var.auth_cognito.google_client_id, null)
   google_client_secret       = try(var.auth_cognito.google_client_secret, null)
-}
+} 
 
 # -------------------------------------------------------------------------
 # GITHUB CICD MODULE

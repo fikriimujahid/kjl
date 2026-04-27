@@ -1,170 +1,196 @@
 [
   {
     "id": "p0",
-    "name": "Japanese Beginner Basic (Pemula)",
+    "name": "Hiragana Dasar (Pemula)",
     "price": 1100,
-    "shortDescription": "Belajar bahasa Jepang dari nol untuk pemula.",
-    "description": "Paket dasar untuk pemula yang belum pernah belajar bahasa Jepang. Fokus pada huruf Hiragana, salam dasar, dan pengucapan sederhana.",
+    "shortDescription": "Belajar huruf Hiragana dari nol untuk pemula.",
+    "description": "Paket dasar untuk mempelajari huruf Hiragana dari nol. Materi mencakup tabel huruf, cara menulis, contoh kata, latihan membaca, dan quiz untuk menguji pemahaman.",
     "level": "Beginner",
-    "topicsCount": 3,
+    "topicsCount": 6,
     "featuredProducts": true,
+    "accessDurationDays": 30,
     "topics": [
       {
-        "id": "t0",
-        "title": "Hiragana Dasar",
+        "id": "tIntro",
+        "title": "Pengenalan Hiragana",
         "sessions": [
-          { "id": "s0", "title": "Video Pengenalan Hiragana", "type": "video" },
-          { "id": "s0b", "title": "Tabel Hiragana Lengkap (PDF)", "type": "pdf" },
-          { "id": "s0c", "title": "Audio Pelafalan Hiragana", "type": "audio" },
-          { "id": "s0d", "title": "Quiz Hiragana Dasar", "type": "quiz" }
+          { "id": "sIntroA", "title": "Apa itu Hiragana?", "type": "pdf" },
+          { "id": "sIntroB", "title": "Cara Belajar Hiragana dengan Efektif", "type": "pdf" },
+          { "id": "sIntroC", "title": "Tips Menghafal Hiragana dengan Cepat", "type": "pdf" },
+          { "id": "sIntroD", "title": "Quiz Pengenalan Hiragana", "type": "quiz" }
+        ]
+      },
+      {
+        "id": "t0",
+        "title": "Hiragana A-I-U-E-O",
+        "sessions": [
+          { "id": "s0a", "title": "Tabel Hiragana A-I-U-E-O", "type": "pdf" },
+          { "id": "s0b", "title": "Cara Menulis Hiragana A-I-U-E-O", "type": "pdf" },
+          { "id": "s0c", "title": "Contoh Kata Hiragana A-I-U-E-O", "type": "pdf" },
+          { "id": "s0d", "title": "Latihan Membaca Hiragana A-I-U-E-O", "type": "pdf" },
+          { "id": "s0e", "title": "Latihan Soal Hiragana A-I-U-E-O", "type": "quiz" },
+          { "id": "s0f", "title": "Ujian Hiragana A-I-U-E-O", "type": "quiz" }
         ]
       },
       {
         "id": "t1",
-        "title": "Salam Dasar",
+        "title": "Hiragana KA-KI-KU-KE-KO",
         "sessions": [
-          { "id": "s1", "title": "Video Salam Dasar", "type": "video" },
-          { "id": "s1b", "title": "Daftar Salam Dasar (PDF)", "type": "pdf" },
-          { "id": "s1c", "title": "Audio Salam Dasar", "type": "audio" },
-          { "id": "s1d", "title": "Quiz Salam Dasar", "type": "quiz" }
+          { "id": "s1a", "title": "Tabel Hiragana KA-KI-KU-KE-KO", "type": "pdf" },
+          { "id": "s1b", "title": "Cara Menulis Hiragana KA-KI-KU-KE-KO", "type": "pdf" },
+          { "id": "s1c", "title": "Contoh Kata Hiragana KA-KI-KU-KE-KO", "type": "pdf" },
+          { "id": "s1d", "title": "Latihan Membaca Hiragana KA-KI-KU-KE-KO", "type": "pdf" },
+          { "id": "s1e", "title": "Latihan Soal Hiragana KA-KI-KU-KE-KO", "type": "quiz" },
+          { "id": "s1f", "title": "Ujian Hiragana KA-KI-KU-KE-KO", "type": "quiz" }
         ]
       },
       {
         "id": "t2",
-        "title": "Perkenalan Diri Sederhana",
+        "title": "Hiragana SA-SHI-SU-SE-SO",
         "sessions": [
-          { "id": "s2", "title": "Video Perkenalan Diri", "type": "video" },
-          { "id": "s2b", "title": "Contoh Perkenalan (PDF)", "type": "pdf" },
-          { "id": "s2c", "title": "Audio Perkenalan", "type": "audio" },
-          { "id": "s2d", "title": "Quiz Perkenalan", "type": "quiz" }
+          { "id": "s2a", "title": "Tabel Hiragana SA-SHI-SU-SE-SO", "type": "pdf" },
+          { "id": "s2b", "title": "Cara Menulis Hiragana SA-SHI-SU-SE-SO", "type": "pdf" },
+          { "id": "s2c", "title": "Contoh Kata Hiragana SA-SHI-SU-SE-SO", "type": "pdf" },
+          { "id": "s2d", "title": "Latihan Membaca Hiragana SA-SHI-SU-SE-SO", "type": "pdf" },
+          { "id": "s2e", "title": "Latihan Soal Hiragana SA-SHI-SU-SE-SO", "type": "quiz" },
+          { "id": "s2f", "title": "Ujian Hiragana SA-SHI-SU-SE-SO", "type": "quiz" }
+        ]
+      },
+      {
+        "id": "t3",
+        "title": "Hiragana TA-CHI-TSU-TE-TO",
+        "sessions": [
+          { "id": "s3a", "title": "Tabel Hiragana TA-CHI-TSU-TE-TO", "type": "pdf" },
+          { "id": "s3b", "title": "Cara Menulis Hiragana TA-CHI-TSU-TE-TO", "type": "pdf" },
+          { "id": "s3c", "title": "Contoh Kata Hiragana TA-CHI-TSU-TE-TO", "type": "pdf" },
+          { "id": "s3d", "title": "Latihan Membaca Hiragana TA-CHI-TSU-TE-TO", "type": "pdf" },
+          { "id": "s3e", "title": "Latihan Soal Hiragana TA-CHI-TSU-TE-TO", "type": "quiz" },
+          { "id": "s3f", "title": "Ujian Hiragana TA-CHI-TSU-TE-TO", "type": "quiz" }
+        ]
+      },
+      {
+        "id": "t4",
+        "title": "Hiragana NA-NI-NU-NE-NO",
+        "sessions": [
+          { "id": "s4a", "title": "Tabel Hiragana NA-NI-NU-NE-NO", "type": "pdf" },
+          { "id": "s4b", "title": "Cara Menulis Hiragana NA-NI-NU-NE-NO", "type": "pdf" },
+          { "id": "s4c", "title": "Contoh Kata Hiragana NA-NI-NU-NE-NO", "type": "pdf" },
+          { "id": "s4d", "title": "Latihan Membaca Hiragana NA-NI-NU-NE-NO", "type": "pdf" },
+          { "id": "s4e", "title": "Latihan Soal Hiragana NA-NI-NU-NE-NO", "type": "quiz" },
+          { "id": "s4f", "title": "Ujian Hiragana NA-NI-NU-NE-NO", "type": "quiz" }
+        ]
+      },
+      {
+        "id": "t5",
+        "title": "Full Hiragana Dasar",
+        "sessions": [
+          { "id": "s5a", "title": "Tabel Lengkap Hiragana Dasar", "type": "pdf" },
+          { "id": "s5b", "title": "Contoh Kata Campuran Hiragana", "type": "pdf" },
+          { "id": "s5c", "title": "Latihan Membaca Hiragana Campuran", "type": "pdf" },
+          { "id": "s5d", "title": "Latihan Soal Hiragana Dasar Full", "type": "quiz" },
+          { "id": "s5e", "title": "Ujian Hiragana Dasar Full", "type": "quiz" }
         ]
       }
     ]
   },
   {
     "id": "p1",
-    "name": "Katakana & Kosakata Dasar",
-    "price": 1500,
-    "shortDescription": "Belajar huruf Katakana dan kosakata dasar sehari-hari.",
-    "description": "Paket ini membantu siswa menguasai Katakana dan memahami kosakata dasar seperti angka, waktu, dan benda sehari-hari.",
+    "name": "Katakana Dasar (Pemula)",
+    "price": 1100,
+    "shortDescription": "Belajar huruf Katakana dari nol untuk pemula.",
+    "description": "Paket dasar untuk mempelajari huruf Katakana dari nol. Materi mencakup tabel huruf, cara menulis, contoh kata, latihan membaca, dan quiz untuk menguji pemahaman.",
     "level": "Beginner",
-    "topicsCount": 3,
+    "topicsCount": 6,
     "featuredProducts": true,
+    "accessDurationDays": 30,
     "topics": [
       {
-        "id": "t0",
-        "title": "Katakana Dasar",
+        "id": "tIntro",
+        "title": "Pengenalan Katakana",
         "sessions": [
-          { "id": "s0", "title": "Video Pengenalan Katakana", "type": "video" },
-          { "id": "s0b", "title": "Tabel Katakana Lengkap (PDF)", "type": "pdf" },
-          { "id": "s0c", "title": "Audio Pelafalan Katakana", "type": "audio" },
-          { "id": "s0d", "title": "Quiz Katakana Dasar", "type": "quiz" }
+          { "id": "sIntroA", "title": "Apa itu Katakana ?", "type": "pdf" },
+          { "id": "sIntroB", "title": "Cara Belajar Katakana dengan Efektif", "type": "pdf" },
+          { "id": "sIntroC", "title": "Tips Menghafal Katakana dengan Cepat", "type": "pdf" },
+          { "id": "sIntroD", "title": "Quiz Pengenalan Katakana", "type": "quiz" }
         ]
       },
-      {
-        "id": "t1",
-        "title": "Angka & Waktu",
-        "sessions": [
-          { "id": "s1", "title": "Video Angka Jepang", "type": "video" },
-          { "id": "s1b", "title": "Daftar Angka (PDF)", "type": "pdf" },
-          { "id": "s1c", "title": "Audio Angka", "type": "audio" },
-          { "id": "s1d", "title": "Quiz Angka", "type": "quiz" }
-        ]
-      },
-      {
-        "id": "t2",
-        "title": "Benda Sehari-hari",
-        "sessions": [
-          { "id": "s2", "title": "Video Kosakata Benda", "type": "video" },
-          { "id": "s2b", "title": "Kosakata Benda (PDF)", "type": "pdf" },
-          { "id": "s2c", "title": "Audio Kosakata", "type": "audio" },
-          { "id": "s2d", "title": "Quiz Kosakata", "type": "quiz" }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "p2",
-    "name": "Grammar Dasar N5",
-    "price": 2000,
-    "shortDescription": "Memahami tata bahasa dasar bahasa Jepang.",
-    "description": "Paket ini mengajarkan struktur kalimat dasar bahasa Jepang termasuk partikel dan kata kerja sederhana.",
-    "level": "Beginner",
-    "topicsCount": 3,
-    "featuredProducts": true,
-    "topics": [
       {
         "id": "t0",
-        "title": "Struktur Kalimat Dasar",
+        "title": "Katakana A-I-U-E-O",
         "sessions": [
-          { "id": "s0", "title": "Video Struktur Kalimat", "type": "video" },
-          { "id": "s0b", "title": "Contoh Kalimat (PDF)", "type": "pdf" },
-          { "id": "s0c", "title": "Audio Contoh Kalimat", "type": "audio" },
-          { "id": "s0d", "title": "Quiz Struktur Kalimat", "type": "quiz" }
+          { "id": "s0a", "title": "Tabel Katakana A-I-U-E-O", "type": "pdf" },
+          { "id": "s0b", "title": "Cara Menulis Katakana A-I-U-E-O", "type": "pdf" },
+          { "id": "s0c", "title": "Contoh Kata Katakana A-I-U-E-O", "type": "pdf" },
+          { "id": "s0d", "title": "Latihan Membaca Katakana A-I-U-E-O", "type": "pdf" },
+          { "id": "s0e", "title": "Latihan Soal Katakana A-I-U-E-O", "type": "quiz" },
+          { "id": "s0f", "title": "Ujian Katakana A-I-U-E-O", "type": "quiz" }
         ]
       },
+
       {
         "id": "t1",
-        "title": "Partikel Dasar (は、が、を)",
+        "title": "Katakana KA-KI-KU-KE-KO",
         "sessions": [
-          { "id": "s1", "title": "Video Partikel Dasar", "type": "video" },
-          { "id": "s1b", "title": "Penjelasan Partikel (PDF)", "type": "pdf" },
-          { "id": "s1c", "title": "Audio Contoh", "type": "audio" },
-          { "id": "s1d", "title": "Quiz Partikel", "type": "quiz" }
+          { "id": "s1a", "title": "Tabel Katakana KA-KI-KU-KE-KO", "type": "pdf" },
+          { "id": "s1b", "title": "Cara Menulis Katakana KA-KI-KU-KE-KO", "type": "pdf" },
+          { "id": "s1c", "title": "Contoh Kata Katakana KA-KI-KU-KE-KO", "type": "pdf" },
+          { "id": "s1d", "title": "Latihan Membaca Katakana KA-KI-KU-KE-KO", "type": "pdf" },
+          { "id": "s1e", "title": "Latihan Soal Katakana KA-KI-KU-KE-KO", "type": "quiz" },
+          { "id": "s1f", "title": "Ujian Katakana KA-KI-KU-KE-KO", "type": "quiz" }
         ]
       },
+
       {
         "id": "t2",
-        "title": "Kata Kerja Dasar",
+        "title": "Katakana SA-SHI-SU-SE-SO",
         "sessions": [
-          { "id": "s2", "title": "Video Kata Kerja", "type": "video" },
-          { "id": "s2b", "title": "Daftar Kata Kerja (PDF)", "type": "pdf" },
-          { "id": "s2c", "title": "Audio Kata Kerja", "type": "audio" },
-          { "id": "s2d", "title": "Quiz Kata Kerja", "type": "quiz" }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "p3",
-    "name": "Listening & Percakapan Dasar",
-    "price": 2200,
-    "shortDescription": "Latihan mendengarkan dan percakapan dasar.",
-    "description": "Paket ini fokus pada pemahaman percakapan sehari-hari melalui latihan listening dan dialog sederhana.",
-    "level": "Beginner",
-    "topicsCount": 3,
-    "featuredProducts": false,
-    "topics": [
-      {
-        "id": "t0",
-        "title": "Percakapan Salam",
-        "sessions": [
-          { "id": "s0", "title": "Video Percakapan Salam", "type": "video" },
-          { "id": "s0b", "title": "Transkrip Percakapan (PDF)", "type": "pdf" },
-          { "id": "s0c", "title": "Audio Percakapan", "type": "audio" },
-          { "id": "s0d", "title": "Quiz Listening Salam", "type": "quiz" }
+          { "id": "s2a", "title": "Tabel Katakana SA-SHI-SU-SE-SO", "type": "pdf" },
+          { "id": "s2b", "title": "Cara Menulis Katakana SA-SHI-SU-SE-SO", "type": "pdf" },
+          { "id": "s2c", "title": "Contoh Kata Katakana SA-SHI-SU-SE-SO", "type": "pdf" },
+          { "id": "s2d", "title": "Latihan Membaca Katakana SA-SHI-SU-SE-SO", "type": "pdf" },
+          { "id": "s2e", "title": "Latihan Soal Katakana SA-SHI-SU-SE-SO", "type": "quiz" },
+          { "id": "s2f", "title": "Ujian Katakana SA-SHI-SU-SE-SO", "type": "quiz" }
         ]
       },
+
       {
-        "id": "t1",
-        "title": "Percakapan di Tempat Umum",
+        "id": "t3",
+        "title": "Katakana TA-CHI-TSU-TE-TO",
         "sessions": [
-          { "id": "s1", "title": "Video Percakapan Umum", "type": "video" },
-          { "id": "s1b", "title": "Transkrip Percakapan (PDF)", "type": "pdf" },
-          { "id": "s1c", "title": "Audio Percakapan", "type": "audio" },
-          { "id": "s1d", "title": "Quiz Listening", "type": "quiz" }
+          { "id": "s3a", "title": "Tabel Katakana TA-CHI-TSU-TE-TO", "type": "pdf" },
+          { "id": "s3b", "title": "Cara Menulis Katakana TA-CHI-TSU-TE-TO", "type": "pdf" },
+          { "id": "s3c", "title": "Contoh Kata Katakana TA-CHI-TSU-TE-TO", "type": "pdf" },
+          { "id": "s3d", "title": "Latihan Membaca Katakana TA-CHI-TSU-TE-TO", "type": "pdf" },
+          { "id": "s3e", "title": "Latihan Soal Katakana TA-CHI-TSU-TE-TO", "type": "quiz" },
+          { "id": "s3f", "title": "Ujian Katakana TA-CHI-TSU-TE-TO", "type": "quiz" }
         ]
       },
+
       {
-        "id": "t2",
-        "title": "Percakapan di Toko",
+        "id": "t4",
+        "title": "Katakana NA-NI-NU-NE-NO",
         "sessions": [
-          { "id": "s2", "title": "Video Percakapan di Toko", "type": "video" },
-          { "id": "s2b", "title": "Transkrip Percakapan (PDF)", "type": "pdf" },
-          { "id": "s2c", "title": "Audio Percakapan", "type": "audio" },
-          { "id": "s2d", "title": "Quiz Listening", "type": "quiz" }
+          { "id": "s4a", "title": "Tabel Katakana NA-NI-NU-NE-NO", "type": "pdf" },
+          { "id": "s4b", "title": "Cara Menulis Katakana NA-NI-NU-NE-NO", "type": "pdf" },
+          { "id": "s4c", "title": "Contoh Kata Katakana NA-NI-NU-NE-NO", "type": "pdf" },
+          { "id": "s4d", "title": "Latihan Membaca Katakana NA-NI-NU-NE-NO", "type": "pdf" },
+          { "id": "s4e", "title": "Latihan Soal Katakana NA-NI-NU-NE-NO", "type": "quiz" },
+          { "id": "s4f", "title": "Ujian Katakana NA-NI-NU-NE-NO", "type": "quiz" }
+        ]
+      },
+
+      {
+        "id": "t5",
+        "title": "Full Katakana Dasar",
+        "sessions": [
+          { "id": "s5a", "title": "Tabel Lengkap Katakana Dasar", "type": "pdf" },
+          { "id": "s5b", "title": "Contoh Kata Campuran Katakana", "type": "pdf" },
+          { "id": "s5c", "title": "Latihan Membaca Katakana Campuran", "type": "pdf" },
+          { "id": "s5d", "title": "Latihan Soal Katakana Dasar Full", "type": "quiz" },
+          { "id": "s5e", "title": "Ujian Katakana Dasar Full", "type": "quiz" }
         ]
       }
+
     ]
   }
 ]

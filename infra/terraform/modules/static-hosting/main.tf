@@ -225,7 +225,6 @@ module "cloudfront" {
   aliases                  = var.cloudfront.aliases
   acm_certificate_arn      = module.acm.certificate_arn
   ssl_support_method       = "sni-only"
-  minimum_protocol_version = "TLSv1.2_2021"
   price_class              = try(var.cloudfront.price_class, "PriceClass_100")
   default_root_object      = try(var.cloudfront.default_root_object, "index.html")
   web_acl_id               = try(var.cloudfront.web_acl_id, null)

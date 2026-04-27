@@ -1,21 +1,27 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
 
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CreditCard, ChevronRight, CheckCircle2, Clock } from 'lucide-react';
 import { MOCK_USER, MOCK_PAYMENTS } from '@/lib/mock-data';
 import { formatPrice, cn } from '@/lib/utils';
+import { RequireAuth } from '@/components/RequireAuth';
+import { useAuth } from '@/components/AuthProvider';
 
 export default function ProfilePage() {
-  const [displayName, setDisplayName] = useState(MOCK_USER.displayName);
+  const { user } = useAuth();
+  const [displayName, setDisplayName] = useState(user?.name ?? MOCK_USER.displayName);
   const [editing, setEditing] = useState(false);
 
+  useEffect(() => {
+    if (!editing) {
+      setDisplayName(user?.name ?? MOCK_USER.displayName);
+    }
+  }, [editing, user]);
+
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+    <RequireAuth>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
       <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-12 tracking-tight">Akun Saya</h1>
 
       <div className="space-y-12">
@@ -37,7 +43,7 @@ export default function ProfilePage() {
               ) : (
                 <h2 className="text-3xl font-black text-gray-900">{displayName}</h2>
               )}
-              <p className="text-gray-500 font-medium">{MOCK_USER.email}</p>
+              <p className="text-gray-500 font-medium">{user?.email ?? MOCK_USER.email}</p>
             </div>
 
             <button
@@ -90,6 +96,7 @@ export default function ProfilePage() {
           </div>
         </section>
       </div>
-    </div>
+      </div>
+    </RequireAuth>
   );
 }

@@ -23,3 +23,16 @@ variable "supported_identity_providers" {
   type        = list(string)
   default     = ["COGNITO"]
 }
+
+variable "verification_message_template" {
+  description = "Optional Cognito verification message template configuration for signup verification emails or SMS."
+  type = object({
+    default_email_option  = optional(string)
+    email_message         = optional(string)
+    email_message_by_link = optional(string)
+    email_subject         = optional(string)
+    email_subject_by_link = optional(string)
+    sms_message           = optional(string)
+  })
+  default = null
+}

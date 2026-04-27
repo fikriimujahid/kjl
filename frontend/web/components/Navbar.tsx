@@ -5,16 +5,11 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, X, BookOpen, User, LogOut, ChevronRight, LayoutDashboard } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const useAuth = () => {
-  const [user, setUser] = useState<{ name: string } | null>({ name: 'Fikri' });
-  const logout = () => setUser(null);
-  return { user, logout };
-};
+import { useAuth } from '@/components/AuthProvider';
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, logout, status } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -24,7 +19,7 @@ export function Navbar() {
     { title: 'Belajarku', path: '/my-learning', icon: <ChevronRight size={20} />, protected: true },
   ];
 
-  const filteredLinks = navLinks.filter((link) => !link.protected || user);
+  const filteredLinks = navLinks.filter((link) => !link.protected || status === 'authenticated');
 
   const handleLogout = () => {
     logout();
@@ -57,7 +52,7 @@ export function Navbar() {
       </div>
 
       <div className="flex items-center gap-4">
-        {user ? (
+        {status === 'authenticated' && user ? (
           <>
             <div className="text-right mr-3 hidden sm:block">
               <p className="text-[10px] font-semibold text-slate-500">Selamat Datang,</p>
@@ -105,7 +100,7 @@ export function Navbar() {
                 {link.title}
               </Link>
             ))}
-            {user ? (
+            {status === 'authenticated' && user ? (
               <div className="pt-4 border-t border-slate-100 mt-4 space-y-2">
                 <Link
                   href="/profile"
