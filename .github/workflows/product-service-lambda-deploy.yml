@@ -13,6 +13,12 @@ env:
 jobs:
   deploy-product-service-lambda:
     runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'prod' && 'prod' || 'dev' }}
+
+    permissions:
+      id-token: write
+      contents: read
+
     defaults:
       run:
         working-directory: backend/product-service
