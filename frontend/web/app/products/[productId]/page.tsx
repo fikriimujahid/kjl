@@ -1,18 +1,29 @@
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { notFound } from 'next/navigation';
 import ProductDetailClient from './ProductDetailClient';
-import { fetchProducts, PRODUCT_URL } from '@/lib/products';
+import { parseProducts } from '@/lib/products';
 
-export async function generateStaticParams() {
-  if (!PRODUCT_URL || PRODUCT_URL.startsWith('/')) {
+async function loadStaticProductIds() {
+  try {
+    const fallbackPath = path.join(process.cwd(), 'public', 'public-data', 'product.json');
+    const fallbackRaw = await readFile(fallbackPath, 'utf-8');
+    const fallbackData: unknown = JSON.parse(fallbackRaw);
+    return parseProducts(fallbackData).map((product) => product.id);
+  } catch {
     return [];
   }
+}
 
-  const products = await fetchProducts({ cache: 'force-cache' });
+export async function generateStaticParams() {
+  const productIds = await loadStaticProductIds();
 
-  return products.map((product) => ({
-    productId: product.id,
+  return productIds.map((productId) => ({
+    productId,
   }));
 }
+
+export const dynamicParams = false;
 
 export default async function ProductDetailPage({
   params,
@@ -20,14 +31,10 @@ export default async function ProductDetailPage({
   params: Promise<{ productId: string }>;
 }) {
   const { productId } = await params;
-  // For static export and SSR, validate on server only when PRODUCT_URL is absolute.
-  if (PRODUCT_URL && !PRODUCT_URL.startsWith('/')) {
-    const products = await fetchProducts({ cache: 'force-cache' });
-    const product = products.find((item) => item.id === productId);
+  const staticProductIds = await loadStaticProductIds();
 
-    if (!product) {
-      notFound();
-    }
+  if (!staticProductIds.includes(productId)) {
+    notFound();
   }
 
   return <ProductDetailClient productId={productId} />;
