@@ -168,6 +168,23 @@ module "cloudfront" {
         }
       }
     } : {}
+    ,
+    try(var.cloudfront.api_origin.enabled, false) ? {
+      api = {
+        domain_name         = var.cloudfront.api_origin.domain_name
+        origin_type         = "custom"
+        origin_path         = try(var.cloudfront.api_origin.origin_path, null)
+        connection_attempts = try(var.cloudfront.api_origin.connection_attempts, 3)
+        connection_timeout  = try(var.cloudfront.api_origin.connection_timeout, 10)
+
+        custom_origin_config = {
+          origin_protocol_policy   = try(var.cloudfront.api_origin.origin_protocol_policy, "https-only")
+          origin_ssl_protocols     = try(var.cloudfront.api_origin.origin_ssl_protocols, ["TLSv1.2"])
+          origin_keepalive_timeout = try(var.cloudfront.api_origin.origin_keepalive_timeout, 5)
+          origin_read_timeout      = try(var.cloudfront.api_origin.origin_read_timeout, 30)
+        }
+      }
+    } : {}
   )
   # The default cache behavior — how CloudFront handles ALL requests
   # that do not match any ordered_cache_behaviors path pattern.
@@ -204,9 +221,22 @@ module "cloudfront" {
         response_headers_policy_id = "67f7725c-6f97-4210-82d7-5512b31e9d03"
       }
     ] : [],
+    try(var.cloudfront.api_origin.enabled, false) ? [
+      {
+        path_pattern               = try(var.cloudfront.api_origin.path_pattern, "/api/*")
+        target_origin_id           = "api"
+        viewer_protocol_policy     = "redirect-to-https"
+        allowed_methods            = ["GET", "HEAD", "OPTIONS"]
+        cached_methods             = ["GET", "HEAD", "OPTIONS"]
+        compress                   = true
+        cache_policy_id            = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
+        origin_request_policy_id   = "b689b0a8-53d0-40ab-baf2-68738e2966ac"
+        response_headers_policy_id = "5cc3b908-e619-4b99-88e5-2cf7f45965bd"
+      }
+    ] : [],
     try(var.cloudfront.ordered_cache_behaviors, [])
   )
-  custom_error_responses  = try(var.cloudfront.custom_error_responses, [])
+  custom_error_responses = try(var.cloudfront.custom_error_responses, [])
   geo_restriction = try(var.cloudfront.geo_restriction, {
     restriction_type = "none"
     locations        = []
@@ -222,17 +252,17 @@ module "cloudfront" {
     signing_behavior = "always"
     signing_protocol = "sigv4"
   }
-  aliases                  = var.cloudfront.aliases
-  acm_certificate_arn      = module.acm.certificate_arn
-  ssl_support_method       = "sni-only"
-  price_class              = try(var.cloudfront.price_class, "PriceClass_100")
-  default_root_object      = try(var.cloudfront.default_root_object, "index.html")
-  web_acl_id               = try(var.cloudfront.web_acl_id, null)
-  enable_logging           = true
-  log_bucket_domain_name   = module.s3_logs.bucket_domain_name
-  log_include_cookies      = false
-  log_prefix               = "cloudfront/"
-  tags                     = var.tags
+  aliases                = var.cloudfront.aliases
+  acm_certificate_arn    = module.acm.certificate_arn
+  ssl_support_method     = "sni-only"
+  price_class            = try(var.cloudfront.price_class, "PriceClass_100")
+  default_root_object    = try(var.cloudfront.default_root_object, "index.html")
+  web_acl_id             = try(var.cloudfront.web_acl_id, null)
+  enable_logging         = true
+  log_bucket_domain_name = module.s3_logs.bucket_domain_name
+  log_include_cookies    = false
+  log_prefix             = "cloudfront/"
+  tags                   = var.tags
 }
 
 # -----------------------------------------------------------------------------

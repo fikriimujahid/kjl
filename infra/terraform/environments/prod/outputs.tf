@@ -17,6 +17,24 @@ output "cloudfront_distribution_id" {
 }
 
 # -------------------------------------------------------------------------
+# DYNAMODB LEARNING CONTENT TABLE
+# -------------------------------------------------------------------------
+output "learning_content_table_name" {
+  description = "DynamoDB learning content table name in the prod environment."
+  value       = module.learning_content_table.table_name
+}
+
+output "learning_content_table_arn" {
+  description = "DynamoDB learning content table ARN in the prod environment."
+  value       = module.learning_content_table.table_arn
+}
+
+output "learning_content_table_id" {
+  description = "DynamoDB learning content table ID in the prod environment."
+  value       = module.learning_content_table.table_id
+}
+
+# -------------------------------------------------------------------------
 # COGNITO AUTH
 # -------------------------------------------------------------------------
 output "user_pool_id" {

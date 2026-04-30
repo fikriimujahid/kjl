@@ -22,6 +22,59 @@ module "budget_alert" {
 }
 
 # -------------------------------------------------------------------------
+# PRODUCT API MODULE
+# -------------------------------------------------------------------------
+module "product_api" {
+  source = "../../modules/service-api"
+
+  lambda = {
+    name                  = var.product_api.lambda.name
+    description           = var.product_api.lambda.description
+    source_dir            = var.product_api.lambda.source_dir
+    handler               = var.product_api.lambda.handler
+    runtime               = var.product_api.lambda.runtime
+    memory_size           = var.product_api.lambda.memory_size
+    timeout               = var.product_api.lambda.timeout
+    environment_variables = var.product_api.lambda.environment_variables
+    publish               = false
+  }
+
+  api_gateway = {
+    name                = var.product_api.api_gateway.name
+    description         = var.product_api.api_gateway.description
+    stage_name          = var.product_api.api_gateway.stage_name
+    cors_allow_origins  = var.product_api.api_gateway.cors_allow_origins
+    cors_allow_methods  = var.product_api.api_gateway.cors_allow_methods
+    cors_allow_headers  = var.product_api.api_gateway.cors_allow_headers
+    cors_expose_headers = var.product_api.api_gateway.cors_expose_headers
+    cors_max_age        = var.product_api.api_gateway.cors_max_age
+    routes              = var.product_api.api_gateway.routes
+  }
+
+  tags = var.tags
+}
+
+# -------------------------------------------------------------------------
+# DYNAMODB LEARNING CONTENT TABLE
+# -------------------------------------------------------------------------
+module "learning_content_table" {
+  source = "../../modules/dynamodb"
+
+  table_name                     = var.learning_content_table.table_name
+  billing_mode                   = var.learning_content_table.billing_mode
+  hash_key                       = var.learning_content_table.hash_key
+  range_key                      = try(var.learning_content_table.range_key, null)
+  attributes                     = var.learning_content_table.attributes
+  global_secondary_indexes       = try(var.learning_content_table.global_secondary_indexes, [])
+  ttl_enabled                    = var.learning_content_table.ttl_enabled
+  ttl_attribute_name             = try(var.learning_content_table.ttl_attribute_name, null)
+  point_in_time_recovery_enabled = var.learning_content_table.point_in_time_recovery_enabled
+  server_side_encryption_enabled = var.learning_content_table.server_side_encryption_enabled
+
+  tags = var.tags
+}
+
+# -------------------------------------------------------------------------
 # FRONTEND SITE HOSTING MODULE
 # -------------------------------------------------------------------------
 module "frontend_site_hosting" {
@@ -48,10 +101,16 @@ module "frontend_site_hosting" {
 
   # CLOUDFRONT CONFIGURATION
   cloudfront = {
-    project_name           = var.project_name
-    environment            = var.environment
-    aliases                = var.frontend_site_hosting.cloudfront.aliases
-    zone_id                = var.frontend_site_hosting.zone_id
+    project_name = var.project_name
+    environment  = var.environment
+    aliases      = var.frontend_site_hosting.cloudfront.aliases
+    zone_id      = var.frontend_site_hosting.zone_id
+    api_origin = {
+      enabled      = true
+      domain_name  = module.product_api.api_gateway_domain_name
+      path_pattern = var.product_api.cloudfront_path_pattern
+      origin_path  = module.product_api.api_gateway_origin_path
+    }
     custom_error_responses = var.frontend_site_hosting.cloudfront.custom_error_responses
   }
 
@@ -72,10 +131,10 @@ module "cognito" {
 
   logout_urls = var.auth_cognito.logout_urls
 
-  enabled_identity_providers = var.auth_cognito.enabled_identity_providers
+  enabled_identity_providers    = var.auth_cognito.enabled_identity_providers
   verification_message_template = try(var.auth_cognito.verification_message_template, null)
-  google_client_id           = try(var.auth_cognito.google_client_id, null)
-  google_client_secret       = try(var.auth_cognito.google_client_secret, null)
+  google_client_id              = try(var.auth_cognito.google_client_id, null)
+  google_client_secret          = try(var.auth_cognito.google_client_secret, null)
 }
 
 # -------------------------------------------------------------------------
@@ -84,11 +143,11 @@ module "cognito" {
 module "github_cicd" {
   source = "../../modules/iam-role-github-oidc"
 
-  github_repo = var.github_cicd.github_repo
-  branches = var.github_cicd.branches
+  github_repo              = var.github_cicd.github_repo
+  branches                 = var.github_cicd.branches
   github_oidc_provider_arn = var.github_cicd.github_oidc_provider_arn
-  role_name = var.github_cicd.role_name
-  managed_policy_arns = var.github_cicd.managed_policy_arns
+  role_name                = var.github_cicd.role_name
+  managed_policy_arns      = var.github_cicd.managed_policy_arns
 
   tags = var.tags
 }
