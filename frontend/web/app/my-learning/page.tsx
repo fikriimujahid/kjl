@@ -1,21 +1,70 @@
-
 'use client';
 
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Play, Book, Music, FileText, ChevronDown, ChevronUp } from 'lucide-react';
-import { MOCK_PRODUCTS, MOCK_USER } from '@/lib/mock-data';
-import { Product, Session } from '@/lib/types';
+import { MOCK_PURCHASED_PRODUCTS, MOCK_SESSION_DETAILS_IMAGE, MOCK_SESSION_DETAILS_QUIZ, MOCK_USER } from '@/lib/mock-data';
+import { Product, Session, SessionDetail } from '@/lib/types';
 import { motion, AnimatePresence } from 'motion/react';
 import QuizViewer from '@/components/QuizViewer';
+import ImageViewer from '../../components/ImageViewer';
 import { cn } from '@/lib/utils';
 import { RequireAuth } from '@/components/RequireAuth';
+import { loadOwnedProducts } from '@/lib/products';
 
 export default function MyLearningPage() {
-  const ownedProducts = MOCK_PRODUCTS.filter((product) => MOCK_USER.purchasedProductIds.includes(product.id));
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(ownedProducts[0] || null);
+  const [ownedProducts, setOwnedProducts] = useState<Product[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [activeSession, setActiveSession] = useState<Session | null>(null);
+  const [activeImagePages, setActiveImagePages] = useState<string[]>([]);
   const [expandedTopic, setExpandedTopic] = useState<string | null>(null);
+  const [loadingSessionId, setLoadingSessionId] = useState<string | null>(null);
+  const [isLoadingOwnedProducts, setIsLoadingOwnedProducts] = useState(true);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let isActive = true;
+
+    async function loadPageOwnedProducts() {
+      const nextOwnedProducts = await loadOwnedProducts({
+        signal: controller.signal,
+        userId: MOCK_USER.id,
+        purchases: MOCK_PURCHASED_PRODUCTS,
+      });
+
+      if (!isActive) {
+        return;
+      }
+
+      setOwnedProducts(nextOwnedProducts);
+      setSelectedProduct((current) => {
+        if (current && nextOwnedProducts.some((product) => product.id === current.id)) {
+          return current;
+        }
+
+        return nextOwnedProducts[0] ?? null;
+      });
+      setIsLoadingOwnedProducts(false);
+    }
+
+    loadPageOwnedProducts();
+
+    return () => {
+      isActive = false;
+      controller.abort();
+    };
+  }, []);
+
+  if (isLoadingOwnedProducts) {
+    return (
+      <RequireAuth>
+        <div className="max-w-7xl mx-auto px-4 py-24 text-center">
+          <h1 className="text-3xl font-bold text-slate-800 mb-4 tracking-tight">Memuat Produk Kamu</h1>
+          <p className="text-slate-500 mb-8 font-medium">Sedang mengambil daftar produk yang sudah kamu beli.</p>
+        </div>
+      </RequireAuth>
+    );
+  }
 
   if (ownedProducts.length === 0) {
     return (
@@ -44,9 +93,73 @@ export default function MyLearningPage() {
     }
   };
 
-  const handleSessionClick = (session: Session) => {
-    setActiveSession(session);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const mockFetchSessionById = async (session: Session): Promise<SessionDetail[]> => {
+    // Temporary mock until real API endpoint is ready.
+    await new Promise((resolve) => setTimeout(resolve, 700));
+
+    if (session.type === 'images') {
+      return MOCK_SESSION_DETAILS_IMAGE;
+    }
+
+    if (session.type === 'quiz') {
+      return MOCK_SESSION_DETAILS_QUIZ;
+    }
+
+    return [];
+  };
+
+  const normalizeContentUrl = (url?: string) => {
+    if (!url) {
+      return '';
+    }
+
+    return url.startsWith('/public/') ? url.replace('/public/', '/') : url;
+  };
+
+  const handleSessionClick = async (session: Session) => {
+    if (loadingSessionId === session.id) {
+      return;
+    }
+
+    setLoadingSessionId(session.id);
+
+    try {
+      const sessionDetails = await mockFetchSessionById(session);
+
+      if (session.type === 'quiz') {
+        setActiveImagePages([]);
+        setActiveSession({
+          ...session,
+          questions: sessionDetails.map((detail) => ({
+            id: detail.id,
+            text: detail.text ?? '',
+            image: detail.image,
+            audio: detail.audio,
+            options: detail.options ?? [],
+            correctAnswer: detail.options?.[0] ?? '',
+          })),
+        });
+      } else if (session.type === 'images') {
+        const imagePages = sessionDetails
+          .map((detail) => normalizeContentUrl(detail.contentUrl))
+          .filter((url) => url.length > 0);
+
+        setActiveImagePages(imagePages);
+        setActiveSession({
+          ...session,
+          contentUrl: imagePages[0],
+        });
+      } else {
+        setActiveImagePages([]);
+        setActiveSession(session);
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error) {
+      console.error('Failed to load session data', error);
+    } finally {
+      setLoadingSessionId(null);
+    }
   };
 
   return (
@@ -63,6 +176,7 @@ export default function MyLearningPage() {
                   onClick={() => {
                     setSelectedProduct(product);
                     setActiveSession(null);
+                    setActiveImagePages([]);
                     setExpandedTopic(null);
                   }}
                   className={cn(
@@ -103,8 +217,9 @@ export default function MyLearningPage() {
                               <button
                                 key={session.id}
                                 onClick={() => handleSessionClick(session)}
+                                disabled={loadingSessionId !== null}
                                 className={cn(
-                                  'w-full p-3 rounded-lg flex items-center gap-4 transition-all text-left',
+                                  'w-full p-3 rounded-lg flex items-center gap-4 transition-all text-left disabled:opacity-70 disabled:cursor-wait',
                                   activeSession?.id === session.id
                                     ? 'bg-white shadow-sm ring-1 ring-slate-100 text-indigo-600'
                                     : 'text-slate-600 hover:bg-white/50',
@@ -116,7 +231,9 @@ export default function MyLearningPage() {
                                 )}>
                                   {getIcon(session.type)}
                                 </div>
-                                <span className="font-bold text-xs leading-tight">{session.title}</span>
+                                <span className="font-bold text-xs leading-tight">
+                                  {loadingSessionId === session.id ? 'Memuat sesi...' : session.title}
+                                </span>
                               </button>
                             ))}
                           </div>
@@ -138,13 +255,22 @@ export default function MyLearningPage() {
                   <span className="text-[10px] font-bold text-indigo-700 bg-indigo-100 px-3 py-1 rounded-full uppercase tracking-wider border border-indigo-200">Materi Aktif</span>
                   <h2 className="text-2xl font-bold text-slate-900 mt-4 tracking-tight">{activeSession.title}</h2>
                 </div>
-                <button onClick={() => setActiveSession(null)} className="text-slate-400 hover:text-slate-900 font-bold text-xs uppercase tracking-widest px-4 py-2 hover:bg-slate-100 rounded-lg transition-colors">
+                <button
+                  onClick={() => {
+                    setActiveSession(null);
+                    setActiveImagePages([]);
+                  }}
+                  className="text-slate-400 hover:text-slate-900 font-bold text-xs uppercase tracking-widest px-4 py-2 hover:bg-slate-100 rounded-lg transition-colors"
+                >
                   Tutup Materi
                 </button>
               </div>
 
               <div className="min-h-[400px]">
+                
                 {activeSession.type === 'quiz' && activeSession.questions && <QuizViewer questions={activeSession.questions} />}
+
+                {activeSession.type === 'images' && <ImageViewer title={activeSession.title} images={activeImagePages} />}
 
                 {activeSession.type === 'pdf' && (
                   <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col min-h-[600px]">

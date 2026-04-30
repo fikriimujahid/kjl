@@ -1,9 +1,15 @@
 import { notFound } from 'next/navigation';
-import { MOCK_PRODUCTS_PUBLIC } from '@/lib/mock-data';
 import ProductDetailClient from './ProductDetailClient';
+import { fetchProducts, PRODUCT_URL } from '@/lib/products';
 
-export function generateStaticParams() {
-  return MOCK_PRODUCTS_PUBLIC.map((product) => ({
+export async function generateStaticParams() {
+  if (!PRODUCT_URL || PRODUCT_URL.startsWith('/')) {
+    return [];
+  }
+
+  const products = await fetchProducts({ cache: 'force-cache' });
+
+  return products.map((product) => ({
     productId: product.id,
   }));
 }
@@ -14,10 +20,14 @@ export default async function ProductDetailPage({
   params: Promise<{ productId: string }>;
 }) {
   const { productId } = await params;
-  const product = MOCK_PRODUCTS_PUBLIC.find((item) => item.id === productId);
+  // For static export and SSR, validate on server only when PRODUCT_URL is absolute.
+  if (PRODUCT_URL && !PRODUCT_URL.startsWith('/')) {
+    const products = await fetchProducts({ cache: 'force-cache' });
+    const product = products.find((item) => item.id === productId);
 
-  if (!product) {
-    notFound();
+    if (!product) {
+      notFound();
+    }
   }
 
   return <ProductDetailClient productId={productId} />;

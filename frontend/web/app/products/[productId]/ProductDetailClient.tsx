@@ -11,8 +11,7 @@ import { MOCK_USER } from '@/lib/mock-data';
 import { formatPrice } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { Product, Session } from '@/lib/types';
-
-const PRODUCT_URL = process.env.NEXT_PUBLIC_PRODUCT_URL ?? '';
+import { fetchProducts as fetchProductList } from '@/lib/products';
 
 function sessionTypeLabel(type: Session['type']): string {
   switch (type) {
@@ -58,33 +57,13 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
   useEffect(() => {
     const controller = new AbortController();
 
-    async function fetchProduct() {
-      try {
-        const response = await fetch(PRODUCT_URL, { signal: controller.signal });
-        if (!response.ok) {
-          throw new Error(`Failed to fetch products: ${response.status}`);
-        }
-
-        const data = await response.json();
-        const products = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.catalog)
-            ? data.catalog
-            : [];
-
-        const matchedProduct = (products as Product[]).find((item) => item.id === productId) ?? null;
-        setProduct(matchedProduct);
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          return;
-        }
-
-        console.error('Failed to load product data for Product Detail page.', error);
-        setProduct(null);
-      }
+    async function loadProduct() {
+      const products = await fetchProductList({ signal: controller.signal });
+      const matchedProduct = products.find((item) => item.id === productId) ?? null;
+      setProduct(matchedProduct);
     }
 
-    fetchProduct();
+    loadProduct();
 
     return () => {
       controller.abort();
@@ -110,7 +89,7 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
       <Link href="/products" className="inline-flex items-center gap-2 text-indigo-600 font-bold mb-10 hover:-translate-x-1 transition-transform">
         <ChevronLeft size={20} />
-        Kembali ke Katalog
+        Kembali ke Produk
       </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">

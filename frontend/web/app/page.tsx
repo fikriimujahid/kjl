@@ -6,8 +6,7 @@ import { motion } from 'motion/react';
 import { ArrowRight, Zap, Lock, Smartphone, CheckCircle } from 'lucide-react';
 import { ProductCard } from '@/components/ProductCard';
 import { Product } from '@/lib/types';
-
-const PRODUCT_URL = process.env.NEXT_PUBLIC_PRODUCT_URL ?? '';
+import { fetchProducts } from '@/lib/products';
 
 export default function HomePage() {
   const [productItems, setProductItems] = useState<Product[]>([]);
@@ -15,32 +14,12 @@ export default function HomePage() {
   useEffect(() => {
     const controller = new AbortController();
 
-    async function fetchProducts() {
-      try {
-        const response = await fetch(PRODUCT_URL, { signal: controller.signal });
-        if (!response.ok) {
-          throw new Error(`Failed to fetch products: ${response.status}`);
-        }
-
-        const data = await response.json();
-        const products = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.catalog)
-            ? data.catalog
-            : [];
-
-        setProductItems(products as Product[]);
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          return;
-        }
-
-        console.error('Failed to load product data for Home page.', error);
-        setProductItems([]);
-      }
+    async function loadProducts() {
+      const products = await fetchProducts({ signal: controller.signal });
+      setProductItems(products);
     }
 
-    fetchProducts();
+    loadProducts();
 
     return () => {
       controller.abort();
