@@ -29,7 +29,6 @@ interface LoadOwnedProductsOptions extends FetchProductsOptions {
 export async function fetchProducts({
   url,
   signal,
-  cache,
 }: FetchProductsOptions = {}): Promise<Product[]> {
   const targetUrl = normalizeUrl(url ?? PRODUCT_URL);
   if (!targetUrl) {
@@ -39,7 +38,6 @@ export async function fetchProducts({
   try {
     const response = await fetch(targetUrl, {
       signal,
-      ...(cache ? { cache } : {}),
     });
 
     if (!response.ok) {
@@ -58,9 +56,8 @@ export async function loadOwnedProducts({
   purchases,
   url,
   signal,
-  cache,
 }: LoadOwnedProductsOptions): Promise<Product[]> {
-  const products = await fetchProducts({ url, signal, cache });
+  const products = await fetchProducts({ url, signal });
   const purchasedProductIds = new Set(
     purchases
       .filter((purchase) => purchase.userId === userId)
