@@ -1,16 +1,19 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   PlayCircle, Flame, Target, Mail, Calendar, BarChart3,
   TrendingUp, CheckCircle2, BookOpen, Trophy, Zap, ChevronRight,
   ArrowRight, Volume2, Star,
 } from 'lucide-react';
-import { MOCK_USER, MOCK_PRODUCTS } from '@/lib/mock-data';
+import { MOCK_PURCHASED_PRODUCTS, MOCK_USER } from '@/lib/mock-data';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { RequireAuth } from '@/components/RequireAuth';
 import { useAuth } from '@/components/AuthProvider';
+import { Product } from '@/lib/types';
+import { loadOwnedProducts } from '@/lib/products';
 
 const STREAK_DAYS = 7;
 const DAILY_GOAL_XP = 80;
@@ -37,9 +40,36 @@ function daysUntil(date: Date) {
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const ownedProducts = MOCK_PRODUCTS.filter((product) =>
-    MOCK_USER.purchasedProductIds.includes(product.id),
-  );
+  const [ownedProducts, setOwnedProducts] = useState<Product[]>([]);
+  const [isLoadingOwnedProducts, setIsLoadingOwnedProducts] = useState(true);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let isActive = true;
+
+    async function loadDashboardOwnedProducts() {
+      const nextOwnedProducts = await loadOwnedProducts({
+        signal: controller.signal,
+        userId: MOCK_USER.id,
+        purchases: MOCK_PURCHASED_PRODUCTS,
+      });
+
+      if (!isActive) {
+        return;
+      }
+
+      setOwnedProducts(nextOwnedProducts);
+      setIsLoadingOwnedProducts(false);
+    }
+
+    loadDashboardOwnedProducts();
+
+    return () => {
+      isActive = false;
+      controller.abort();
+    };
+  }, []);
+
   const recentProduct = ownedProducts[0];
   const daysLeft = daysUntil(EXAM_DATE);
   const today = new Date().getDay();
@@ -277,6 +307,9 @@ export default function DashboardPage() {
             </Link>
           </div>
           <div className="space-y-3">
+            {isLoadingOwnedProducts && (
+              <p className="text-xs text-slate-400 font-medium px-1">Memuat produk kamu...</p>
+            )}
             {ownedProducts.map((product) => {
               const pct = PRODUCT_PROGRESS[product.id] ?? 0;
               return (

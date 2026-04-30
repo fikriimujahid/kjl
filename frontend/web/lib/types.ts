@@ -22,9 +22,18 @@ export interface Question {
 export interface Session {
   id: string;
   title: string;
-  type: 'quiz' | 'pdf' | 'audio' | 'image' | 'video';
+  type: 'quiz' | 'pdf' | 'audio' | 'images' | 'video';
   contentUrl?: string;
-  questions?: Question[];
+  questions?: Question[]; 
+}
+
+export interface SessionDetail {
+  id: string;
+  text?: string;
+  contentUrl?: string;
+  options?: string[];
+  image?: string;
+  audio?: string;
 }
 
 export interface Topic {
@@ -52,4 +61,12 @@ export interface PaymentHistory {
   date: string;
   amount: number;
   status: 'Success' | 'Failed' | 'Pending';
+}
+
+export interface PurchasedProduct {
+  id: string;
+  productId: string;
+  userId: string;
+  purchaseDate: string;
+  accessExpiryDate: string;
 }

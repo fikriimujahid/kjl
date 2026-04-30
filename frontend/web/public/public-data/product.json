@@ -14,7 +14,7 @@
         "id": "tIntro",
         "title": "Pengenalan Hiragana",
         "sessions": [
-          { "id": "sIntroA", "title": "Apa itu Hiragana?", "type": "pdf" },
+          { "id": "sIntroA", "title": "Apa itu Hiragana?", "type": "images" },
           { "id": "sIntroB", "title": "Cara Belajar Hiragana dengan Efektif", "type": "pdf" },
           { "id": "sIntroC", "title": "Tips Menghafal Hiragana dengan Cepat", "type": "pdf" },
           { "id": "sIntroD", "title": "Quiz Pengenalan Hiragana", "type": "quiz" }
