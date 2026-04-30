@@ -4,8 +4,6 @@ on:
     branches: [dev, prod]
     paths:
       - frontend/web/**
-      - .github/workflows/frontend-ci.yml
-      - .github/workflows/frontend-deploy.yml
   # push:
   #   branches: ["feature/**"]
   #   paths: ["frontend/**"]
