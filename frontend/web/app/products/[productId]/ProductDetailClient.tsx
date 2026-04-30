@@ -21,7 +21,7 @@ function sessionTypeLabel(type: Session['type']): string {
       return 'PDF';
     case 'audio':
       return 'Audio';
-    case 'image':
+    case 'images':
       return 'Gambar';
     default:
       return type;
@@ -38,7 +38,7 @@ function SessionTypeIcon({ type }: { type: Session['type'] }) {
       return <FileText {...props} />;
     case 'audio':
       return <Headphones {...props} />;
-    case 'image':
+    case 'images':
       return <ImageIcon {...props} />;
     default:
       return <BookOpen {...props} />;
