@@ -155,7 +155,8 @@ github_cicd = {
   role_name                = "kejepangdulu-dev-github-oidc-role"
   managed_policy_arns = [
     "arn:aws:iam::aws:policy/AmazonS3FullAccess",
-    "arn:aws:iam::aws:policy/CloudFrontFullAccess"
+    "arn:aws:iam::aws:policy/CloudFrontFullAccess",
+    "arn:aws:iam::aws:policy/AWSLambda_FullAccess"
   ]
 }
 
