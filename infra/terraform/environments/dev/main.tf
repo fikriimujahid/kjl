@@ -92,22 +92,22 @@ module "product_api" {
 # -------------------------------------------------------------------------
 # DYNAMODB LEARNING CONTENT TABLE
 # -------------------------------------------------------------------------
-module "learning_content_table" {
-  source = "../../modules/dynamodb"
+# module "learning_content_table" {
+#   source = "../../modules/dynamodb"
 
-  table_name                     = var.learning_content_table.table_name
-  billing_mode                   = var.learning_content_table.billing_mode
-  hash_key                       = var.learning_content_table.hash_key
-  range_key                      = try(var.learning_content_table.range_key, null)
-  attributes                     = var.learning_content_table.attributes
-  global_secondary_indexes       = try(var.learning_content_table.global_secondary_indexes, [])
-  ttl_enabled                    = var.learning_content_table.ttl_enabled
-  ttl_attribute_name             = try(var.learning_content_table.ttl_attribute_name, null)
-  point_in_time_recovery_enabled = var.learning_content_table.point_in_time_recovery_enabled
-  server_side_encryption_enabled = var.learning_content_table.server_side_encryption_enabled
+#   table_name                     = var.learning_content_table.table_name
+#   billing_mode                   = var.learning_content_table.billing_mode
+#   hash_key                       = var.learning_content_table.hash_key
+#   range_key                      = try(var.learning_content_table.range_key, null)
+#   attributes                     = var.learning_content_table.attributes
+#   global_secondary_indexes       = try(var.learning_content_table.global_secondary_indexes, [])
+#   ttl_enabled                    = var.learning_content_table.ttl_enabled
+#   ttl_attribute_name             = try(var.learning_content_table.ttl_attribute_name, null)
+#   point_in_time_recovery_enabled = var.learning_content_table.point_in_time_recovery_enabled
+#   server_side_encryption_enabled = var.learning_content_table.server_side_encryption_enabled
 
-  tags = var.tags
-}
+#   tags = var.tags
+# }
 
 # -------------------------------------------------------------------------
 # FRONTEND SITE HOSTING MODULE
