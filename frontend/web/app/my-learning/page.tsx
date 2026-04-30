@@ -3,16 +3,18 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Play, Book, Music, FileText, ChevronDown, ChevronUp } from 'lucide-react';
-import { MOCK_PURCHASED_PRODUCTS, MOCK_SESSION_DETAILS_IMAGE, MOCK_SESSION_DETAILS_QUIZ, MOCK_USER } from '@/lib/mock-data';
+import { MOCK_PURCHASED_PRODUCTS, MOCK_SESSION_DETAILS_IMAGE, MOCK_SESSION_DETAILS_QUIZ } from '@/lib/mock-data';
 import { Product, Session, SessionDetail } from '@/lib/types';
 import { motion, AnimatePresence } from 'motion/react';
 import QuizViewer from '@/components/QuizViewer';
 import ImageViewer from '../../components/ImageViewer';
 import { cn } from '@/lib/utils';
 import { RequireAuth } from '@/components/RequireAuth';
+import { useAuth } from '@/components/AuthProvider';
 import { loadOwnedProducts } from '@/lib/products';
 
 export default function MyLearningPage() {
+  const { status, user } = useAuth();
   const [ownedProducts, setOwnedProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [activeSession, setActiveSession] = useState<Session | null>(null);
@@ -22,13 +24,26 @@ export default function MyLearningPage() {
   const [isLoadingOwnedProducts, setIsLoadingOwnedProducts] = useState(true);
 
   useEffect(() => {
+    if (status === 'loading') {
+      return;
+    }
+
+    if (status !== 'authenticated' || !user?.id) {
+      setOwnedProducts([]);
+      setSelectedProduct(null);
+      setIsLoadingOwnedProducts(false);
+      return;
+    }
+
+    const userId = user.id;
+
     const controller = new AbortController();
     let isActive = true;
 
     async function loadPageOwnedProducts() {
       const nextOwnedProducts = await loadOwnedProducts({
         signal: controller.signal,
-        userId: MOCK_USER.id,
+        userId,
         purchases: MOCK_PURCHASED_PRODUCTS,
       });
 
@@ -53,7 +68,7 @@ export default function MyLearningPage() {
       isActive = false;
       controller.abort();
     };
-  }, []);
+  }, [status, user?.id]);
 
   if (isLoadingOwnedProducts) {
     return (
@@ -250,9 +265,8 @@ export default function MyLearningPage() {
         <div className="lg:col-span-8 order-1 lg:order-2">
           {activeSession ? (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
+              {/* <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
                 <div>
-                  <span className="text-[10px] font-bold text-indigo-700 bg-indigo-100 px-3 py-1 rounded-full uppercase tracking-wider border border-indigo-200">Materi Aktif</span>
                   <h2 className="text-2xl font-bold text-slate-900 mt-4 tracking-tight">{activeSession.title}</h2>
                 </div>
                 <button
@@ -264,7 +278,7 @@ export default function MyLearningPage() {
                 >
                   Tutup Materi
                 </button>
-              </div>
+              </div> */}
 
               <div className="min-h-[400px]">
                 
