@@ -149,12 +149,82 @@ auth_cognito = {
 # GitHub CICD Variables
 # ============================================================================
 github_cicd = {
-  github_repo = "fikriimujahid/kjl"
-  branches = ["dev"]
+  github_repo              = "fikriimujahid/kjl"
+  branches                 = ["dev"]
   github_oidc_provider_arn = "arn:aws:iam::731099197523:oidc-provider/token.actions.githubusercontent.com"
-  role_name = "kejepangdulu-dev-github-oidc-role"
+  role_name                = "kejepangdulu-dev-github-oidc-role"
   managed_policy_arns = [
     "arn:aws:iam::aws:policy/AmazonS3FullAccess",
     "arn:aws:iam::aws:policy/CloudFrontFullAccess"
   ]
+}
+
+# ============================================================================
+# Product API Variables
+# ============================================================================
+product_api = {
+  lambda = {
+    name                  = "kejepangdulu-dev-product-api"
+    description           = "Public Product API Lambda."
+    source_dir            = "../../../../backend/product-service/lambda"
+    handler               = "handler.handler"
+    runtime               = "nodejs18.x"
+    memory_size           = 256
+    timeout               = 10
+    environment_variables = {}
+    publish               = true
+  }
+
+  api_gateway = {
+    name        = "kejepangdulu-dev-product-api"
+    description = "Public Product API."
+    stage_name  = "$default"
+
+    cors_allow_origins  = ["*"]
+    cors_allow_methods  = ["GET", "OPTIONS"]
+    cors_allow_headers  = ["content-type", "authorization"]
+    cors_expose_headers = []
+    cors_max_age        = 300
+
+    routes = {
+      list_products_under_api = {
+        route_key          = "GET /api/products"
+        authorization_type = "NONE"
+        operation_name     = "ListProductsUnderApi"
+      }
+      get_product_by_id_under_api = {
+        route_key          = "GET /api/products/{id}"
+        authorization_type = "NONE"
+        operation_name     = "GetProductByIdUnderApi"
+      }
+    }
+  }
+  cloudfront_path_pattern = "/api/*"
+}
+
+# ============================================================================
+# DynamoDB Learning Content Table Variables
+# ============================================================================
+learning_content_table = {
+  table_name   = "learning-content-dev"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "PK"
+  range_key    = "SK"
+
+  attributes = [
+    {
+      name = "PK"
+      type = "S"
+    },
+    {
+      name = "SK"
+      type = "S"
+    }
+  ]
+
+  global_secondary_indexes       = []
+  ttl_enabled                    = false
+  ttl_attribute_name             = null
+  point_in_time_recovery_enabled = true
+  server_side_encryption_enabled = true
 }

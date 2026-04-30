@@ -74,6 +74,78 @@ variable "frontend_site_hosting" {
 }
 
 # -------------------------------------------------------------------------
+# PRODUCT API MODULE
+# -------------------------------------------------------------------------
+variable "product_api" {
+  description = "Product API settings for Lambda, API Gateway, and CloudFront route path."
+  type = object({
+
+    lambda = object({
+      name                  = string
+      description           = optional(string)
+      source_dir            = string
+      handler               = string
+      runtime               = string
+      memory_size           = number
+      timeout               = number
+      environment_variables = map(string)
+      publish               = bool
+    })
+
+    api_gateway = object({
+      name                = optional(string)
+      description         = optional(string)
+      stage_name          = optional(string)
+      cors_allow_origins  = list(string)
+      cors_allow_methods  = list(string)
+      cors_allow_headers  = list(string)
+      cors_expose_headers = list(string)
+      cors_max_age        = number
+      routes = map(object({
+        route_key              = string
+        payload_format_version = optional(string)
+        timeout_milliseconds   = optional(number)
+        authorization_type     = optional(string)
+        authorizer_id          = optional(string)
+        operation_name         = optional(string)
+      }))
+    })
+
+    cloudfront_path_pattern = string
+  })
+}
+
+# -------------------------------------------------------------------------
+# DYNAMODB LEARNING CONTENT TABLE
+# -------------------------------------------------------------------------
+variable "learning_content_table" {
+  description = "DynamoDB table configuration for learning content."
+  type = object({
+    table_name   = string
+    billing_mode = string
+    hash_key     = string
+    range_key    = optional(string)
+    attributes = list(object({
+      name = string
+      type = string
+    }))
+    global_secondary_indexes = optional(list(object({
+      name               = string
+      hash_key           = string
+      range_key          = optional(string)
+      projection_type    = string
+      non_key_attributes = optional(list(string), [])
+      read_capacity      = optional(number)
+      write_capacity     = optional(number)
+    })), [])
+    ttl_enabled                    = bool
+    ttl_attribute_name             = optional(string)
+    point_in_time_recovery_enabled = bool
+    server_side_encryption_enabled = bool
+  })
+}
+
+# -------------------------------------------------------------------------
 # COGNITO AUTH MODULE
 # -------------------------------------------------------------------------
 variable "auth_cognito" {
@@ -104,10 +176,10 @@ variable "auth_cognito" {
 variable "github_cicd" {
   description = "GitHub OIDC settings for CI/CD module."
   type = object({
-    github_repo = string
-    branches = list(string)
+    github_repo              = string
+    branches                 = list(string)
     github_oidc_provider_arn = string
-    role_name = string
-    managed_policy_arns = list(string)
+    role_name                = string
+    managed_policy_arns      = list(string)
   })
 }
