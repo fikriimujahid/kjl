@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Search, BookOpen } from 'lucide-react';
 import { ProductCard } from '@/components/ProductCard';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { Product } from '@/lib/types';
-
-const PRODUCT_URL = process.env.NEXT_PUBLIC_PRODUCT_URL ?? '';
+import { fetchProducts } from '@/lib/products';
 
 export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -17,32 +16,12 @@ export default function ProductsPage() {
   useEffect(() => {
     const controller = new AbortController();
 
-    async function fetchProducts() {
-      try {
-        const response = await fetch(PRODUCT_URL, { signal: controller.signal });
-        if (!response.ok) {
-          throw new Error(`Failed to fetch products: ${response.status}`);
-        }
-
-        const data = await response.json();
-        const products = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.catalog)
-            ? data.catalog
-            : [];
-
-        setProductItems(products as Product[]);
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          return;
-        }
-
-        console.error('Failed to load product data for Products page.', error);
-        setProductItems([]);
-      }
+    async function loadProducts() {
+      const products = await fetchProducts({ signal: controller.signal });
+      setProductItems(products);
     }
 
-    fetchProducts();
+    loadProducts();
 
     return () => {
       controller.abort();
@@ -60,7 +39,7 @@ export default function ProductsPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <header className="mb-12">
-        <h1 className="text-3xl font-bold text-slate-800 tracking-tight mb-4">Katalog Program Pembelajaran</h1>
+        <h1 className="text-3xl font-bold text-slate-800 tracking-tight mb-4">Daftar Program Pembelajaran</h1>
         <p className="text-slate-500 font-medium">Pilih paket belajar yang sesuai dengan level dan target ujianmu.</p>
       </header>
 

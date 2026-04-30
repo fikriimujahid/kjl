@@ -128,7 +128,7 @@ export default function LoginPage() {
         user: safeUser,
       });
 
-      setLoading(false);
+      //setLoading(false);
       router.push(nextPath);
     } catch (loginError) {
       setLoading(false);

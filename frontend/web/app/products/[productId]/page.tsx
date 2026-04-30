@@ -1,12 +1,29 @@
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { notFound } from 'next/navigation';
-import { MOCK_PRODUCTS_PUBLIC } from '@/lib/mock-data';
 import ProductDetailClient from './ProductDetailClient';
+import { parseProducts } from '@/lib/products';
 
-export function generateStaticParams() {
-  return MOCK_PRODUCTS_PUBLIC.map((product) => ({
-    productId: product.id,
+async function loadStaticProductIds() {
+  try {
+    const fallbackPath = path.join(process.cwd(), 'public', 'public-data', 'product.json');
+    const fallbackRaw = await readFile(fallbackPath, 'utf-8');
+    const fallbackData: unknown = JSON.parse(fallbackRaw);
+    return parseProducts(fallbackData).map((product) => product.id);
+  } catch {
+    return [];
+  }
+}
+
+export async function generateStaticParams() {
+  const productIds = await loadStaticProductIds();
+
+  return productIds.map((productId) => ({
+    productId,
   }));
 }
+
+export const dynamicParams = false;
 
 export default async function ProductDetailPage({
   params,
@@ -14,9 +31,9 @@ export default async function ProductDetailPage({
   params: Promise<{ productId: string }>;
 }) {
   const { productId } = await params;
-  const product = MOCK_PRODUCTS_PUBLIC.find((item) => item.id === productId);
+  const staticProductIds = await loadStaticProductIds();
 
-  if (!product) {
+  if (!staticProductIds.includes(productId)) {
     notFound();
   }
 
