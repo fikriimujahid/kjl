@@ -11,14 +11,14 @@ export const MOCK_PURCHASED_PRODUCTS: PurchasedProduct[] = [
   {
     id: 'pp1',
     productId: 'p0',
-    userId: 'u1',
+    userId: '491a856c-00a1-701a-b7b6-dfeb5db1e6fe',
     purchaseDate: '2026-03-15',
     accessExpiryDate: '2027-04-14',
   },
   {
     id: 'pp2',
     productId: 'p1',
-    userId: 'u1',
+    userId: '491a856c-00a1-701a-b7b6-dfeb5db1e6fe',
     purchaseDate: '2026-03-15',
     accessExpiryDate: '2026-04-14',
   }

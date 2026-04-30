@@ -33,7 +33,7 @@ export default function ImageViewer({ images, title }: ImageViewerProps) {
     <div className="flex flex-col h-full bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
       <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 gap-4">
         <div className="flex items-center gap-3 min-w-0">
-          <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-full uppercase tracking-wider">Image Mode</span>
+          <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-full uppercase tracking-wider">Learning Mode</span>
           <h2 className="font-bold text-slate-800 text-sm truncate">{title ?? 'Sesi Gambar'}</h2>
         </div>
         <div className="text-xs text-slate-500 font-medium shrink-0">
