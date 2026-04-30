@@ -22,6 +22,37 @@ output "cloudfront_distribution_id" {
 }
 
 # -------------------------------------------------------------------------
+# PRODUCT API
+# -------------------------------------------------------------------------
+output "product_api_endpoint" {
+  description = "API Gateway endpoint for the Product API in the dev environment."
+  value       = module.product_api.api_endpoint
+}
+
+output "product_api_lambda_function_name" {
+  description = "Lambda function name backing the Product API in the dev environment."
+  value       = module.product_api.lambda_function_name
+}
+
+# -------------------------------------------------------------------------
+# DYNAMODB LEARNING CONTENT TABLE
+# -------------------------------------------------------------------------
+output "learning_content_table_name" {
+  description = "DynamoDB learning content table name in the dev environment."
+  value       = module.learning_content_table.table_name
+}
+
+output "learning_content_table_arn" {
+  description = "DynamoDB learning content table ARN in the dev environment."
+  value       = module.learning_content_table.table_arn
+}
+
+output "learning_content_table_id" {
+  description = "DynamoDB learning content table ID in the dev environment."
+  value       = module.learning_content_table.table_id
+}
+
+# -------------------------------------------------------------------------
 # COGNITO AUTH
 # -------------------------------------------------------------------------
 output "user_pool_id" {

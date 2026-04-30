@@ -89,6 +89,18 @@ variable "cloudfront" {
       bucket_regional_domain_name = optional(string)
       manage_bucket_policy        = optional(bool, true)
     }), {})
+    api_origin = optional(object({
+      enabled                  = optional(bool, false)
+      domain_name              = optional(string)
+      path_pattern             = optional(string, "/api/*")
+      origin_path              = optional(string)
+      connection_attempts      = optional(number, 3)
+      connection_timeout       = optional(number, 10)
+      origin_protocol_policy   = optional(string, "https-only")
+      origin_ssl_protocols     = optional(list(string), ["TLSv1.2"])
+      origin_keepalive_timeout = optional(number, 5)
+      origin_read_timeout      = optional(number, 30)
+    }), {})
     ordered_cache_behaviors = optional(list(object({
       path_pattern               = string
       target_origin_id           = string
@@ -122,6 +134,14 @@ variable "cloudfront" {
       try(var.cloudfront.public_origin.bucket_regional_domain_name, null) != null
     )
     error_message = "When cloudfront.public_origin.enabled is true, cloudfront.public_origin.bucket_name and cloudfront.public_origin.bucket_regional_domain_name are required."
+  }
+
+  validation {
+    condition = !try(var.cloudfront.api_origin.enabled, false) || (
+      try(var.cloudfront.api_origin.domain_name, null) != null &&
+      trimspace(try(var.cloudfront.api_origin.domain_name, "")) != ""
+    )
+    error_message = "When cloudfront.api_origin.enabled is true, cloudfront.api_origin.domain_name is required."
   }
 }
 

@@ -772,7 +772,7 @@ variable "acm_certificate_arn" {
   # ARN string contains ":us-east-1:". A certificate in any other region
   # would cause a silent failure or a confusing AWS error during apply.
   validation {
-    condition = strcontains(var.acm_certificate_arn, ":us-east-1:")
+    condition     = strcontains(var.acm_certificate_arn, ":us-east-1:")
     error_message = "CloudFront ACM certificates must be created in us-east-1."
   }
 }

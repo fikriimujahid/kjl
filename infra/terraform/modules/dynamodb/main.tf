@@ -1,126 +1,59 @@
 locals {
-  table_definitions = {
-    users = {
-      hash_key  = "id"
-      range_key = null
-    }
-    products = {
-      hash_key  = "id"
-      range_key = null
-    }
-    payments = {
-      hash_key  = "id"
-      range_key = null
-    }
-    user_product_access = {
-      hash_key  = "user_id"
-      range_key = "product_id"
-    }
-    content_metadata = {
-      hash_key  = "content_id"
-      range_key = null
-    }
-  }
-
-  resolved_table_names = {
-    for table_name, definition in local.table_definitions : table_name => coalesce(
-      lookup(var.table_name_overrides, table_name, null),
-      "${var.project_name}-${var.environment}-${table_name}"
-    )
-  }
+  merged_tags = merge(var.tags, {
+    Module = "dynamodb"
+    Name   = var.table_name
+  })
 }
 
 resource "aws_dynamodb_table" "this" {
-  for_each = local.table_definitions
+  name         = var.table_name
+  billing_mode = var.billing_mode
+  hash_key     = var.hash_key
+  range_key    = var.range_key
 
-  name         = local.resolved_table_names[each.key]
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = each.value.hash_key
-  range_key    = each.value.range_key
+  read_capacity  = var.billing_mode == "PROVISIONED" ? var.read_capacity : null
+  write_capacity = var.billing_mode == "PROVISIONED" ? var.write_capacity : null
 
   dynamic "attribute" {
-    for_each = toset(compact([each.value.hash_key, each.value.range_key]))
+    for_each = var.attributes
 
     content {
-      name = attribute.value
-      type = "S"
+      name = attribute.value.name
+      type = attribute.value.type
     }
   }
 
-  server_side_encryption {
-    enabled = true
+  dynamic "global_secondary_index" {
+    for_each = var.global_secondary_indexes
+
+    content {
+      name               = global_secondary_index.value.name
+      hash_key           = global_secondary_index.value.hash_key
+      range_key          = try(global_secondary_index.value.range_key, null)
+      projection_type    = global_secondary_index.value.projection_type
+      non_key_attributes = try(global_secondary_index.value.non_key_attributes, null)
+
+      read_capacity  = var.billing_mode == "PROVISIONED" ? try(global_secondary_index.value.read_capacity, null) : null
+      write_capacity = var.billing_mode == "PROVISIONED" ? try(global_secondary_index.value.write_capacity, null) : null
+    }
+  }
+
+  dynamic "ttl" {
+    for_each = var.ttl_enabled ? [1] : []
+
+    content {
+      attribute_name = var.ttl_attribute_name
+      enabled        = true
+    }
   }
 
   point_in_time_recovery {
     enabled = var.point_in_time_recovery_enabled
   }
 
-  tags = merge(var.tags, { Table = each.key })
-}
-
-data "aws_iam_policy_document" "tables_rw" {
-  statement {
-    sid    = "DynamoDbReadWriteTables"
-    effect = "Allow"
-
-    actions = [
-      "dynamodb:BatchGetItem",
-      "dynamodb:BatchWriteItem",
-      "dynamodb:ConditionCheckItem",
-      "dynamodb:DeleteItem",
-      "dynamodb:GetItem",
-      "dynamodb:PutItem",
-      "dynamodb:Query",
-      "dynamodb:Scan",
-      "dynamodb:UpdateItem",
-      "dynamodb:DescribeTable"
-    ]
-
-    resources = flatten([
-      for table in aws_dynamodb_table.this : [
-        table.arn,
-        "${table.arn}/index/*"
-      ]
-    ])
+  server_side_encryption {
+    enabled = var.server_side_encryption_enabled
   }
-}
 
-resource "aws_iam_policy" "tables_rw" {
-  count = var.create_iam_policies ? 1 : 0
-
-  name        = "${var.project_name}-${var.environment}-dynamodb-rw"
-  description = "Read/write access policy for KeJepangDulu DynamoDB tables."
-  policy      = data.aws_iam_policy_document.tables_rw.json
-  tags        = var.tags
-}
-
-data "aws_iam_policy_document" "tables_ro" {
-  statement {
-    sid    = "DynamoDbReadOnlyTables"
-    effect = "Allow"
-
-    actions = [
-      "dynamodb:BatchGetItem",
-      "dynamodb:GetItem",
-      "dynamodb:Query",
-      "dynamodb:Scan",
-      "dynamodb:DescribeTable"
-    ]
-
-    resources = flatten([
-      for table in aws_dynamodb_table.this : [
-        table.arn,
-        "${table.arn}/index/*"
-      ]
-    ])
-  }
-}
-
-resource "aws_iam_policy" "tables_ro" {
-  count = var.create_iam_policies ? 1 : 0
-
-  name        = "${var.project_name}-${var.environment}-dynamodb-ro"
-  description = "Read-only access policy for KeJepangDulu DynamoDB tables."
-  policy      = data.aws_iam_policy_document.tables_ro.json
-  tags        = var.tags
+  tags = local.merged_tags
 }
