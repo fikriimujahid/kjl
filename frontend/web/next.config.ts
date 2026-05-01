@@ -10,6 +10,9 @@ const isStaticExport =
   process.env.npm_lifecycle_event === 'export';
 
 const nextConfig: NextConfig = {
+  env: {
+    NEXT_API_BASE_URL: process.env.NEXT_API_BASE_URL,
+  },
   images: {
     unoptimized: true,
   },
