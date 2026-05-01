@@ -2,14 +2,14 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { notFound } from 'next/navigation';
 import ProductDetailClient from './ProductDetailClient';
-import { parseProducts } from '@/lib/products';
+import { Product } from '@/lib/types';
 
 async function loadStaticProductIds() {
   try {
     const fallbackPath = path.join(process.cwd(), 'public', 'public-data', 'product.json');
     const fallbackRaw = await readFile(fallbackPath, 'utf-8');
-    const fallbackData: unknown = JSON.parse(fallbackRaw);
-    return parseProducts(fallbackData).map((product) => product.id);
+    const fallbackData: Product[] = JSON.parse(fallbackRaw);
+    return fallbackData.map((product) => product.id);
   } catch {
     return [];
   }

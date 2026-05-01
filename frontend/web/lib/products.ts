@@ -1,45 +1,8 @@
 import { Product, PurchasedProduct } from '@/lib/types';
 
-const API_BASE_URL = process.env.NEXT_API_BASE_URL;
-const PRODUCTS_ENDPOINT = '/products';
+const API_BASE_URL = process.env.NEXT_API_BASE_URL ?? '/api';
 const PURCHASED_PRODUCTS_ENDPOINT = '/purchased-products';
-
-function buildProductsUrl(baseUrl?: string): string | null {
-  const normalizedBaseUrl = normalizeUrl(baseUrl);
-  if (!normalizedBaseUrl) {
-    return null;
-  }
-
-  return `${normalizedBaseUrl.replace(/\/+$/, '')}${PRODUCTS_ENDPOINT}`;
-}
-
-export const PRODUCT_URL =
-  buildProductsUrl(API_BASE_URL) ?? process.env.NEXT_PUBLIC_PRODUCT_URL;
-
-function buildPurchasedProductsUrl(baseUrl: string, userId: string): string {
-  return `${baseUrl.replace(/\/+$/, '')}${PURCHASED_PRODUCTS_ENDPOINT}/${encodeURIComponent(userId)}`;
-}
-
-function normalizeUrl(url?: string): string | null {
-  const normalized = url?.trim();
-  return normalized ? normalized : null;
-}
-
-export function parseProducts(data: unknown): Product[] {
-  if (Array.isArray(data)) {
-    return data as Product[];
-  }
-
-  return [];
-}
-
-export function parsePurchasedProducts(data: unknown): PurchasedProduct[] {
-  if (Array.isArray(data)) {
-    return data as PurchasedProduct[];
-  }
-
-  return [];
-}
+const PUBLIC_PRODUCT_URL = process.env.NEXT_PUBLIC_PRODUCT_URL ?? '';
 
 interface FetchProductsOptions {
   url?: string;
@@ -63,17 +26,11 @@ interface FetchPurchasedProductsOptions {
 }
 
 export async function fetchProducts({
-  url,
   signal,
   cache = 'no-store',
 }: FetchProductsOptions = {}): Promise<Product[]> {
-  const targetUrl = normalizeUrl(url ?? PRODUCT_URL);
-  if (!targetUrl) {
-    return [];
-  }
-
   try {
-    const response = await fetch(targetUrl, {
+    const response = await fetch(PUBLIC_PRODUCT_URL, {
       signal,
       cache,
     });
@@ -82,34 +39,46 @@ export async function fetchProducts({
       return [];
     }
 
-    const data: unknown = await response.json();
-    return parseProducts(data);
+    const data: Product[] = await response.json();
+    return data;
   } catch {
     return [];
   }
 }
 
+export async function loadOwnedProducts({
+  signal,
+  userId,
+  accessToken,
+}: LoadOwnedProductsOptions): Promise<Product[]> {
+  const [products, purchasedProductsFromApi] = await Promise.all([
+    fetchProducts({ signal }),
+    fetchPurchasedProductsByUser({
+      userId,
+      signal,
+      accessToken,
+    }),
+  ]);
+
+  const purchasedProductIds = new Set(
+    (purchasedProductsFromApi ?? []).map((purchase) => purchase.productId),
+  );
+
+  return products.filter((product) => purchasedProductIds.has(product.id));
+}
+
 export async function fetchPurchasedProductsByUser({
   userId,
-  url,
   signal,
-  cache = 'no-store',
   accessToken,
 }: FetchPurchasedProductsOptions): Promise<PurchasedProduct[] | null> {
-  const baseUrl = normalizeUrl(API_BASE_URL);
-  const targetUrl = normalizeUrl(url) ?? (baseUrl ? buildPurchasedProductsUrl(baseUrl, userId) : null);
-  if (!targetUrl) {
-    return null;
-  }
-
   try {
     const headers: HeadersInit = accessToken
       ? { Authorization: `Bearer ${accessToken}` }
       : {};
 
-    const response = await fetch(targetUrl, {
+    const response = await fetch(`${API_BASE_URL}${PURCHASED_PRODUCTS_ENDPOINT}/${encodeURIComponent(userId)}`, {
       signal,
-      cache,
       headers,
     });
 
@@ -117,36 +86,10 @@ export async function fetchPurchasedProductsByUser({
       return null;
     }
 
-    const data: unknown = await response.json();
-    return parsePurchasedProducts(data);
+    const data: PurchasedProduct[] = await response.json();
+    return data;
   } catch {
     return null;
   }
 }
 
-export async function loadOwnedProducts({
-  userId,
-  purchases,
-  url,
-  purchasesUrl,
-  signal,
-  accessToken,
-}: LoadOwnedProductsOptions): Promise<Product[]> {
-  const products = await fetchProducts({ url, signal });
-  const purchasedProductsFromApi = await fetchPurchasedProductsByUser({
-    userId,
-    url: purchasesUrl,
-    signal,
-    accessToken,
-  });
-  const fallbackPurchases = purchases ?? [];
-  const effectivePurchases = purchasedProductsFromApi ?? fallbackPurchases;
-
-  const purchasedProductIds = new Set(
-    effectivePurchases
-      .filter((purchase) => purchase.userId === userId)
-      .map((purchase) => purchase.productId),
-  );
-
-  return products.filter((product) => purchasedProductIds.has(product.id));
-}
