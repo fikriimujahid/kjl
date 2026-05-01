@@ -5,7 +5,12 @@
   "description": "Product API Lambda service for KeJepangDulu",
   "scripts": {
     "clean": "node -e \"require('fs').rmSync('build',{recursive:true,force:true})\"",
-    "build": "npm run clean && tsc -p tsconfig.json"
+    "build": "npm run clean && tsc -p tsconfig.json",
+    "seed:purchases": "node scripts/seedDummyPurchases.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "3.1040.0",
+    "@aws-sdk/lib-dynamodb": "3.1040.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.147",

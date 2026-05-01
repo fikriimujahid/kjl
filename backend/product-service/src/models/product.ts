@@ -30,3 +30,11 @@ export interface ProductSummary {
   price: number;
 }
 
+export interface PurchasedProduct {
+  id: string;
+  productId: string;
+  userId: string;
+  purchaseDate: string;
+  accessExpiryDate: string;
+}
+

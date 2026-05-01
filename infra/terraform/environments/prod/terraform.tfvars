@@ -167,7 +167,7 @@ product_api = {
     description           = "Public Product API Lambda."
     source_dir            = "../../../../backend/product-service/lambda"
     handler               = "handler.handler"
-    runtime               = "nodejs18.x"
+    runtime               = "nodejs22.x"
     memory_size           = 256
     timeout               = 10
     environment_variables = {}
@@ -195,6 +195,11 @@ product_api = {
         route_key          = "GET /api/products/{id}"
         authorization_type = "NONE"
         operation_name     = "GetProductByIdUnderApi"
+      }
+      get_purchased_products_by_user_under_api = {
+        route_key          = "GET /api/purchased-products/{userId}"
+        authorization_type = "JWT"
+        operation_name     = "GetPurchasedProductsByUserUnderApi"
       }
     }
   }
