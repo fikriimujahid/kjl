@@ -7,7 +7,6 @@ import {
   TrendingUp, CheckCircle2, BookOpen, Trophy, Zap, ChevronRight,
   ArrowRight, Volume2, Star,
 } from 'lucide-react';
-import { MOCK_PURCHASED_PRODUCTS, MOCK_USER } from '@/lib/mock-data';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { RequireAuth } from '@/components/RequireAuth';
@@ -39,19 +38,31 @@ function daysUntil(date: Date) {
 }
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { status, user, accessToken } = useAuth();
   const [ownedProducts, setOwnedProducts] = useState<Product[]>([]);
   const [isLoadingOwnedProducts, setIsLoadingOwnedProducts] = useState(true);
 
   useEffect(() => {
+    if (status === 'loading') {
+      return;
+    }
+
+    if (status !== 'authenticated' || !user?.id) {
+      setOwnedProducts([]);
+      setIsLoadingOwnedProducts(false);
+      return;
+    }
+
+    const authenticatedUserId = user.id;
+
     const controller = new AbortController();
     let isActive = true;
 
     async function loadDashboardOwnedProducts() {
       const nextOwnedProducts = await loadOwnedProducts({
         signal: controller.signal,
-        userId: MOCK_USER.id,
-        purchases: MOCK_PURCHASED_PRODUCTS,
+        userId: authenticatedUserId,
+        accessToken: accessToken ?? undefined,
       });
 
       if (!isActive) {
@@ -68,7 +79,7 @@ export default function DashboardPage() {
       isActive = false;
       controller.abort();
     };
-  }, []);
+  }, [status, user?.id, accessToken]);
 
   const recentProduct = ownedProducts[0];
   const daysLeft = daysUntil(EXAM_DATE);
@@ -92,7 +103,7 @@ export default function DashboardPage() {
                 {STREAK_DAYS} Hari Berturut-turut 🔥
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-1">
-                Selamat datang kembali, <span className="text-indigo-600">{user?.name ?? MOCK_USER.displayName}</span>!
+                Selamat datang kembali, <span className="text-indigo-600">{user?.name ?? 'Pengguna'}</span>!
               </h1>
               <p className="text-slate-500 text-sm font-medium">Streakmu sedang on-fire — jangan putus hari ini!</p>
             </div>

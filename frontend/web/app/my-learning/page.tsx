@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Play, Book, Music, FileText, ChevronDown, ChevronUp } from 'lucide-react';
-import { MOCK_PURCHASED_PRODUCTS, MOCK_SESSION_DETAILS_IMAGE, MOCK_SESSION_DETAILS_QUIZ } from '@/lib/mock-data';
+import { MOCK_SESSION_DETAILS_IMAGE, MOCK_SESSION_DETAILS_QUIZ } from '@/lib/mock-data';
 import { Product, Session, SessionDetail } from '@/lib/types';
 import { motion, AnimatePresence } from 'motion/react';
 import QuizViewer from '@/components/QuizViewer';
@@ -14,7 +14,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { loadOwnedProducts } from '@/lib/products';
 
 export default function MyLearningPage() {
-  const { status, user } = useAuth();
+  const { status, user, accessToken } = useAuth();
   const [ownedProducts, setOwnedProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [activeSession, setActiveSession] = useState<Session | null>(null);
@@ -44,7 +44,7 @@ export default function MyLearningPage() {
       const nextOwnedProducts = await loadOwnedProducts({
         signal: controller.signal,
         userId,
-        purchases: MOCK_PURCHASED_PRODUCTS,
+        accessToken: accessToken ?? undefined,
       });
 
       if (!isActive) {
@@ -68,7 +68,7 @@ export default function MyLearningPage() {
       isActive = false;
       controller.abort();
     };
-  }, [status, user?.id]);
+  }, [status, user?.id, accessToken]);
 
   if (isLoadingOwnedProducts) {
     return (

@@ -28,16 +28,23 @@ module "product_api" {
   source = "../../modules/service-api"
 
   lambda = {
-    name                  = var.product_api.lambda.name
-    description           = var.product_api.lambda.description
-    source_dir            = var.product_api.lambda.source_dir
-    handler               = var.product_api.lambda.handler
-    runtime               = var.product_api.lambda.runtime
-    memory_size           = var.product_api.lambda.memory_size
-    timeout               = var.product_api.lambda.timeout
-    environment_variables = var.product_api.lambda.environment_variables
-    publish               = false
+    name        = var.product_api.lambda.name
+    description = var.product_api.lambda.description
+    source_dir  = var.product_api.lambda.source_dir
+    handler     = var.product_api.lambda.handler
+    runtime     = var.product_api.lambda.runtime
+    memory_size = var.product_api.lambda.memory_size
+    timeout     = var.product_api.lambda.timeout
+    environment_variables = merge(
+      var.product_api.lambda.environment_variables,
+      {
+        PURCHASES_TABLE_NAME = var.learning_content_table.table_name
+      }
+    )
+    publish = false
   }
+
+  dynamodb_table_arns = [module.learning_content_table.table_arn]
 
   api_gateway = {
     name                = var.product_api.api_gateway.name
@@ -49,6 +56,12 @@ module "product_api" {
     cors_expose_headers = var.product_api.api_gateway.cors_expose_headers
     cors_max_age        = var.product_api.api_gateway.cors_max_age
     routes              = var.product_api.api_gateway.routes
+  }
+
+  jwt_authorizer = {
+    name     = "${var.project_name}-${var.environment}-product-api-jwt-authorizer"
+    issuer   = module.cognito.cognito_uri
+    audience = [module.cognito.user_pool_client_id]
   }
 
   tags = var.tags

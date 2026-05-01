@@ -56,6 +56,20 @@ resource "aws_apigatewayv2_integration" "this" {
   timeout_milliseconds   = try(each.value.timeout_milliseconds, 30000)
 }
 
+resource "aws_apigatewayv2_authorizer" "jwt" {
+  count = var.jwt_authorizer == null ? 0 : 1
+
+  api_id           = aws_apigatewayv2_api.this.id
+  name             = var.jwt_authorizer.name
+  authorizer_type  = "JWT"
+  identity_sources = var.jwt_authorizer.identity_sources
+
+  jwt_configuration {
+    audience = var.jwt_authorizer.audience
+    issuer   = var.jwt_authorizer.issuer
+  }
+}
+
 resource "aws_apigatewayv2_route" "this" {
   for_each = var.routes
 
@@ -63,6 +77,6 @@ resource "aws_apigatewayv2_route" "this" {
   route_key          = each.value.route_key
   target             = "integrations/${aws_apigatewayv2_integration.this[each.key].id}"
   authorization_type = try(each.value.authorization_type, "NONE")
-  authorizer_id      = try(each.value.authorizer_id, null)
+  authorizer_id      = try(each.value.authorizer_id, null) != null ? try(each.value.authorizer_id, null) : (try(each.value.authorization_type, "NONE") == "JWT" ? aws_apigatewayv2_authorizer.jwt[0].id : null)
   operation_name     = try(each.value.operation_name, null)
 }

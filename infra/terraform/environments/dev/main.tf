@@ -63,16 +63,23 @@ module "product_api" {
   source = "../../modules/service-api"
 
   lambda = {
-    name                  = var.product_api.lambda.name
-    description           = var.product_api.lambda.description
-    source_dir            = var.product_api.lambda.source_dir
-    handler               = var.product_api.lambda.handler
-    runtime               = var.product_api.lambda.runtime
-    memory_size           = var.product_api.lambda.memory_size
-    timeout               = var.product_api.lambda.timeout
-    environment_variables = var.product_api.lambda.environment_variables
-    publish               = false
+    name        = var.product_api.lambda.name
+    description = var.product_api.lambda.description
+    source_dir  = var.product_api.lambda.source_dir
+    handler     = var.product_api.lambda.handler
+    runtime     = var.product_api.lambda.runtime
+    memory_size = var.product_api.lambda.memory_size
+    timeout     = var.product_api.lambda.timeout
+    environment_variables = merge(
+      var.product_api.lambda.environment_variables,
+      {
+        PURCHASES_TABLE_NAME = var.learning_content_table.table_name
+      }
+    )
+    publish = false
   }
+
+  dynamodb_table_arns = [module.learning_content_table.table_arn]
 
   api_gateway = {
     name                = var.product_api.api_gateway.name
@@ -86,28 +93,34 @@ module "product_api" {
     routes              = var.product_api.api_gateway.routes
   }
 
+  jwt_authorizer = {
+    name     = "${var.project_name}-${var.environment}-product-api-jwt-authorizer"
+    issuer   = module.cognito.cognito_uri
+    audience = [module.cognito.user_pool_client_id]
+  }
+
   tags = var.tags
 }
 
 # -------------------------------------------------------------------------
 # DYNAMODB LEARNING CONTENT TABLE
 # -------------------------------------------------------------------------
-# module "learning_content_table" {
-#   source = "../../modules/dynamodb"
+module "learning_content_table" {
+  source = "../../modules/dynamodb"
 
-#   table_name                     = var.learning_content_table.table_name
-#   billing_mode                   = var.learning_content_table.billing_mode
-#   hash_key                       = var.learning_content_table.hash_key
-#   range_key                      = try(var.learning_content_table.range_key, null)
-#   attributes                     = var.learning_content_table.attributes
-#   global_secondary_indexes       = try(var.learning_content_table.global_secondary_indexes, [])
-#   ttl_enabled                    = var.learning_content_table.ttl_enabled
-#   ttl_attribute_name             = try(var.learning_content_table.ttl_attribute_name, null)
-#   point_in_time_recovery_enabled = var.learning_content_table.point_in_time_recovery_enabled
-#   server_side_encryption_enabled = var.learning_content_table.server_side_encryption_enabled
+  table_name                     = var.learning_content_table.table_name
+  billing_mode                   = var.learning_content_table.billing_mode
+  hash_key                       = var.learning_content_table.hash_key
+  range_key                      = try(var.learning_content_table.range_key, null)
+  attributes                     = var.learning_content_table.attributes
+  global_secondary_indexes       = try(var.learning_content_table.global_secondary_indexes, [])
+  ttl_enabled                    = var.learning_content_table.ttl_enabled
+  ttl_attribute_name             = try(var.learning_content_table.ttl_attribute_name, null)
+  point_in_time_recovery_enabled = var.learning_content_table.point_in_time_recovery_enabled
+  server_side_encryption_enabled = var.learning_content_table.server_side_encryption_enabled
 
-#   tags = var.tags
-# }
+  tags = var.tags
+}
 
 # -------------------------------------------------------------------------
 # FRONTEND SITE HOSTING MODULE
