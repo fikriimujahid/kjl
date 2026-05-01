@@ -12,6 +12,7 @@ on:
 jobs:
   frontend-ci:
     runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'prod' && 'prod' || 'dev' }}
     defaults:
       run:
         working-directory: frontend/web
