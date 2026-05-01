@@ -12,7 +12,6 @@ on:
 jobs:
   frontend-ci:
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'prod' && 'prod' || 'dev' }}
     defaults:
       run:
         working-directory: frontend/web
@@ -21,55 +20,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
-      - name: Validate frontend-deploy parameters
-        env:
-          NEXT_PUBLIC_PRODUCT_URL: ${{ secrets.NEXT_PUBLIC_PRODUCT_URL }}
-          NEXT_API_BASE_URL: ${{ secrets.NEXT_API_BASE_URL }}
-          NEXT_PUBLIC_COGNITO_API_ENDPOINT: ${{ secrets.NEXT_PUBLIC_COGNITO_API_ENDPOINT }}
-          NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID }}
-          NEXT_PUBLIC_AUTH_STORAGE_KEY: ${{ secrets.NEXT_PUBLIC_AUTH_STORAGE_KEY }}
-          AWS_REGION: ${{ vars.AWS_REGION }}
-          PROJECT_NAME: ${{ secrets.PROJECT_NAME }}
-          CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
-          AWS_DEV_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}
-          AWS_PROD_ROLE_ARN: ${{ secrets.AWS_PROD_ROLE_ARN }}
-        run: |
-          missing=()
-          required=(
-            NEXT_PUBLIC_PRODUCT_URL
-            NEXT_API_BASE_URL
-            NEXT_PUBLIC_COGNITO_API_ENDPOINT
-            NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID
-            NEXT_PUBLIC_AUTH_STORAGE_KEY
-            AWS_REGION
-            PROJECT_NAME
-            CLOUDFRONT_DISTRIBUTION_ID
-            AWS_DEV_ROLE_ARN
-            AWS_PROD_ROLE_ARN
-          )
-
-          for key in "${required[@]}"; do
-            if [ -z "${!key}" ]; then
-              missing+=("$key")
-            fi
-          done
-
-          if [ ${#missing[@]} -gt 0 ]; then
-            printf 'Missing required frontend-deploy parameters:\n' >&2
-            printf ' - %s\n' "${missing[@]}" >&2
-            exit 1
-          fi
-
-          echo "All required frontend-deploy parameters are set."
-      - name: Create .env.local
-        run: |
-          cat <<'EOF' > .env.local
-          NEXT_PUBLIC_PRODUCT_URL=${{ secrets.NEXT_PUBLIC_PRODUCT_URL }}
-          NEXT_API_BASE_URL=${{ secrets.NEXT_API_BASE_URL }}
-          NEXT_PUBLIC_COGNITO_API_ENDPOINT=${{ secrets.NEXT_PUBLIC_COGNITO_API_ENDPOINT }}
-          NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID=${{ secrets.NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID }}
-          NEXT_PUBLIC_AUTH_STORAGE_KEY=${{ secrets.NEXT_PUBLIC_AUTH_STORAGE_KEY }}
-          EOF
       - name: Install deps
         run: |
           if [ -f package-lock.json ]; then npm ci; else npm install; fi

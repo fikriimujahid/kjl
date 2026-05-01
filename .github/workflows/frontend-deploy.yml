@@ -48,6 +48,7 @@ jobs:
         run: |
           cat <<'EOF' > .env.local
           NEXT_PUBLIC_PRODUCT_URL=${{ secrets.NEXT_PUBLIC_PRODUCT_URL }}
+          NEXT_API_BASE_URL=${{ secrets.NEXT_API_BASE_URL }}
           NEXT_PUBLIC_COGNITO_API_ENDPOINT=${{ secrets.NEXT_PUBLIC_COGNITO_API_ENDPOINT }}
           NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID=${{ secrets.NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID }}
           NEXT_PUBLIC_AUTH_STORAGE_KEY=${{ secrets.NEXT_PUBLIC_AUTH_STORAGE_KEY }}
