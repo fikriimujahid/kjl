@@ -1,6 +1,11 @@
-name: Product Service Lambda Deploy
+name: Product Service Lambda
 
 on:
+  pull_request:
+    branches: [dev, prod]
+    paths:
+      - backend/product-service/**
+      - .github/workflows/product-service-lambda-deploy.yml
   push:
     branches: [dev, prod]
     paths:
@@ -11,7 +16,56 @@ env:
   AWS_REGION: ${{ vars.AWS_REGION }}
 
 jobs:
+  product-service-lambda-ci:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: backend/product-service
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Create .env.lambda
+        run: |
+          cat <<'EOF' > .env.lambda
+          PURCHASES_TABLE_NAME=${{ vars.PURCHASES_TABLE_NAME || secrets.PURCHASES_TABLE_NAME || 'learning-content-dev' }}
+          EOF
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Package Lambda
+        run: |
+          if [ ! -d build/lambda ]; then
+            echo "Expected build/lambda directory is missing."
+            exit 1
+          fi
+
+          rm -f product-service-lambda.zip
+          cd build/lambda
+          zip -r ../../product-service-lambda.zip .
+
+      - name: Upload Lambda artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: product-service-lambda-pr
+          path: backend/product-service/product-service-lambda.zip
+          if-no-files-found: error
+
   deploy-product-service-lambda:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name == 'prod' && 'prod' || 'dev' }}
 
@@ -100,13 +154,9 @@ jobs:
 
           UPDATED_ENV_VARS=$(echo "${CURRENT_ENV_VARS}" | jq -c --arg purchasesTableName "${PURCHASES_TABLE_NAME}" '. + {PURCHASES_TABLE_NAME: $purchasesTableName}')
 
-          UPDATE_PAYLOAD=$(jq -cn \
-            --arg functionName "${LAMBDA_FUNCTION_NAME}" \
-            --argjson variables "${UPDATED_ENV_VARS}" \
-            '{FunctionName: $functionName, Environment: {Variables: $variables}}')
-
           aws lambda update-function-configuration \
-            --cli-input-json "${UPDATE_PAYLOAD}"
+            --function-name "${LAMBDA_FUNCTION_NAME}" \
+            --environment "Variables=${UPDATED_ENV_VARS}"
 
           aws lambda wait function-updated \
             --function-name "${LAMBDA_FUNCTION_NAME}"
