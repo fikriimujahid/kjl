@@ -69,6 +69,17 @@ variable "cors_configuration" {
   default = null
 }
 
+variable "jwt_authorizer" {
+  description = "Optional JWT authorizer configuration used for routes with authorization_type JWT."
+  type = object({
+    name             = optional(string, "http-api-jwt-authorizer")
+    issuer           = string
+    audience         = list(string)
+    identity_sources = optional(list(string), ["$request.header.Authorization"])
+  })
+  default = null
+}
+
 variable "routes" {
   description = "Map of route definitions keyed by logical route name."
   type = map(object({

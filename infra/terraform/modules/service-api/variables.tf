@@ -16,6 +16,12 @@ variable "lambda" {
   })
 }
 
+variable "dynamodb_table_arns" {
+  description = "DynamoDB table ARNs that Lambda can query."
+  type        = list(string)
+  default     = []
+}
+
 
 # -----------------------------------------------------------------------------
 # API GATEWAY
@@ -42,6 +48,17 @@ variable "api_gateway" {
       operation_name         = optional(string)
     }))
   })
+}
+
+variable "jwt_authorizer" {
+  description = "Optional JWT authorizer configuration for API Gateway HTTP API routes."
+  type = object({
+    name             = optional(string, "service-api-jwt-authorizer")
+    issuer           = string
+    audience         = list(string)
+    identity_sources = optional(list(string), ["$request.header.Authorization"])
+  })
+  default = null
 }
 
 variable "tags" {

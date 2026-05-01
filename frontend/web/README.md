@@ -18,9 +18,10 @@ Prerequisite: Node.js 20+
 
 ## Environment
 
-Copy `.env.example` to `.env.local` if you need to override the catalog source.
+Copy `.env.example` to `.env.local` if you need to override the product API source.
 
-- `NEXT_PUBLIC_PRODUCT_URL`: client-side catalog URL, defaults to `https://kjl.fikri.dev/public-data/catalog.json`
+- `NEXT_PUBLIC_API_BASE_URL`: product API base URL used by `fetchProducts`, example `https://kjl.fikri.dev/api`.
+- `fetchProducts` calls `${NEXT_PUBLIC_API_BASE_URL}/products` via GET.
 
 ## Deployment Targets
 

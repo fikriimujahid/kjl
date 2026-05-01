@@ -22,6 +22,29 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+data "aws_iam_policy_document" "lambda_dynamodb_query" {
+  count = length(var.dynamodb_table_arns) > 0 ? 1 : 0
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "dynamodb:Query"
+    ]
+    resources = concat(
+      var.dynamodb_table_arns,
+      [for arn in var.dynamodb_table_arns : "${arn}/index/*"]
+    )
+  }
+}
+
+resource "aws_iam_role_policy" "lambda_dynamodb_query" {
+  count = length(var.dynamodb_table_arns) > 0 ? 1 : 0
+
+  name   = "${var.lambda.name}-dynamodb-query"
+  role   = aws_iam_role.lambda_execution.id
+  policy = data.aws_iam_policy_document.lambda_dynamodb_query[0].json
+}
+
 module "product_lambda" {
   source = "../lambda-base"
 
@@ -54,6 +77,8 @@ module "api_gateway" {
     expose_headers = var.api_gateway.cors_expose_headers
     max_age        = var.api_gateway.cors_max_age
   }
+
+  jwt_authorizer = var.jwt_authorizer
 
   routes = {
     for route_name, route in var.api_gateway.routes : route_name => {
