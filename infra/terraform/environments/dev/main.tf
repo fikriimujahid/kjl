@@ -1,6 +1,3 @@
-locals {
-  name_prefix = "${var.project_name}-${var.environment}"
-}
 data "aws_caller_identity" "current" {}
 data "aws_s3_bucket" "state_backend" {
   bucket = "terraform-state-${data.aws_caller_identity.current.account_id}"
@@ -57,40 +54,43 @@ module "catalog_public_bucket" {
 }
 
 # -------------------------------------------------------------------------
-# PRODUCT API MODULE
+# SERVICE API MODULE
 # -------------------------------------------------------------------------
-module "product_api" {
+module "service_api" {
   source = "../../modules/service-api"
 
-  lambda = {
-    name        = var.product_api.lambda.name
-    description = var.product_api.lambda.description
-    source_dir  = var.product_api.lambda.source_dir
-    handler     = var.product_api.lambda.handler
-    runtime     = var.product_api.lambda.runtime
-    memory_size = var.product_api.lambda.memory_size
-    timeout     = var.product_api.lambda.timeout
-    environment_variables = merge(
-      var.product_api.lambda.environment_variables,
-      {
-        PURCHASES_TABLE_NAME = var.learning_content_table.table_name
-      }
-    )
-    publish = false
+  lambdas = {
+    for key, lambda_cfg in var.service_api.lambdas : key => {
+      name        = lambda_cfg.name
+      description = try(lambda_cfg.description, null)
+      source_dir  = lambda_cfg.source_dir
+      handler     = lambda_cfg.handler
+      runtime     = lambda_cfg.runtime
+      memory_size = lambda_cfg.memory_size
+      timeout     = lambda_cfg.timeout
+      environment_variables = merge(
+        lambda_cfg.environment_variables,
+        {
+          DYNAMO_DB_TABLE_NAME = var.learning_content_table.table_name
+        }
+      )
+      publish          = lambda_cfg.publish
+      dynamodb_actions = try(lambda_cfg.dynamodb_actions, null)
+    }
   }
 
   dynamodb_table_arns = [module.learning_content_table.table_arn]
 
   api_gateway = {
-    name                = var.product_api.api_gateway.name
-    description         = var.product_api.api_gateway.description
-    stage_name          = var.product_api.api_gateway.stage_name
-    cors_allow_origins  = var.product_api.api_gateway.cors_allow_origins
-    cors_allow_methods  = var.product_api.api_gateway.cors_allow_methods
-    cors_allow_headers  = var.product_api.api_gateway.cors_allow_headers
-    cors_expose_headers = var.product_api.api_gateway.cors_expose_headers
-    cors_max_age        = var.product_api.api_gateway.cors_max_age
-    routes              = var.product_api.api_gateway.routes
+    name                = var.service_api.api_gateway.name
+    description         = var.service_api.api_gateway.description
+    stage_name          = var.service_api.api_gateway.stage_name
+    cors_allow_origins  = var.service_api.api_gateway.cors_allow_origins
+    cors_allow_methods  = var.service_api.api_gateway.cors_allow_methods
+    cors_allow_headers  = var.service_api.api_gateway.cors_allow_headers
+    cors_expose_headers = var.service_api.api_gateway.cors_expose_headers
+    cors_max_age        = var.service_api.api_gateway.cors_max_age
+    routes              = var.service_api.api_gateway.routes
   }
 
   jwt_authorizer = {
@@ -161,9 +161,9 @@ module "frontend_site_hosting" {
     }
     api_origin = {
       enabled      = true
-      domain_name  = module.product_api.api_gateway_domain_name
-      path_pattern = var.product_api.cloudfront_path_pattern
-      origin_path  = module.product_api.api_gateway_origin_path
+      domain_name  = module.service_api.api_gateway_domain_name
+      path_pattern = var.service_api.cloudfront_path_pattern
+      origin_path  = module.service_api.api_gateway_origin_path
     }
     custom_error_responses = var.frontend_site_hosting.cloudfront.custom_error_responses
   }

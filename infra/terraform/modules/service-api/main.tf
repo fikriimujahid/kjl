@@ -12,24 +12,29 @@ data "aws_iam_policy_document" "lambda_assume_role" {
 }
 
 resource "aws_iam_role" "lambda_execution" {
-  name               = "${var.lambda.name}-lambda-role"
+  for_each = var.lambdas
+
+  name               = "${each.value.name}-lambda-role"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
   tags               = var.tags
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
-  role       = aws_iam_role.lambda_execution.name
+  for_each = var.lambdas
+
+  role       = aws_iam_role.lambda_execution[each.key].name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-data "aws_iam_policy_document" "lambda_dynamodb_query" {
-  count = length(var.dynamodb_table_arns) > 0 ? 1 : 0
+data "aws_iam_policy_document" "lambda_dynamodb_access" {
+  for_each = length(var.dynamodb_table_arns) > 0 ? var.lambdas : {}
 
   statement {
     effect = "Allow"
-    actions = [
-      "dynamodb:Query"
-    ]
+    actions = coalesce(
+      try(each.value.dynamodb_actions, null),
+      var.dynamodb_actions
+    )
     resources = concat(
       var.dynamodb_table_arns,
       [for arn in var.dynamodb_table_arns : "${arn}/index/*"]
@@ -37,27 +42,28 @@ data "aws_iam_policy_document" "lambda_dynamodb_query" {
   }
 }
 
-resource "aws_iam_role_policy" "lambda_dynamodb_query" {
-  count = length(var.dynamodb_table_arns) > 0 ? 1 : 0
+resource "aws_iam_role_policy" "lambda_dynamodb_access" {
+  for_each = length(var.dynamodb_table_arns) > 0 ? var.lambdas : {}
 
-  name   = "${var.lambda.name}-dynamodb-query"
-  role   = aws_iam_role.lambda_execution.id
-  policy = data.aws_iam_policy_document.lambda_dynamodb_query[0].json
+  name   = "${each.value.name}-dynamodb-access"
+  role   = aws_iam_role.lambda_execution[each.key].id
+  policy = data.aws_iam_policy_document.lambda_dynamodb_access[each.key].json
 }
 
-module "product_lambda" {
-  source = "../lambda-base"
+module "lambdas" {
+  for_each = var.lambdas
+  source   = "../lambda-base"
 
-  function_name         = var.lambda.name
-  description           = var.lambda.description
-  source_dir            = var.lambda.source_dir
-  handler               = var.lambda.handler
-  runtime               = var.lambda.runtime
-  memory_size           = var.lambda.memory_size
-  timeout               = var.lambda.timeout
-  role_arn              = aws_iam_role.lambda_execution.arn
-  environment_variables = var.lambda.environment_variables
-  publish               = var.lambda.publish
+  function_name         = each.value.name
+  description           = try(each.value.description, null)
+  source_dir            = each.value.source_dir
+  handler               = each.value.handler
+  runtime               = each.value.runtime
+  memory_size           = each.value.memory_size
+  timeout               = each.value.timeout
+  role_arn              = aws_iam_role.lambda_execution[each.key].arn
+  environment_variables = each.value.environment_variables
+  publish               = each.value.publish
   tags                  = var.tags
 }
 
@@ -82,8 +88,11 @@ module "api_gateway" {
 
   routes = {
     for route_name, route in var.api_gateway.routes : route_name => {
-      route_key              = route.route_key
-      integration_uri        = module.product_lambda.invoke_arn
+      route_key = route.route_key
+      integration_uri = merge(
+        { for key, lambda_module in module.lambdas : key => lambda_module.invoke_arn },
+        { for key, config in var.additional_integrations : key => config.integration_uri }
+      )[route.integration_key]
       payload_format_version = try(route.payload_format_version, "2.0")
       timeout_milliseconds   = try(route.timeout_milliseconds, 30000)
       authorization_type     = try(route.authorization_type, "NONE")
@@ -96,9 +105,19 @@ module "api_gateway" {
 }
 
 resource "aws_lambda_permission" "allow_apigw_invoke" {
-  statement_id  = "AllowApiGatewayInvokeServiceApi"
+  for_each = merge(
+    {
+      for key, lambda_module in module.lambdas : key => {
+        integration_uri = lambda_module.invoke_arn
+        function_name   = lambda_module.lambda_function_name
+      }
+    },
+    var.additional_integrations
+  )
+
+  statement_id  = "AllowApiGatewayInvoke${replace(replace(replace(each.key, "-", "_"), ".", "_"), "/", "_")}"
   action        = "lambda:InvokeFunction"
-  function_name = module.product_lambda.lambda_function_name
+  function_name = each.value.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${module.api_gateway.execution_arn}/*/*"
 }

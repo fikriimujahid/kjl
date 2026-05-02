@@ -65,19 +65,19 @@ jobs:
 
       - name: Create Lambda env file
         run: |
-          PURCHASES_TABLE_NAME="${{ vars.PURCHASES_TABLE_NAME }}"
+          DYNAMO_DB_TABLE_NAME="${{ vars.DYNAMO_DB_TABLE_NAME }}"
 
-          if [ -z "${PURCHASES_TABLE_NAME}" ]; then
-            PURCHASES_TABLE_NAME="${{ secrets.PURCHASES_TABLE_NAME }}"
+          if [ -z "${DYNAMO_DB_TABLE_NAME}" ]; then
+            DYNAMO_DB_TABLE_NAME="${{ secrets.DYNAMO_DB_TABLE_NAME }}"
           fi
 
-          if [ -z "${PURCHASES_TABLE_NAME}" ]; then
-            echo "PURCHASES_TABLE_NAME is missing. Set vars.PURCHASES_TABLE_NAME or secrets.PURCHASES_TABLE_NAME."
+          if [ -z "${DYNAMO_DB_TABLE_NAME}" ]; then
+            echo "DYNAMO_DB_TABLE_NAME is missing. Set vars.DYNAMO_DB_TABLE_NAME or secrets.DYNAMO_DB_TABLE_NAME."
             exit 1
           fi
 
           cat > .env.lambda <<EOF
-          PURCHASES_TABLE_NAME=${PURCHASES_TABLE_NAME}
+          DYNAMO_DB_TABLE_NAME=${DYNAMO_DB_TABLE_NAME}
           EOF
 
       - name: Update Lambda environment variables
@@ -98,7 +98,7 @@ jobs:
             --query 'Environment.Variables' \
             --output json)
 
-          UPDATED_ENV_VARS=$(echo "${CURRENT_ENV_VARS}" | jq -c --arg purchasesTableName "${PURCHASES_TABLE_NAME}" '. + {PURCHASES_TABLE_NAME: $purchasesTableName}')
+          UPDATED_ENV_VARS=$(echo "${CURRENT_ENV_VARS}" | jq -c --arg dynamoDbTableName "${DYNAMO_DB_TABLE_NAME}" '. + {DYNAMO_DB_TABLE_NAME: $dynamoDbTableName}')
 
           UPDATE_PAYLOAD=$(jq -cn \
             --arg functionName "${LAMBDA_FUNCTION_NAME}" \

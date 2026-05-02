@@ -74,13 +74,12 @@ variable "frontend_site_hosting" {
 }
 
 # -------------------------------------------------------------------------
-# PRODUCT API MODULE
+# SERVICE API MODULE
 # -------------------------------------------------------------------------
-variable "product_api" {
-  description = "Product API settings for Lambda, API Gateway, and CloudFront route path."
+variable "service_api" {
+  description = "Service API settings for Lambda, API Gateway, and CloudFront route path."
   type = object({
-
-    lambda = object({
+    lambdas = map(object({
       name                  = string
       description           = optional(string)
       source_dir            = string
@@ -90,7 +89,8 @@ variable "product_api" {
       timeout               = number
       environment_variables = map(string)
       publish               = bool
-    })
+      dynamodb_actions      = optional(list(string))
+    }))
 
     api_gateway = object({
       name                = optional(string)
@@ -108,6 +108,7 @@ variable "product_api" {
         authorization_type     = optional(string)
         authorizer_id          = optional(string)
         operation_name         = optional(string)
+        integration_key        = string
       }))
     })
 

@@ -7,11 +7,12 @@ import {
   ChevronLeft, Check, ShoppingCart, BookOpen, Clock, Globe,
   ChevronDown, FileText, Headphones, Image as ImageIcon, HelpCircle,
 } from 'lucide-react';
-import { MOCK_USER } from '@/lib/mock-data';
 import { formatPrice } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { Product, Session } from '@/lib/types';
-import { fetchProducts as fetchProductList } from '@/lib/products';
+import { fetchProducts as fetchProductList, fetchPurchasedProductsByUser } from '@/lib/products';
+import { readStoredAuthSession } from '@/lib/auth';
+import { createPayment } from '@/lib/payments';
 
 function sessionTypeLabel(type: Session['type']): string {
   switch (type) {
@@ -53,17 +54,35 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
   const router = useRouter();
   const [openTopicId, setOpenTopicId] = useState<string | null>(null);
   const [product, setProduct] = useState<Product | null>(null);
+  const [isOwned, setIsOwned] = useState(false);
+  const [isBuying, setIsBuying] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
 
-    async function loadProduct() {
+    async function loadProductAndOwnership() {
       const products = await fetchProductList({ signal: controller.signal });
       const matchedProduct = products.find((item) => item.id === productId) ?? null;
       setProduct(matchedProduct);
+
+      const session = readStoredAuthSession();
+
+      if (!session) {
+        setIsOwned(false);
+        return;
+      }
+
+      const purchases = await fetchPurchasedProductsByUser({
+        userId: session.user.id,
+        accessToken: session.idToken,
+        signal: controller.signal,
+      });
+
+      setIsOwned(Boolean((purchases ?? []).some((purchase) => purchase.productId === productId)));
     }
 
-    loadProduct();
+    loadProductAndOwnership();
 
     return () => {
       controller.abort();
@@ -74,11 +93,36 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
     return null;
   }
 
-  const isOwned = MOCK_USER.purchasedProductIds.includes(product.id);
   const totalSessions = product.topics.reduce((acc, topic) => acc + topic.sessions.length, 0);
 
-  const handleBuy = () => {
-    router.push('/payment-success');
+  const handleBuy = async () => {
+    const session = readStoredAuthSession();
+
+    if (!session) {
+      router.push(`/login?next=${encodeURIComponent(`/products/${productId}`)}`);
+      return;
+    }
+
+    setIsBuying(true);
+    setPaymentError(null);
+
+    try {
+      const payment = await createPayment({
+        productId: product.id,
+        idToken: session.idToken,
+      });
+
+      if (payment.redirectUrl) {
+        window.location.assign(payment.redirectUrl);
+        return;
+      }
+
+      router.push('/payment-success');
+    } catch {
+      setPaymentError('Gagal membuat pembayaran. Silakan coba lagi.');
+    } finally {
+      setIsBuying(false);
+    }
   };
 
   const toggleTopic = (topicId: string) => {
@@ -188,12 +232,20 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
                 <Check size={28} />
               </Link>
             ) : (
-              <button onClick={handleBuy} className="w-full md:w-auto px-10 py-5 bg-indigo-600 text-white rounded-3xl font-black text-xl hover:bg-indigo-700 shadow-xl shadow-indigo-100 transition-all flex items-center justify-center gap-3">
-                Beli Sekarang
+              <button
+                onClick={handleBuy}
+                disabled={isBuying}
+                className="w-full md:w-auto px-10 py-5 bg-indigo-600 text-white rounded-3xl font-black text-xl hover:bg-indigo-700 shadow-xl shadow-indigo-100 transition-all flex items-center justify-center gap-3 disabled:cursor-not-allowed disabled:bg-indigo-400"
+              >
+                {isBuying ? 'Memproses...' : 'Beli Sekarang'}
                 <ShoppingCart size={28} />
               </button>
             )}
           </div>
+
+          {paymentError && (
+            <p className="text-sm font-semibold text-red-600">{paymentError}</p>
+          )}
 
           <section>
             <h2 className="text-xl font-black text-gray-900 mb-4">Yang akan kamu pelajari:</h2>
