@@ -9,7 +9,6 @@ on:
 jobs:
   payment-service-lambda-ci:
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'prod' && 'prod' || 'dev' }}
     defaults:
       run:
         working-directory: backend/payment-service
