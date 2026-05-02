@@ -189,6 +189,88 @@
         "url": "{{cognito_api_endpoint}}"
       },
       "response": []
+    },
+    {
+      "name": "6 - Product Service - List Products",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{product_service_endpoint}}/api/products"
+      },
+      "response": []
+    },
+    {
+      "name": "7 - Product Service - Get Purchased Products",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{id_token}}"
+          }
+        ],
+        "url": "{{product_service_endpoint}}/api/purchased-products/{{user_id}}"
+      },
+      "response": []
+    },
+    {
+      "name": "8 - Payment Service - Create Payment",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{id_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"productId\": \"{{product_id}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{payment_service_endpoint}}/api/payments/create"
+      },
+      "response": []
+    },
+    {
+      "name": "9 - Payment Service - Webhook",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"order_id\": \"TEST-ORDER-001\",\n  \"status_code\": \"200\",\n  \"gross_amount\": \"10000.00\",\n  \"signature_key\": \"REPLACE_WITH_VALID_SIGNATURE\",\n  \"transaction_status\": \"settlement\",\n  \"fraud_status\": \"accept\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{payment_service_endpoint}}/api/payments/webhook"
+      },
+      "response": []
     }
   ],
   "variable": [
@@ -199,6 +281,18 @@
     {
       "key": "cognito_api_endpoint",
       "value": "https://cognito-idp.{{region}}.amazonaws.com/"
+    },
+    {
+      "key": "service_api_endpoint",
+      "value": ""
+    },
+    {
+      "key": "product_service_endpoint",
+      "value": "{{service_api_endpoint}}"
+    },
+    {
+      "key": "payment_service_endpoint",
+      "value": "{{service_api_endpoint}}"
     },
     {
       "key": "user_pool_id",
@@ -230,6 +324,14 @@
     },
     {
       "key": "id_token",
+      "value": ""
+    },
+    {
+      "key": "user_id",
+      "value": ""
+    },
+    {
+      "key": "product_id",
       "value": ""
     }
   ]

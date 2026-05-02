@@ -4,7 +4,7 @@ export const MOCK_USER: User = {
   id: 'u1',
   email: 'fikri@example.com',
   displayName: 'Fikri Haikal',
-  purchasedProductIds: ['p0', 'p3'],
+  purchasedProductIds: ['p3'],
 };
 
 export const MOCK_PURCHASED_PRODUCTS: PurchasedProduct[] = [

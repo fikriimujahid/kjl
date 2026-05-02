@@ -10,7 +10,7 @@ variable "description" {
 }
 
 variable "source_dir" {
-  description = "Directory that will be zipped and deployed as Lambda code."
+  description = "Retained for compatibility. Lambda code is bootstrapped with module dummy content; CI/CD manages deployed code afterward."
   type        = string
 }
 

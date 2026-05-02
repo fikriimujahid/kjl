@@ -1,11 +1,11 @@
 # -----------------------------------------------------------------------------
-# LAMBDA
+# LAMBDAS
 # -----------------------------------------------------------------------------
-variable "lambda" {
-  description = "Lambda function settings for the service API."
-  type = object({
+variable "lambdas" {
+  description = "Map of Lambda function settings keyed by integration key."
+  type = map(object({
     name                  = string
-    description           = string
+    description           = optional(string)
     source_dir            = string
     handler               = string
     runtime               = string
@@ -13,15 +13,35 @@ variable "lambda" {
     timeout               = number
     environment_variables = map(string)
     publish               = bool
-  })
+    dynamodb_actions      = optional(list(string))
+  }))
+
+  validation {
+    condition     = length(var.lambdas) > 0
+    error_message = "At least one lambda must be configured in `lambdas`."
+  }
 }
 
 variable "dynamodb_table_arns" {
-  description = "DynamoDB table ARNs that Lambda can query."
+  description = "DynamoDB table ARNs that lambdas can access."
   type        = list(string)
   default     = []
 }
 
+variable "dynamodb_actions" {
+  description = "Default DynamoDB actions granted to lambda roles for configured table ARNs."
+  type        = list(string)
+  default     = ["dynamodb:Query"]
+}
+
+variable "additional_integrations" {
+  description = "Additional non-managed Lambda integrations selectable by integration_key."
+  type = map(object({
+    integration_uri = string
+    function_name   = string
+  }))
+  default = {}
+}
 
 # -----------------------------------------------------------------------------
 # API GATEWAY
@@ -46,6 +66,7 @@ variable "api_gateway" {
       authorization_type     = optional(string, "NONE")
       authorizer_id          = optional(string)
       operation_name         = optional(string)
+      integration_key        = string
     }))
   })
 }

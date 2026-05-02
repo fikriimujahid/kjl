@@ -1,7 +1,7 @@
 data "archive_file" "package" {
   type        = "zip"
-  source_dir  = var.source_dir
-  output_path = "${path.module}/.build-${var.function_name}.zip"
+  source_dir  = "${path.module}/dummy"
+  output_path = "${path.root}/.build-${var.function_name}.zip"
 }
 
 resource "aws_lambda_function" "this" {
@@ -22,6 +22,14 @@ resource "aws_lambda_function" "this" {
 
   environment {
     variables = var.environment_variables
+  }
+
+  # Lambda code is bootstrapped by Terraform only; CI/CD owns subsequent code updates.
+  lifecycle {
+    ignore_changes = [
+      filename,
+      source_code_hash
+    ]
   }
 
   tags = var.tags

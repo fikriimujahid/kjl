@@ -6,6 +6,7 @@
   "scripts": {
     "clean": "node -e \"require('fs').rmSync('build',{recursive:true,force:true})\"",
     "build": "npm run clean && tsc -p tsconfig.json",
+    "start:local": "npm run build && node local-server.js",
     "seed:purchases": "node scripts/seedDummyPurchases.js"
   },
   "dependencies": {
