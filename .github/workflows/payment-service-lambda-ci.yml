@@ -20,12 +20,12 @@ jobs:
       - name: Create .env.lambda
         run: |
           cat <<'EOF' > .env.lambda
-          DYNAMO_DB_TABLE_NAME=${{ vars.DYNAMO_DB_TABLE_NAME || secrets.DYNAMO_DB_TABLE_NAME || 'learning-content-dev' }}
-          MIDTRANS_SERVER_KEY=${{ vars.MIDTRANS_SERVER_KEY || secrets.MIDTRANS_SERVER_KEY || 'dummy-server-key' }}
-          MIDTRANS_IS_PRODUCTION=${{ vars.MIDTRANS_IS_PRODUCTION || secrets.MIDTRANS_IS_PRODUCTION || 'false' }}
-          PRODUCT_DATA_URL=${{ vars.PRODUCT_DATA_URL || secrets.PRODUCT_DATA_URL || 'https://kjl.fikri.dev/public-data/product.json' }}
-          APP_BASE_URL=${{ vars.APP_BASE_URL || secrets.APP_BASE_URL || 'https://kjl.fikri.dev' }}
-          MIDTRANS_SNAP_API_URL=${{ vars.MIDTRANS_SNAP_API_URL || secrets.MIDTRANS_SNAP_API_URL || '' }}
+          DYNAMO_DB_TABLE_NAME=${{ secrets.DYNAMO_DB_TABLE_NAME }}
+          MIDTRANS_SERVER_KEY=${{ secrets.MIDTRANS_SERVER_KEY }}
+          MIDTRANS_IS_PRODUCTION=${{ secrets.MIDTRANS_IS_PRODUCTION }}
+          PRODUCT_DATA_URL=${{ secrets.PRODUCT_DATA_URL }}
+          APP_BASE_URL=${{ secrets.APP_BASE_URL }}
+          MIDTRANS_SNAP_API_URL=${{ secrets.MIDTRANS_SNAP_API_URL }}
           EOF
       - name: Install dependencies
         run: |

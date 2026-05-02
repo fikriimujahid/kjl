@@ -63,40 +63,12 @@ jobs:
 
       - name: Create Lambda env file
         run: |
-          DYNAMO_DB_TABLE_NAME="${{ vars.DYNAMO_DB_TABLE_NAME }}"
-          MIDTRANS_SERVER_KEY="${{ vars.MIDTRANS_SERVER_KEY }}"
-          MIDTRANS_IS_PRODUCTION="${{ vars.MIDTRANS_IS_PRODUCTION }}"
-          PRODUCT_DATA_URL="${{ vars.PRODUCT_DATA_URL }}"
-          APP_BASE_URL="${{ vars.APP_BASE_URL }}"
-          MIDTRANS_SNAP_API_URL="${{ vars.MIDTRANS_SNAP_API_URL }}"
-
-          if [ -z "${DYNAMO_DB_TABLE_NAME}" ]; then
-            DYNAMO_DB_TABLE_NAME="${{ secrets.DYNAMO_DB_TABLE_NAME }}"
-          fi
-
-          if [ -z "${MIDTRANS_SERVER_KEY}" ]; then
-            MIDTRANS_SERVER_KEY="${{ secrets.MIDTRANS_SERVER_KEY }}"
-          fi
-
-          if [ -z "${MIDTRANS_IS_PRODUCTION}" ]; then
-            MIDTRANS_IS_PRODUCTION="${{ github.ref_name == 'prod' && 'true' || 'false' }}"
-          fi
-
-          if [ -z "${PRODUCT_DATA_URL}" ]; then
-            PRODUCT_DATA_URL="${{ secrets.PRODUCT_DATA_URL }}"
-          fi
-
-          if [ -z "${PRODUCT_DATA_URL}" ]; then
-            PRODUCT_DATA_URL="https://kjl.fikri.dev/public-data/product.json"
-          fi
-
-          if [ -z "${APP_BASE_URL}" ]; then
-            APP_BASE_URL="${{ secrets.APP_BASE_URL }}"
-          fi
-
-          if [ -z "${APP_BASE_URL}" ]; then
-            APP_BASE_URL="${{ github.ref_name == 'prod' && 'https://kejepangdulu.click' || 'https://kjl.fikri.dev' }}"
-          fi
+          DYNAMO_DB_TABLE_NAME="${{ secrets.DYNAMO_DB_TABLE_NAME }}"
+          MIDTRANS_SERVER_KEY="${{ secrets.MIDTRANS_SERVER_KEY }}"
+          MIDTRANS_IS_PRODUCTION="${{ secrets.MIDTRANS_IS_PRODUCTION }}"
+          PRODUCT_DATA_URL="${{ secrets.PRODUCT_DATA_URL }}"
+          APP_BASE_URL="${{ secrets.APP_BASE_URL }}"
+          MIDTRANS_SNAP_API_URL="${{ secrets.MIDTRANS_SNAP_API_URL }}"
 
           if [ -z "${DYNAMO_DB_TABLE_NAME}" ]; then
             echo "DYNAMO_DB_TABLE_NAME is missing. Set vars.DYNAMO_DB_TABLE_NAME or secrets.DYNAMO_DB_TABLE_NAME."
