@@ -161,28 +161,48 @@ github_cicd = {
 }
 
 # ============================================================================
-# Product API Variables
+# Service API Variables
 # ============================================================================
-product_api = {
-  lambda = {
-    name                  = "kejepangdulu-dev-product-api"
-    description           = "Public Product API Lambda."
-    source_dir            = "../../../../backend/product-service/lambda"
-    handler               = "handler.handler"
-    runtime               = "nodejs22.x"
-    memory_size           = 256
-    timeout               = 10
-    environment_variables = {}
-    publish               = true
+service_api = {
+  lambdas = {
+    product = {
+      name                  = "kejepangdulu-dev-product-api"
+      description           = "Public Product API Lambda."
+      source_dir            = "../../../../backend/product-service/lambda"
+      handler               = "handler.handler"
+      runtime               = "nodejs22.x"
+      memory_size           = 256
+      timeout               = 10
+      environment_variables = {}
+      publish               = true
+    }
+
+    payment = {
+      name                  = "kejepangdulu-dev-payment-api"
+      description           = "Midtrans Payment API Lambda."
+      source_dir            = "../../../../backend/payment-service/lambda"
+      handler               = "handler.handler"
+      runtime               = "nodejs22.x"
+      memory_size           = 256
+      timeout               = 15
+      environment_variables = {}
+      publish               = true
+      dynamodb_actions = [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:Query",
+        "dynamodb:UpdateItem"
+      ]
+    }
   }
 
   api_gateway = {
-    name        = "kejepangdulu-dev-product-api"
-    description = "Public Product API."
+    name        = "kejepangdulu-dev-service-api"
+    description = "Service API."
     stage_name  = "$default"
 
     cors_allow_origins  = ["*"]
-    cors_allow_methods  = ["GET", "OPTIONS"]
+    cors_allow_methods  = ["GET", "POST", "OPTIONS"]
     cors_allow_headers  = ["content-type", "authorization"]
     cors_expose_headers = []
     cors_max_age        = 300
@@ -192,16 +212,31 @@ product_api = {
         route_key          = "GET /api/products"
         authorization_type = "NONE"
         operation_name     = "ListProductsUnderApi"
+        integration_key    = "product"
       }
       get_product_by_id_under_api = {
         route_key          = "GET /api/products/{id}"
         authorization_type = "NONE"
         operation_name     = "GetProductByIdUnderApi"
+        integration_key    = "product"
       }
       get_purchased_products_by_user_under_api = {
         route_key          = "GET /api/purchased-products/{userId}"
         authorization_type = "JWT"
         operation_name     = "GetPurchasedProductsByUserUnderApi"
+        integration_key    = "product"
+      }
+      create_payment_under_api = {
+        route_key          = "POST /api/payments/create"
+        authorization_type = "JWT"
+        operation_name     = "CreatePaymentUnderApi"
+        integration_key    = "payment"
+      }
+      payment_webhook_under_api = {
+        route_key          = "POST /api/payments/webhook"
+        authorization_type = "NONE"
+        operation_name     = "PaymentWebhookUnderApi"
+        integration_key    = "payment"
       }
     }
   }

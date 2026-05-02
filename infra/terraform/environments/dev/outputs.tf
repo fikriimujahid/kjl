@@ -26,31 +26,41 @@ output "cloudfront_distribution_id" {
 # -------------------------------------------------------------------------
 output "product_api_endpoint" {
   description = "API Gateway endpoint for the Product API in the dev environment."
-  value       = module.product_api.api_endpoint
+  value       = module.service_api.api_endpoint
 }
 
 output "product_api_lambda_function_name" {
   description = "Lambda function name backing the Product API in the dev environment."
-  value       = module.product_api.lambda_function_name
+  value       = module.service_api.lambda_function_names["product"]
+}
+
+output "payment_api_endpoint" {
+  description = "Shared API Gateway endpoint (products + payments) in the dev environment."
+  value       = module.service_api.api_endpoint
+}
+
+output "payment_api_lambda_function_name" {
+  description = "Lambda function name backing payment routes in the dev environment."
+  value       = module.service_api.lambda_function_names["payment"]
 }
 
 # -------------------------------------------------------------------------
 # DYNAMODB LEARNING CONTENT TABLE
 # -------------------------------------------------------------------------
-# output "learning_content_table_name" {
-#   description = "DynamoDB learning content table name in the dev environment."
-#   value       = module.learning_content_table.table_name
-# }
+output "learning_content_table_name" {
+  description = "DynamoDB learning content table name in the dev environment."
+  value       = module.learning_content_table.table_name
+}
 
-# output "learning_content_table_arn" {
-#   description = "DynamoDB learning content table ARN in the dev environment."
-#   value       = module.learning_content_table.table_arn
-# }
+output "learning_content_table_arn" {
+  description = "DynamoDB learning content table ARN in the dev environment."
+  value       = module.learning_content_table.table_arn
+}
 
-# output "learning_content_table_id" {
-#   description = "DynamoDB learning content table ID in the dev environment."
-#   value       = module.learning_content_table.table_id
-# }
+output "learning_content_table_id" {
+  description = "DynamoDB learning content table ID in the dev environment."
+  value       = module.learning_content_table.table_id
+}
 
 # -------------------------------------------------------------------------
 # COGNITO AUTH

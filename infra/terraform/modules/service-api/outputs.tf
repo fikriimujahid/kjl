@@ -28,12 +28,30 @@ output "api_gateway_origin_path" {
   value       = module.api_gateway.stage_name == "$default" ? null : "/${module.api_gateway.stage_name}"
 }
 
-output "lambda_function_name" {
-  description = "Lambda function name used by the service API."
-  value       = module.product_lambda.lambda_function_name
+output "lambda_function_names" {
+  description = "Map of managed Lambda function names keyed by integration key."
+  value = {
+    for key, lambda_module in module.lambdas : key => lambda_module.lambda_function_name
+  }
 }
 
-output "lambda_arn" {
-  description = "Lambda ARN used by the service API."
-  value       = module.product_lambda.lambda_arn
+output "lambda_invoke_arns" {
+  description = "Map of managed Lambda invoke ARNs keyed by integration key."
+  value = {
+    for key, lambda_module in module.lambdas : key => lambda_module.invoke_arn
+  }
+}
+
+output "additional_lambda_function_names" {
+  description = "Map of managed Lambda function names (compatibility output)."
+  value = {
+    for key, lambda_module in module.lambdas : key => lambda_module.lambda_function_name
+  }
+}
+
+output "additional_lambda_invoke_arns" {
+  description = "Map of managed Lambda invoke ARNs (compatibility output)."
+  value = {
+    for key, lambda_module in module.lambdas : key => lambda_module.invoke_arn
+  }
 }

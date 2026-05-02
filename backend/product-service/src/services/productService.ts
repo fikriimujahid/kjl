@@ -3,7 +3,7 @@ import { DynamoDBDocumentClient, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { Product, ProductSummary, PurchasedProduct } from "../models/product";
 
 const PRODUCT_DATA_URL = "https://kjl.fikri.dev/public-data/product.json";
-const PURCHASES_TABLE_NAME = process.env.PURCHASES_TABLE_NAME;
+const DYNAMO_DB_TABLE_NAME = process.env.DYNAMO_DB_TABLE_NAME;
 const dynamoDbClient = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
 interface PurchaseRecord {
@@ -94,13 +94,13 @@ export const getProductById = async (id: string): Promise<Product | null> => {
 export const listPurchasedProductsByUser = async (
   userId: string
 ): Promise<PurchasedProduct[]> => {
-  if (!PURCHASES_TABLE_NAME) {
-    throw new Error("Missing PURCHASES_TABLE_NAME environment variable");
+  if (!DYNAMO_DB_TABLE_NAME) {
+    throw new Error("Missing DYNAMO_DB_TABLE_NAME environment variable");
   }
 
   const response = await dynamoDbClient.send(
     new QueryCommand({
-      TableName: PURCHASES_TABLE_NAME,
+      TableName: DYNAMO_DB_TABLE_NAME,
       KeyConditionExpression: "#pk = :pk AND begins_with(#sk, :skPrefix)",
       ExpressionAttributeNames: {
         "#pk": "PK",

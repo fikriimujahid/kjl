@@ -53,6 +53,7 @@ api/samconfig.toml
 override.tf
 override.tf.json
 infra/terraform/environments/*/backend.hcl
+infra/terraform/environments/*/*.zip
 # Note: terraform.tfvars IS committed - it contains non-sensitive config
 # Note: .terraform.lock.hcl should be committed
 

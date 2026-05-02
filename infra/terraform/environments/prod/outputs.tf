@@ -17,6 +17,19 @@ output "cloudfront_distribution_id" {
 }
 
 # -------------------------------------------------------------------------
+# PAYMENT API
+# -------------------------------------------------------------------------
+output "payment_api_endpoint" {
+  description = "Shared API Gateway endpoint (products + payments) in the prod environment."
+  value       = module.service_api.api_endpoint
+}
+
+output "payment_api_lambda_function_name" {
+  description = "Lambda function name backing payment routes in the prod environment."
+  value       = module.service_api.lambda_function_names["payment"]
+}
+
+# -------------------------------------------------------------------------
 # DYNAMODB LEARNING CONTENT TABLE
 # -------------------------------------------------------------------------
 output "learning_content_table_name" {
