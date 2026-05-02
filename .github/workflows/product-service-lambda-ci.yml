@@ -17,49 +17,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
-      - name: Create .env.lambda
-        run: |
-          cat <<'EOF' > .env.lambda
-          DYNAMO_DB_TABLE_NAME=${{ vars.DYNAMO_DB_TABLE_NAME || secrets.DYNAMO_DB_TABLE_NAME || 'learning-content-dev' }}
-          EOF
       - name: Install dependencies
         run: |
           if [ -f package-lock.json ]; then npm ci; else npm install; fi
       - name: Build TypeScript
         run: npm run build
-      - name: Validate Lambda env update payload
-        run: |
-          set -a
-          source ./.env.lambda
-          set +a
-
-          if [ -z "${DYNAMO_DB_TABLE_NAME}" ]; then
-            echo "DYNAMO_DB_TABLE_NAME is missing in .env.lambda"
-            exit 1
-          fi
-
-          CURRENT_ENV_VARS='{}'
-          UPDATED_ENV_VARS=$(echo "${CURRENT_ENV_VARS}" | jq -c --arg dynamoDbTableName "${DYNAMO_DB_TABLE_NAME}" '. + {DYNAMO_DB_TABLE_NAME: $dynamoDbTableName}')
-
-          UPDATE_PAYLOAD=$(jq -cn \
-            --arg functionName "validation-dummy-lambda" \
-            --argjson variables "${UPDATED_ENV_VARS}" \
-            '{FunctionName: $functionName, Environment: {Variables: $variables}}')
-
-          echo "${UPDATE_PAYLOAD}" | jq -e '.FunctionName and .Environment and .Environment.Variables.DYNAMO_DB_TABLE_NAME'
-      - name: Package Lambda
-        run: |
-          if [ ! -d build/lambda ]; then
-            echo "Expected build/lambda directory is missing."
-            exit 1
-          fi
-
-          rm -f product-service-lambda.zip
-          cd build/lambda
-          zip -r ../../product-service-lambda.zip .
-      - name: Upload Lambda artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: product-service-lambda-pr
-          path: backend/product-service/product-service-lambda.zip
-          if-no-files-found: error
