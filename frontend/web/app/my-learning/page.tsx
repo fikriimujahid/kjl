@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Play, Book, Music, FileText, ChevronDown, ChevronUp } from 'lucide-react';
-import { MOCK_SESSION_DETAILS_IMAGE, MOCK_SESSION_DETAILS_QUIZ } from '@/lib/mock-data';
 import { Product, Session, SessionDetail } from '@/lib/types';
 import { motion, AnimatePresence } from 'motion/react';
 import QuizViewer from '@/components/QuizViewer';
@@ -11,7 +10,7 @@ import ImageViewer from '../../components/ImageViewer';
 import { cn } from '@/lib/utils';
 import { RequireAuth } from '@/components/RequireAuth';
 import { useAuth } from '@/components/AuthProvider';
-import { loadOwnedProducts } from '@/lib/products';
+import { fetchProductSessionDetails, loadOwnedProducts } from '@/lib/products';
 
 export default function MyLearningPage() {
   const { status, user, accessToken } = useAuth();
@@ -108,19 +107,19 @@ export default function MyLearningPage() {
     }
   };
 
-  const mockFetchSessionById = async (session: Session): Promise<SessionDetail[]> => {
-    // Temporary mock until real API endpoint is ready.
-    await new Promise((resolve) => setTimeout(resolve, 700));
+  const fetchSessionById = async (
+    productId: string,
+    topicId: string,
+    session: Session,
+  ): Promise<SessionDetail[]> => {
+    const sessionDetails = await fetchProductSessionDetails({
+      productId,
+      topicId,
+      sessionId: session.id,
+      accessToken: accessToken ?? undefined,
+    });
 
-    if (session.type === 'images') {
-      return MOCK_SESSION_DETAILS_IMAGE;
-    }
-
-    if (session.type === 'quiz') {
-      return MOCK_SESSION_DETAILS_QUIZ;
-    }
-
-    return [];
+    return sessionDetails ?? [];
   };
 
   const normalizeContentUrl = (url?: string) => {
@@ -131,15 +130,19 @@ export default function MyLearningPage() {
     return url.startsWith('/public/') ? url.replace('/public/', '/') : url;
   };
 
-  const handleSessionClick = async (session: Session) => {
+  const handleSessionClick = async (topicId: string, session: Session) => {
     if (loadingSessionId === session.id) {
+      return;
+    }
+
+    if (!selectedProduct) {
       return;
     }
 
     setLoadingSessionId(session.id);
 
     try {
-      const sessionDetails = await mockFetchSessionById(session);
+      const sessionDetails = await fetchSessionById(selectedProduct.id, topicId, session);
 
       if (session.type === 'quiz') {
         setActiveImagePages([]);
@@ -166,7 +169,10 @@ export default function MyLearningPage() {
         });
       } else {
         setActiveImagePages([]);
-        setActiveSession(session);
+        setActiveSession({
+          ...session,
+          contentUrl: normalizeContentUrl(sessionDetails[0]?.contentUrl ?? session.contentUrl),
+        });
       }
 
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -231,7 +237,7 @@ export default function MyLearningPage() {
                             {topic.sessions.map((session) => (
                               <button
                                 key={session.id}
-                                onClick={() => handleSessionClick(session)}
+                                onClick={() => handleSessionClick(topic.id, session)}
                                 disabled={loadingSessionId !== null}
                                 className={cn(
                                   'w-full p-3 rounded-lg flex items-center gap-4 transition-all text-left disabled:opacity-70 disabled:cursor-wait',

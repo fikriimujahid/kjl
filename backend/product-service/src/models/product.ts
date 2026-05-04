@@ -24,6 +24,15 @@ export interface Session {
   contentUrl?: string;
 }
 
+export interface SessionDetail {
+  id: string;
+  text?: string;
+  contentUrl?: string;
+  options?: string[];
+  image?: string;
+  audio?: string;
+}
+
 export interface ProductSummary {
   id: string;
   name: string;

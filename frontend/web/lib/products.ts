@@ -1,7 +1,8 @@
-import { Product, PurchasedProduct } from '@/lib/types';
+import { Product, PurchasedProduct, SessionDetail } from '@/lib/types';
 
 const API_BASE_URL = process.env.NEXT_API_BASE_URL ?? '/api';
 const PURCHASED_PRODUCTS_ENDPOINT = '/purchased-products';
+const PRODUCTS_ENDPOINT = '/products';
 const PUBLIC_PRODUCT_URL = process.env.NEXT_PUBLIC_PRODUCT_URL ?? '';
 
 interface FetchProductsOptions {
@@ -20,6 +21,15 @@ interface LoadOwnedProductsOptions extends FetchProductsOptions {
 interface FetchPurchasedProductsOptions {
   userId: string;
   url?: string;
+  signal?: AbortSignal;
+  cache?: RequestCache;
+  accessToken?: string;
+}
+
+interface FetchProductSessionDetailsOptions {
+  productId: string;
+  topicId: string;
+  sessionId: string;
   signal?: AbortSignal;
   cache?: RequestCache;
   accessToken?: string;
@@ -87,6 +97,39 @@ export async function fetchPurchasedProductsByUser({
     }
 
     const data: PurchasedProduct[] = await response.json();
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchProductSessionDetails({
+  productId,
+  topicId,
+  sessionId,
+  signal,
+  cache = 'no-store',
+  accessToken,
+}: FetchProductSessionDetailsOptions): Promise<SessionDetail[] | null> {
+  try {
+    const headers: HeadersInit = accessToken
+      ? { Authorization: `Bearer ${accessToken}` }
+      : {};
+
+    const response = await fetch(
+      `${API_BASE_URL}${PRODUCTS_ENDPOINT}/${encodeURIComponent(productId)}/topics/${encodeURIComponent(topicId)}/sessions/${encodeURIComponent(sessionId)}`,
+      {
+        signal,
+        cache,
+        headers,
+      },
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data: SessionDetail[] = await response.json();
     return data;
   } catch {
     return null;
