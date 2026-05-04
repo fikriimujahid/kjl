@@ -226,7 +226,7 @@ module "cloudfront" {
         path_pattern               = try(var.cloudfront.api_origin.path_pattern, "/api/*")
         target_origin_id           = "api"
         viewer_protocol_policy     = "redirect-to-https"
-        allowed_methods            = ["GET", "HEAD", "OPTIONS"]
+        allowed_methods            = ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
         cached_methods             = ["GET", "HEAD", "OPTIONS"]
         compress                   = true
         cache_policy_id            = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
