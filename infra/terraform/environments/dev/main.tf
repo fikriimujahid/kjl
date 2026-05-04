@@ -54,6 +54,41 @@ module "catalog_public_bucket" {
 }
 
 # -------------------------------------------------------------------------
+# PRIVATE MEDIA BUCKET
+# -------------------------------------------------------------------------
+module "media_private_bucket" {
+  source = "../../modules/s3"
+
+  bucket_name        = "${var.project_name}-${var.environment}-media-private"
+  force_destroy      = false
+  tags               = var.tags
+  versioning_enabled = true
+
+  encryption = {
+    sse_algorithm      = "AES256"
+    kms_master_key_id  = null
+    bucket_key_enabled = true
+  }
+
+  lifecycle_config = {
+    lifecycle_days  = null
+    lifecycle_rules = []
+  }
+
+  security = {
+    public_access_block = {
+      block_public_acls       = true
+      block_public_policy     = true
+      ignore_public_acls      = true
+      restrict_public_buckets = true
+    }
+    object_ownership            = "BucketOwnerEnforced"
+    attach_tls_only_policy      = true
+    additional_policy_documents = []
+  }
+}
+
+# -------------------------------------------------------------------------
 # DYNAMODB MODULE
 # -------------------------------------------------------------------------
 module "learning_content_table" {
@@ -93,10 +128,18 @@ module "service_api" {
         lambda_cfg.environment_variables,
         {
           DYNAMO_DB_TABLE_NAME = var.learning_content_table.table_name
-        }
+        },
+        key == "product" ? {
+          MEDIA_PRIVATE_BUCKET_NAME = module.media_private_bucket.bucket_name
+        } : {}
       )
       publish          = lambda_cfg.publish
       dynamodb_actions = try(lambda_cfg.dynamodb_actions, null)
+      s3_bucket_read_arns = try(
+        lambda_cfg.s3_bucket_read_arns,
+        key == "product" ? [module.media_private_bucket.bucket_arn] : []
+      )
+      s3_actions = try(lambda_cfg.s3_actions, null)
     }
   }
 

@@ -26,6 +26,13 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+locals {
+  lambdas_with_s3_read_access = {
+    for key, lambda_cfg in var.lambdas : key => lambda_cfg
+    if length(try(lambda_cfg.s3_bucket_read_arns, [])) > 0
+  }
+}
+
 data "aws_iam_policy_document" "lambda_dynamodb_access" {
   for_each = length(var.dynamodb_table_arns) > 0 ? var.lambdas : {}
 
@@ -48,6 +55,30 @@ resource "aws_iam_role_policy" "lambda_dynamodb_access" {
   name   = "${each.value.name}-dynamodb-access"
   role   = aws_iam_role.lambda_execution[each.key].id
   policy = data.aws_iam_policy_document.lambda_dynamodb_access[each.key].json
+}
+
+data "aws_iam_policy_document" "lambda_s3_read_access" {
+  for_each = local.lambdas_with_s3_read_access
+
+  statement {
+    effect = "Allow"
+    actions = coalesce(
+      try(each.value.s3_actions, null),
+      var.s3_read_actions
+    )
+    resources = distinct(concat(
+      each.value.s3_bucket_read_arns,
+      [for arn in each.value.s3_bucket_read_arns : "${arn}/*"]
+    ))
+  }
+}
+
+resource "aws_iam_role_policy" "lambda_s3_read_access" {
+  for_each = local.lambdas_with_s3_read_access
+
+  name   = "${each.value.name}-s3-read-access"
+  role   = aws_iam_role.lambda_execution[each.key].id
+  policy = data.aws_iam_policy_document.lambda_s3_read_access[each.key].json
 }
 
 module "lambdas" {
