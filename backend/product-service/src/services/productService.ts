@@ -24,6 +24,31 @@ interface PurchaseRecord {
   expiryDate: string;
 }
 
+const serializeError = (error: unknown) => {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    };
+  }
+
+  return {
+    message: String(error)
+  };
+};
+
+const logServiceInfo = (event: string, context: Record<string, unknown>) => {
+  console.info(`productService.${event}`, context);
+};
+
+const logServiceError = (event: string, context: Record<string, unknown>, error: unknown) => {
+  console.error(`productService.${event}`, {
+    ...context,
+    error: serializeError(error)
+  });
+};
+
 const isProduct = (value: unknown): value is Product => {
   if (!value || typeof value !== "object") {
     return false;
@@ -106,14 +131,34 @@ const buildSignedObjectUrl = async (key: string): Promise<string> => {
     throw new Error("Missing MEDIA_PRIVATE_BUCKET_NAME environment variable");
   }
 
-  return getSignedUrl(
-    s3Client,
-    new GetObjectCommand({
-      Bucket: MEDIA_PRIVATE_BUCKET_NAME,
-      Key: key
-    }),
-    { expiresIn: SIGNED_URL_TTL_SECONDS }
-  );
+  const logContext = {
+    bucketName: MEDIA_PRIVATE_BUCKET_NAME,
+    key,
+    expiresInSeconds: SIGNED_URL_TTL_SECONDS
+  };
+
+  logServiceInfo("s3.getSignedUrl.start", logContext);
+
+  try {
+    const signedUrl = await getSignedUrl(
+      s3Client,
+      new GetObjectCommand({
+        Bucket: MEDIA_PRIVATE_BUCKET_NAME,
+        Key: key
+      }),
+      { expiresIn: SIGNED_URL_TTL_SECONDS }
+    );
+
+    logServiceInfo("s3.getSignedUrl.success", {
+      ...logContext,
+      hasSignedUrl: Boolean(signedUrl)
+    });
+
+    return signedUrl;
+  } catch (error) {
+    logServiceError("s3.getSignedUrl.failure", logContext, error);
+    throw error;
+  }
 };
 
 const listSessionObjectKeys = async (prefix: string): Promise<string[]> => {
@@ -121,28 +166,55 @@ const listSessionObjectKeys = async (prefix: string): Promise<string[]> => {
     throw new Error("Missing MEDIA_PRIVATE_BUCKET_NAME environment variable");
   }
 
+  const logContext = {
+    bucketName: MEDIA_PRIVATE_BUCKET_NAME,
+    prefix
+  };
   const objectKeys: string[] = [];
   let continuationToken: string | undefined;
 
-  do {
-    const response = await s3Client.send(
-      new ListObjectsV2Command({
-        Bucket: MEDIA_PRIVATE_BUCKET_NAME,
-        Prefix: prefix,
-        ContinuationToken: continuationToken
-      })
-    );
+  logServiceInfo("s3.listObjects.start", logContext);
 
-    for (const item of response.Contents ?? []) {
-      if (item.Key && !item.Key.endsWith("/")) {
-        objectKeys.push(item.Key);
+  try {
+    do {
+      const response = await s3Client.send(
+        new ListObjectsV2Command({
+          Bucket: MEDIA_PRIVATE_BUCKET_NAME,
+          Prefix: prefix,
+          ContinuationToken: continuationToken
+        })
+      );
+
+      logServiceInfo("s3.listObjects.page", {
+        ...logContext,
+        keyCount: response.KeyCount ?? 0,
+        isTruncated: response.IsTruncated ?? false,
+        hasContinuationToken: Boolean(continuationToken),
+        hasNextContinuationToken: Boolean(response.NextContinuationToken)
+      });
+
+      for (const item of response.Contents ?? []) {
+        if (item.Key && !item.Key.endsWith("/")) {
+          objectKeys.push(item.Key);
+        }
       }
-    }
 
-    continuationToken = response.NextContinuationToken;
-  } while (continuationToken);
+      continuationToken = response.NextContinuationToken;
+    } while (continuationToken);
 
-  return objectKeys.sort((left, right) => left.localeCompare(right));
+    const sortedKeys = objectKeys.sort((left, right) => left.localeCompare(right));
+
+    logServiceInfo("s3.listObjects.success", {
+      ...logContext,
+      objectKeyCount: sortedKeys.length,
+      objectKeys: sortedKeys
+    });
+
+    return sortedKeys;
+  } catch (error) {
+    logServiceError("s3.listObjects.failure", logContext, error);
+    throw error;
+  }
 };
 
 const resolveTopicAndSession = (
@@ -250,41 +322,106 @@ export const getProductSessionDetails = async (
   const product = await getProductById(productId);
 
   if (!product) {
+    logServiceInfo("sessionDetails.productNotFound", {
+      userId,
+      productId,
+      topicId,
+      sessionId
+    });
     return null;
   }
 
   const resolvedSession = resolveTopicAndSession(product, topicId, sessionId);
 
   if (!resolvedSession) {
+    logServiceInfo("sessionDetails.topicOrSessionNotFound", {
+      userId,
+      productId,
+      topicId,
+      sessionId
+    });
     return null;
   }
 
-  const purchaseResponse = await dynamoDbClient.send(
-    new QueryCommand({
-      TableName: DYNAMO_DB_TABLE_NAME,
-      KeyConditionExpression: "#pk = :pk AND #sk = :sk",
-      ExpressionAttributeNames: {
-        "#pk": "PK",
-        "#sk": "SK"
-      },
-      ExpressionAttributeValues: {
-        ":pk": `USER#${userId}`,
-        ":sk": `PURCHASE#${productId}`
-      },
-      Limit: 1
-    })
-  );
+  const purchaseLogContext = {
+    userId,
+    productId,
+    topicId,
+    sessionId,
+    tableName: DYNAMO_DB_TABLE_NAME,
+    purchasePartitionKey: `USER#${userId}`,
+    purchaseSortKey: `PURCHASE#${productId}`
+  };
+
+  logServiceInfo("dynamodb.getPurchase.start", purchaseLogContext);
+
+  let purchaseResponse;
+
+  try {
+    purchaseResponse = await dynamoDbClient.send(
+      new QueryCommand({
+        TableName: DYNAMO_DB_TABLE_NAME,
+        KeyConditionExpression: "#pk = :pk AND #sk = :sk",
+        ExpressionAttributeNames: {
+          "#pk": "PK",
+          "#sk": "SK"
+        },
+        ExpressionAttributeValues: {
+          ":pk": `USER#${userId}`,
+          ":sk": `PURCHASE#${productId}`
+        },
+        Limit: 1
+      })
+    );
+
+    logServiceInfo("dynamodb.getPurchase.success", {
+      ...purchaseLogContext,
+      itemCount: purchaseResponse.Items?.length ?? 0
+    });
+  } catch (error) {
+    logServiceError("dynamodb.getPurchase.failure", purchaseLogContext, error);
+    throw error;
+  }
 
   const purchase = (purchaseResponse.Items ?? []).find(isPurchaseRecord);
 
-  if (!purchase || !isPurchaseActive(purchase)) {
+  if (!purchase) {
+    logServiceInfo("dynamodb.getPurchase.notFound", purchaseLogContext);
+    return null;
+  }
+
+  if (!isPurchaseActive(purchase)) {
+    logServiceInfo("dynamodb.getPurchase.inactive", {
+      ...purchaseLogContext,
+      expiryDate: purchase.expiryDate
+    });
     return null;
   }
 
   const prefix = `products/${productId}/${topicId}/${sessionId}`;
+  logServiceInfo("sessionDetails.s3Lookup.start", {
+    userId,
+    productId,
+    topicId,
+    sessionId,
+    prefix,
+    sessionType: resolvedSession.session.type
+  });
   const objectKeys = await listSessionObjectKeys(prefix);
+  const sessionDetails = await buildSessionDetailsFromMedia(resolvedSession.session, objectKeys);
 
-  return buildSessionDetailsFromMedia(resolvedSession.session, objectKeys);
+  logServiceInfo("sessionDetails.s3Lookup.success", {
+    userId,
+    productId,
+    topicId,
+    sessionId,
+    prefix,
+    objectKeyCount: objectKeys.length,
+    sessionDetailCount: sessionDetails.length,
+    sessionType: resolvedSession.session.type
+  });
+
+  return sessionDetails;
 };
 
 export const listPurchasedProductsByUser = async (
@@ -294,20 +431,42 @@ export const listPurchasedProductsByUser = async (
     throw new Error("Missing DYNAMO_DB_TABLE_NAME environment variable");
   }
 
-  const response = await dynamoDbClient.send(
-    new QueryCommand({
-      TableName: DYNAMO_DB_TABLE_NAME,
-      KeyConditionExpression: "#pk = :pk AND begins_with(#sk, :skPrefix)",
-      ExpressionAttributeNames: {
-        "#pk": "PK",
-        "#sk": "SK"
-      },
-      ExpressionAttributeValues: {
-        ":pk": `USER#${userId}`,
-        ":skPrefix": "PURCHASE#"
-      }
-    })
-  );
+  const logContext = {
+    userId,
+    tableName: DYNAMO_DB_TABLE_NAME,
+    purchasePartitionKey: `USER#${userId}`,
+    purchaseSortKeyPrefix: "PURCHASE#"
+  };
 
-  return (response.Items ?? []).filter(isPurchaseRecord).map(mapPurchaseRecord);
+  logServiceInfo("dynamodb.listPurchases.start", logContext);
+
+  try {
+    const response = await dynamoDbClient.send(
+      new QueryCommand({
+        TableName: DYNAMO_DB_TABLE_NAME,
+        KeyConditionExpression: "#pk = :pk AND begins_with(#sk, :skPrefix)",
+        ExpressionAttributeNames: {
+          "#pk": "PK",
+          "#sk": "SK"
+        },
+        ExpressionAttributeValues: {
+          ":pk": `USER#${userId}`,
+          ":skPrefix": "PURCHASE#"
+        }
+      })
+    );
+
+    const purchasedProducts = (response.Items ?? []).filter(isPurchaseRecord).map(mapPurchaseRecord);
+
+    logServiceInfo("dynamodb.listPurchases.success", {
+      ...logContext,
+      itemCount: response.Items?.length ?? 0,
+      purchaseCount: purchasedProducts.length
+    });
+
+    return purchasedProducts;
+  } catch (error) {
+    logServiceError("dynamodb.listPurchases.failure", logContext, error);
+    throw error;
+  }
 };
