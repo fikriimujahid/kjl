@@ -16,6 +16,16 @@ output "catalog_public_bucket_name" {
   value       = module.catalog_public_bucket.bucket_name
 }
 
+output "media_private_bucket_name" {
+  description = "S3 bucket name for private product media in the dev environment."
+  value       = module.media_private_bucket.bucket_name
+}
+
+output "media_private_bucket_arn" {
+  description = "S3 bucket ARN for private product media in the dev environment."
+  value       = module.media_private_bucket.bucket_arn
+}
+
 output "cloudfront_distribution_id" {
   description = "CloudFront distribution ID for the frontend site in the dev environment."
   value       = module.frontend_site_hosting.distribution_id

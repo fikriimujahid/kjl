@@ -226,6 +226,12 @@ service_api = {
         operation_name     = "GetPurchasedProductsByUserUnderApi"
         integration_key    = "product"
       }
+      get_product_session_details_under_api = {
+        route_key          = "GET /api/products/{productId}/topics/{topicId}/sessions/{sessionId}"
+        authorization_type = "JWT"
+        operation_name     = "GetProductSessionDetailsUnderApi"
+        integration_key    = "product"
+      }
       create_payment_under_api = {
         route_key          = "POST /api/payments/create"
         authorization_type = "JWT"

@@ -14,6 +14,8 @@ variable "lambdas" {
     environment_variables = map(string)
     publish               = bool
     dynamodb_actions      = optional(list(string))
+    s3_bucket_read_arns   = optional(list(string), [])
+    s3_actions            = optional(list(string))
   }))
 
   validation {
@@ -32,6 +34,12 @@ variable "dynamodb_actions" {
   description = "Default DynamoDB actions granted to lambda roles for configured table ARNs."
   type        = list(string)
   default     = ["dynamodb:Query"]
+}
+
+variable "s3_read_actions" {
+  description = "Default S3 read actions granted to lambda roles for configured S3 bucket ARNs."
+  type        = list(string)
+  default     = ["s3:GetObject", "s3:ListBucket"]
 }
 
 variable "additional_integrations" {

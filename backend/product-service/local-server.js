@@ -61,6 +61,18 @@ function resolveRoute(method, pathname) {
     };
   }
 
+  const productSessionMatch = pathname.match(/^\/api\/products\/([^/]+)\/topics\/([^/]+)\/sessions\/([^/]+)$/);
+  if (method === "GET" && productSessionMatch) {
+    return {
+      routeKey: "GET /api/products/{productId}/topics/{topicId}/sessions/{sessionId}",
+      pathParameters: {
+        productId: decodeURIComponent(productSessionMatch[1]),
+        topicId: decodeURIComponent(productSessionMatch[2]),
+        sessionId: decodeURIComponent(productSessionMatch[3])
+      }
+    };
+  }
+
   const purchasedProductsMatch = pathname.match(/^\/api\/purchased-products\/([^/]+)$/);
   if (method === "GET" && purchasedProductsMatch) {
     return {

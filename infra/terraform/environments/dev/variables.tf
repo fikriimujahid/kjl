@@ -90,6 +90,8 @@ variable "service_api" {
       environment_variables = map(string)
       publish               = bool
       dynamodb_actions      = optional(list(string))
+      s3_bucket_read_arns   = optional(list(string), [])
+      s3_actions            = optional(list(string))
     }))
 
     api_gateway = object({
