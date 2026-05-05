@@ -135,8 +135,7 @@ module "service_api" {
       )
       publish          = lambda_cfg.publish
       dynamodb_actions = try(lambda_cfg.dynamodb_actions, null)
-      s3_bucket_read_arns = try(
-        lambda_cfg.s3_bucket_read_arns,
+      s3_bucket_read_arns = length(try(lambda_cfg.s3_bucket_read_arns, [])) > 0 ? lambda_cfg.s3_bucket_read_arns : (
         key == "product" ? [module.media_private_bucket.bucket_arn] : []
       )
       s3_actions = try(lambda_cfg.s3_actions, null)
