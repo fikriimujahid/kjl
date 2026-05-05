@@ -1,0 +1,69 @@
+[
+  {
+    "id": "q1",
+    "text": "Apa itu Hiragana?",
+    "options": [
+      { "id": "optA", "text": "Huruf untuk angka dalam Bahasa Jepang" },
+      { "id": "optB", "text": "Salah satu sistem huruf dalam Bahasa Jepang" },
+      { "id": "optC", "text": "Bahasa Jepang modern" },
+      { "id": "optD", "text": "Huruf khusus untuk nama orang" }
+    ]
+  },
+
+  {
+    "id": "q2",
+    "text": "Manakah yang termasuk huruf Hiragana?",
+    "options": [
+      { "id": "optA", "text": "ア" },
+      { "id": "optB", "text": "あ" },
+      { "id": "optC", "text": "A" },
+      { "id": "optD", "text": "1" }
+    ]
+  },
+
+  {
+    "id": "q3",
+    "text": "Dengarkan audio berikut. Huruf apa yang diucapkan?",
+    "audio": "https://your-cdn.com/audio/a.mp3",
+    "options": [
+      { "id": "optA", "text": "あ" },
+      { "id": "optB", "text": "い" },
+      { "id": "optC", "text": "う" },
+      { "id": "optD", "text": "え" }
+    ]
+  },
+
+  {
+    "id": "q4",
+    "text": "Berapa jumlah huruf dasar Hiragana?",
+    "options": [
+      { "id": "optA", "text": "26" },
+      { "id": "optB", "text": "46" },
+      { "id": "optC", "text": "100" },
+      { "id": "optD", "text": "10" }
+    ]
+  },
+
+  {
+    "id": "q5",
+    "text": "Huruf apa yang ditampilkan pada gambar berikut?",
+    "image": "https://your-cdn.com/images/hiragana-a.png",
+    "options": [
+      { "id": "optA", "text": "あ" },
+      { "id": "optB", "text": "お" },
+      { "id": "optC", "text": "い" },
+      { "id": "optD", "text": "う" }
+    ]
+  },
+
+  {
+    "id": "q6",
+    "text": "Hiragana biasanya digunakan untuk apa?",
+    "options": [
+      { "id": "optA", "text": "Menulis kata asli Jepang" },
+      { "id": "optB", "text": "Menulis angka" },
+      { "id": "optC", "text": "Menulis simbol matematika" },
+      { "id": "optD", "text": "Menulis bahasa Inggris" }
+    ]
+  }
+]

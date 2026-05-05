@@ -1,0 +1,43 @@
+[
+  {
+    "id": "q1",
+    "correctAnswer": "optB",
+    "score": 10,
+    "explanation": "Hiragana adalah salah satu dari tiga sistem tulisan dalam Bahasa Jepang, digunakan untuk kata asli Jepang dan tata bahasa."
+  },
+
+  {
+    "id": "q2",
+    "correctAnswer": "optB",
+    "score": 10,
+    "explanation": "あ adalah Hiragana. ア adalah Katakana, sedangkan A dan 1 bukan huruf Jepang."
+  },
+
+  {
+    "id": "q3",
+    "correctAnswer": "optA",
+    "score": 15,
+    "explanation": "Audio tersebut mengucapkan 'a', yaitu huruf あ dalam Hiragana."
+  },
+
+  {
+    "id": "q4",
+    "correctAnswer": "optB",
+    "score": 10,
+    "explanation": "Hiragana memiliki 46 huruf dasar yang disusun dalam pola A-I-U-E-O."
+  },
+
+  {
+    "id": "q5",
+    "correctAnswer": "optA",
+    "score": 20,
+    "explanation": "Gambar tersebut menunjukkan huruf あ (a), huruf pertama dalam Hiragana."
+  },
+
+  {
+    "id": "q6",
+    "correctAnswer": "optA",
+    "score": 10,
+    "explanation": "Hiragana digunakan untuk kata asli Jepang, partikel, dan tata bahasa."
+  }
+]
