@@ -89,9 +89,16 @@ variable "service_api" {
       timeout               = number
       environment_variables = map(string)
       publish               = bool
-      dynamodb_actions      = optional(list(string))
-      s3_bucket_read_arns   = optional(list(string), [])
-      s3_actions            = optional(list(string))
+      dynamodb_access = optional(map(object({
+        table_arn = optional(string)
+        read      = optional(bool, false)
+        write     = optional(bool, false)
+      })), {})
+      s3_access = optional(map(object({
+        s3_arn = string
+        read   = optional(bool, false)
+        write  = optional(bool, false)
+      })), {})
     }))
 
     api_gateway = object({

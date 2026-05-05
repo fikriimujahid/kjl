@@ -13,9 +13,16 @@ variable "lambdas" {
     timeout               = number
     environment_variables = map(string)
     publish               = bool
-    dynamodb_actions      = optional(list(string))
-    s3_bucket_read_arns   = optional(list(string), [])
-    s3_actions            = optional(list(string))
+    dynamodb_access = optional(map(object({
+      table_arn = optional(string)
+      read      = optional(bool, false)
+      write     = optional(bool, false)
+    })), {})
+    s3_access = optional(map(object({
+      s3_arn = string
+      read   = optional(bool, false)
+      write  = optional(bool, false)
+    })), {})
   }))
 
   validation {
@@ -24,22 +31,28 @@ variable "lambdas" {
   }
 }
 
-variable "dynamodb_table_arns" {
-  description = "DynamoDB table ARNs that lambdas can access."
+variable "dynamodb_read_actions" {
+  description = "Default DynamoDB read actions granted to lambda roles for configured table ARNs."
   type        = list(string)
-  default     = []
+  default     = ["dynamodb:GetItem", "dynamodb:BatchGetItem", "dynamodb:Query", "dynamodb:Scan"]
 }
 
-variable "dynamodb_actions" {
-  description = "Default DynamoDB actions granted to lambda roles for configured table ARNs."
+variable "dynamodb_write_actions" {
+  description = "Default DynamoDB write actions granted to lambda roles for configured table ARNs."
   type        = list(string)
-  default     = ["dynamodb:Query"]
+  default     = ["dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:BatchWriteItem"]
 }
 
 variable "s3_read_actions" {
   description = "Default S3 read actions granted to lambda roles for configured S3 bucket ARNs."
   type        = list(string)
   default     = ["s3:GetObject", "s3:ListBucket"]
+}
+
+variable "s3_write_actions" {
+  description = "Default S3 write actions granted to lambda roles for configured S3 bucket ARNs."
+  type        = list(string)
+  default     = ["s3:PutObject", "s3:DeleteObject"]
 }
 
 variable "additional_integrations" {

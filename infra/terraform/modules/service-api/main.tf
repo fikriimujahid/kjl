@@ -27,58 +27,93 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
 }
 
 locals {
-  lambdas_with_s3_read_access = {
-    for key, lambda_cfg in var.lambdas : key => lambda_cfg
-    if length(try(lambda_cfg.s3_bucket_read_arns, [])) > 0
+  lambda_dynamodb_policy_candidates = {
+    for key, lambda_cfg in var.lambdas : key => {
+      table_arns = distinct(compact([
+        for _, access_cfg in try(lambda_cfg.dynamodb_access, {}) : try(access_cfg.table_arn, null)
+        if try(access_cfg.read, false) || try(access_cfg.write, false)
+      ]))
+
+      actions = distinct(flatten([
+        for _, access_cfg in try(lambda_cfg.dynamodb_access, {}) : concat(
+          try(access_cfg.read, false) ? var.dynamodb_read_actions : [],
+          try(access_cfg.write, false) ? var.dynamodb_write_actions : []
+        )
+      ]))
+    }
+  }
+
+  lambdas_with_dynamodb_access = {
+    for key, cfg in local.lambda_dynamodb_policy_candidates : key => cfg
+    if length(cfg.table_arns) > 0 && length(cfg.actions) > 0
+  }
+
+  lambda_s3_policy_candidates = {
+    for key, lambda_cfg in var.lambdas : key => {
+      bucket_arns = distinct(concat(
+        [
+          for _, access_cfg in try(lambda_cfg.s3_access, {}) : access_cfg.s3_arn
+          if try(access_cfg.read, false) || try(access_cfg.write, false)
+        ]
+      ))
+
+      actions = distinct(concat(
+        flatten([
+          for _, access_cfg in try(lambda_cfg.s3_access, {}) : concat(
+            try(access_cfg.read, false) ? var.s3_read_actions : [],
+            try(access_cfg.write, false) ? var.s3_write_actions : []
+          )
+        ])
+      ))
+    }
+  }
+
+  lambdas_with_s3_access = {
+    for key, cfg in local.lambda_s3_policy_candidates : key => cfg
+    if length(cfg.bucket_arns) > 0 && length(cfg.actions) > 0
   }
 }
 
 data "aws_iam_policy_document" "lambda_dynamodb_access" {
-  for_each = length(var.dynamodb_table_arns) > 0 ? var.lambdas : {}
+  for_each = local.lambdas_with_dynamodb_access
 
   statement {
-    effect = "Allow"
-    actions = coalesce(
-      try(each.value.dynamodb_actions, null),
-      var.dynamodb_actions
-    )
-    resources = concat(
-      var.dynamodb_table_arns,
-      [for arn in var.dynamodb_table_arns : "${arn}/index/*"]
-    )
-  }
-}
-
-resource "aws_iam_role_policy" "lambda_dynamodb_access" {
-  for_each = length(var.dynamodb_table_arns) > 0 ? var.lambdas : {}
-
-  name   = "${each.value.name}-dynamodb-access"
-  role   = aws_iam_role.lambda_execution[each.key].id
-  policy = data.aws_iam_policy_document.lambda_dynamodb_access[each.key].json
-}
-
-data "aws_iam_policy_document" "lambda_s3_read_access" {
-  for_each = local.lambdas_with_s3_read_access
-
-  statement {
-    effect = "Allow"
-    actions = coalesce(
-      try(each.value.s3_actions, null),
-      var.s3_read_actions
-    )
+    effect  = "Allow"
+    actions = each.value.actions
     resources = distinct(concat(
-      each.value.s3_bucket_read_arns,
-      [for arn in each.value.s3_bucket_read_arns : "${arn}/*"]
+      each.value.table_arns,
+      [for arn in each.value.table_arns : "${arn}/index/*"]
     ))
   }
 }
 
-resource "aws_iam_role_policy" "lambda_s3_read_access" {
-  for_each = local.lambdas_with_s3_read_access
+resource "aws_iam_role_policy" "lambda_dynamodb_access" {
+  for_each = local.lambdas_with_dynamodb_access
 
-  name   = "${each.value.name}-s3-read-access"
+  name   = "${var.lambdas[each.key].name}-dynamodb-access"
   role   = aws_iam_role.lambda_execution[each.key].id
-  policy = data.aws_iam_policy_document.lambda_s3_read_access[each.key].json
+  policy = data.aws_iam_policy_document.lambda_dynamodb_access[each.key].json
+}
+
+data "aws_iam_policy_document" "lambda_s3_access" {
+  for_each = local.lambdas_with_s3_access
+
+  statement {
+    effect  = "Allow"
+    actions = each.value.actions
+    resources = distinct(concat(
+      each.value.bucket_arns,
+      [for arn in each.value.bucket_arns : "${arn}/*"]
+    ))
+  }
+}
+
+resource "aws_iam_role_policy" "lambda_s3_access" {
+  for_each = local.lambdas_with_s3_access
+
+  name   = "${var.lambdas[each.key].name}-s3-access"
+  role   = aws_iam_role.lambda_execution[each.key].id
+  policy = data.aws_iam_policy_document.lambda_s3_access[each.key].json
 }
 
 module "lambdas" {

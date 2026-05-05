@@ -175,6 +175,20 @@ service_api = {
       timeout               = 10
       environment_variables = {}
       publish               = true
+      dynamodb_access = {
+        learning_content = {
+          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/learning-content-dev"
+          read  = true
+          write = true
+        }
+      }
+      s3_access = {
+        media_private = {
+          s3_arn = "arn:aws:s3:::kejepangdulu-dev-media-private"
+          read   = true
+          write  = false
+        }
+      }
     }
 
     payment = {
@@ -187,12 +201,13 @@ service_api = {
       timeout               = 15
       environment_variables = {}
       publish               = true
-      dynamodb_actions = [
-        "dynamodb:GetItem",
-        "dynamodb:PutItem",
-        "dynamodb:Query",
-        "dynamodb:UpdateItem"
-      ]
+      dynamodb_access = {
+        learning_content = {
+          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/learning-content-dev"
+          read  = true
+          write = true
+        }
+      }
     }
   }
 
