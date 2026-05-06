@@ -199,6 +199,31 @@ service_api = {
         }
       }
     }
+
+    quiz = {
+      name                  = "kejepangdulu-prod-quiz-api"
+      description           = "Quiz submit API Lambda."
+      source_dir            = "../../../../backend/quiz-service/build/lambda"
+      handler               = "handler.handler"
+      runtime               = "nodejs22.x"
+      memory_size           = 256
+      timeout               = 15
+      environment_variables = {}
+      publish               = true
+      dynamodb_access = {
+        learning_content = {
+          read  = true
+          write = true
+        }
+      }
+      s3_access = {
+        media_private = {
+          s3_arn = "arn:aws:s3:::kejepangdulu-prod-media-private"
+          read   = true
+          write  = false
+        }
+      }
+    }
   }
 
   api_gateway = {
@@ -242,6 +267,12 @@ service_api = {
         authorization_type = "NONE"
         operation_name     = "PaymentWebhookUnderApi"
         integration_key    = "payment"
+      }
+      submit_quiz_exam_under_api = {
+        route_key          = "POST /api/quiz/exam/submit"
+        authorization_type = "JWT"
+        operation_name     = "SubmitQuizExamUnderApi"
+        integration_key    = "quiz"
       }
     }
   }

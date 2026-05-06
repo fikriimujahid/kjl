@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import { CheckCircle2, ArrowRight, ArrowLeft, RefreshCcw, Volume2 } from 'lucide-react';
 import { Question } from '@/lib/types';
+import { submitQuizExam, SubmitQuizExamResponse } from '@/lib/quiz';
 import { cn } from '@/lib/utils';
 
 function getPaginationItems(current: number, total: number): (number | '...')[] {
@@ -20,46 +21,148 @@ function getPaginationItems(current: number, total: number): (number | '...')[] 
 
 interface QuizViewerProps {
   questions: Question[];
+  productId: string;
+  topicId: string;
+  sessionId: string;
+  accessToken?: string;
 }
 
-export default function QuizViewer({ questions }: QuizViewerProps) {
+interface SelectedAnswer {
+  option: string;
+  optionId: string;
+}
+
+export default function QuizViewer({
+  questions,
+  productId,
+  topicId,
+  sessionId,
+  accessToken,
+}: QuizViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, string>>({});
-  const [complete, setComplete] = useState(false);
+  const [answers, setAnswers] = useState<Record<number, SelectedAnswer>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [result, setResult] = useState<SubmitQuizExamResponse | null>(null);
+
+  if (questions.length === 0) {
+    return (
+      <div className="p-10 text-center bg-white rounded-2xl border border-slate-200 shadow-sm">
+        <h2 className="text-2xl font-bold text-slate-800 mb-3 tracking-tight">Kuis Belum Tersedia</h2>
+        <p className="text-slate-500 font-medium">Data pertanyaan untuk sesi ini belum bisa dimuat.</p>
+      </div>
+    );
+  }
 
   const currentQuestion = questions[currentIndex];
+  const complete = result !== null;
 
-  const handleSelect = (option: string) => {
-    setAnswers({ ...answers, [currentIndex]: option });
+  const handleSelect = (option: string, optionId: string) => {
+    setAnswers({
+      ...answers,
+      [currentIndex]: {
+        option,
+        optionId,
+      },
+    });
+    setSubmitError(null);
   };
 
-  const handleNext = () => {
+  const submitQuiz = async () => {
+    if (!accessToken) {
+      setSubmitError('Sesi login tidak ditemukan. Silakan login ulang.');
+      return;
+    }
+
+    if (!productId || !topicId || !sessionId) {
+      setSubmitError('Konteks kuis tidak lengkap. Muat ulang sesi dan coba lagi.');
+      return;
+    }
+
+    const answerPayload = questions
+      .map((question, index) => {
+        const selectedAnswer = answers[index];
+        if (!selectedAnswer) {
+          return null;
+        }
+
+        return {
+          questionId: question.id,
+          selectedOptionId: selectedAnswer.optionId,
+        };
+      })
+      .filter((item): item is { questionId: string; selectedOptionId: string } => item !== null);
+
+    if (answerPayload.length === 0) {
+      setSubmitError('Jawaban belum tersedia untuk dikirim.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const submitResult = await submitQuizExam({
+        productId,
+        topicId,
+        sessionId,
+        answers: answerPayload,
+        accessToken,
+      });
+
+      setResult(submitResult);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Gagal mengirim hasil kuis');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleNext = async () => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(currentIndex + 1);
     } else {
-      setComplete(true);
+      await submitQuiz();
     }
   };
 
   const reset = () => {
     setCurrentIndex(0);
     setAnswers({});
-    setComplete(false);
+    setIsSubmitting(false);
+    setSubmitError(null);
+    setResult(null);
   };
 
   if (complete) {
-    const score = Object.entries(answers).reduce((acc, [idx, answer]) => {
-      return answer === questions[parseInt(idx, 10)].correctAnswer ? acc + 1 : acc;
-    }, 0);
+    const correctCount = result.details.filter((detail) => detail.isCorrect).length;
+    const failed = !result.passed;
 
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-10 text-center">
-        <div className="w-24 h-24 bg-teal-50 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
+        <div
+          className={cn(
+            'w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner',
+            failed ? 'bg-red-50 text-red-600' : 'bg-teal-50 text-teal-600',
+          )}
+        >
           <CheckCircle2 size={48} />
         </div>
-        <h2 className="text-4xl font-bold text-slate-800 mb-4 tracking-tight">Kuis Selesai!</h2>
+        <h2 className="text-4xl font-bold text-slate-800 mb-4 tracking-tight">
+          {failed ? 'Belum Lulus Kuis' : 'Kuis Selesai!'}
+        </h2>
         <p className="text-xl text-slate-500 font-medium mb-10">
-          Kamu menjawab <span className="text-indigo-600 font-bold">{score} dari {questions.length}</span> pertanyaan dengan benar.
+          Kamu menjawab{' '}
+          <span className="text-indigo-600 font-bold">
+            {correctCount} dari {result.totalQuestions}
+          </span>{' '}
+          pertanyaan dengan benar.
+        </p>
+
+        <p className="text-lg text-slate-600 font-medium mb-8">
+          Skor: <span className="font-bold text-slate-800">{result.obtainedScore}</span> / {result.maxScore}
+          {' '}({result.percentage}%)
+          {' '}• Passing score: {result.passingScore}%
         </p>
 
         <div className="flex gap-4 justify-center">
@@ -120,20 +223,26 @@ export default function QuizViewer({ questions }: QuizViewerProps) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-            {currentQuestion.options.map((option, idx) => (
+            {currentQuestion.options.map((option, idx) => {
+              const optionId =
+                currentQuestion.optionIds?.[idx] ??
+                `opt${String.fromCharCode(65 + idx)}`;
+              const isSelected = answers[currentIndex]?.optionId === optionId;
+
+              return (
               <button
                 key={idx}
-                onClick={() => handleSelect(option)}
+                onClick={() => handleSelect(option, optionId)}
                 className={cn(
                   'p-6 rounded-xl border-2 transition-all text-left group flex items-center gap-4',
-                  answers[currentIndex] === option
+                  isSelected
                     ? 'border-indigo-600 bg-indigo-50'
                     : 'border-slate-200 hover:border-indigo-500 hover:bg-slate-50',
                 )}
               >
                 <span className={cn(
                   'w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm',
-                  answers[currentIndex] === option
+                  isSelected
                     ? 'bg-indigo-600 text-white'
                     : 'bg-slate-100 text-slate-500 group-hover:bg-indigo-200 group-hover:text-indigo-600',
                 )}>
@@ -141,7 +250,7 @@ export default function QuizViewer({ questions }: QuizViewerProps) {
                 </span>
                 <span className="font-bold text-slate-800">{option}</span>
               </button>
-            ))}
+            )})}
           </div>
         </motion.div>
       </div>
@@ -186,14 +295,22 @@ export default function QuizViewer({ questions }: QuizViewerProps) {
           </div>
         </div>
 
-        <button
-          disabled={!answers[currentIndex]}
-          onClick={handleNext}
-          className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 flex items-center gap-2 shadow-sm shadow-indigo-100 transition-all disabled:opacity-50"
-        >
-          {currentIndex === questions.length - 1 ? 'Selesaikan' : 'Selanjutnya'}
-          <ArrowRight size={16} />
-        </button>
+        <div className="flex flex-col items-end gap-2">
+          <button
+            disabled={!answers[currentIndex] || isSubmitting}
+            onClick={handleNext}
+            className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 flex items-center gap-2 shadow-sm shadow-indigo-100 transition-all disabled:opacity-50"
+          >
+            {currentIndex === questions.length - 1
+              ? isSubmitting
+                ? 'Mengirim...'
+                : 'Selesaikan'
+              : 'Selanjutnya'}
+            <ArrowRight size={16} />
+          </button>
+
+          {submitError && <p className="text-xs text-red-500 font-semibold">{submitError}</p>}
+        </div>
       </div>
     </div>
   );

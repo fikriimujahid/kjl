@@ -28,6 +28,7 @@ export interface SessionDetail {
   id: string;
   text?: string;
   contentUrl?: string;
+  optionIds?: string[];
   options?: string[];
   image?: string;
   audio?: string;

@@ -54,6 +54,11 @@ output "payment_api_lambda_function_name" {
   value       = module.service_api.lambda_function_names["payment"]
 }
 
+output "quiz_api_lambda_function_name" {
+  description = "Lambda function name backing quiz submit routes in the dev environment."
+  value       = module.service_api.lambda_function_names["quiz"]
+}
+
 # -------------------------------------------------------------------------
 # DYNAMODB LEARNING CONTENT TABLE
 # -------------------------------------------------------------------------

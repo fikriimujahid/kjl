@@ -10,6 +10,7 @@ export interface PurchaseRecord {
 }
 
 export interface QuizOptionRecord {
+  id?: string;
   text: string;
 }
 

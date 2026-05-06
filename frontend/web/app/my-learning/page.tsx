@@ -148,13 +148,17 @@ export default function MyLearningPage() {
         setActiveImagePages([]);
         setActiveSession({
           ...session,
+          topicId,
           questions: sessionDetails.map((detail) => ({
             id: detail.id,
             text: detail.text ?? '',
             image: detail.image,
             audio: detail.audio,
             options: detail.options ?? [],
-            correctAnswer: detail.options?.[0] ?? '',
+            optionIds:
+              detail.optionIds ??
+              (detail.options ?? []).map((_, index) => `opt${String.fromCharCode(65 + index)}`),
+            correctAnswer: '',
           })),
         });
       } else if (session.type === 'images') {
@@ -165,12 +169,14 @@ export default function MyLearningPage() {
         setActiveImagePages(imagePages);
         setActiveSession({
           ...session,
+          topicId,
           contentUrl: imagePages[0],
         });
       } else {
         setActiveImagePages([]);
         setActiveSession({
           ...session,
+          topicId,
           contentUrl: normalizeContentUrl(sessionDetails[0]?.contentUrl ?? session.contentUrl),
         });
       }
@@ -288,7 +294,15 @@ export default function MyLearningPage() {
 
               <div className="min-h-[400px]">
                 
-                {activeSession.type === 'quiz' && activeSession.questions && <QuizViewer questions={activeSession.questions} />}
+                {activeSession.type === 'quiz' && activeSession.questions && (
+                  <QuizViewer
+                    questions={activeSession.questions}
+                    productId={selectedProduct?.id ?? ''}
+                    topicId={activeSession.topicId ?? ''}
+                    sessionId={activeSession.id}
+                    accessToken={accessToken ?? undefined}
+                  />
+                )}
 
                 {activeSession.type === 'images' && <ImageViewer title={activeSession.title} images={activeImagePages} />}
 

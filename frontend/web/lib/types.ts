@@ -16,6 +16,7 @@ export interface Question {
   image?: string;
   audio?: string;
   options: string[];
+  optionIds?: string[];
   correctAnswer: string;
 }
 
@@ -24,6 +25,7 @@ export interface Session {
   title: string;
   type: 'quiz' | 'pdf' | 'audio' | 'images' | 'video';
   contentUrl?: string;
+  topicId?: string;
   questions?: Question[]; 
 }
 
@@ -31,6 +33,7 @@ export interface SessionDetail {
   id: string;
   text?: string;
   contentUrl?: string;
+  optionIds?: string[];
   options?: string[];
   image?: string;
   audio?: string;
