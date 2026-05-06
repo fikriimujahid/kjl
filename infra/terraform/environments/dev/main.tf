@@ -117,32 +117,19 @@ module "service_api" {
 
   lambdas = {
     for key, lambda_cfg in var.service_api.lambdas : key => {
-      name        = lambda_cfg.name
-      description = try(lambda_cfg.description, null)
-      source_dir  = lambda_cfg.source_dir
-      handler     = lambda_cfg.handler
-      runtime     = lambda_cfg.runtime
-      memory_size = lambda_cfg.memory_size
-      timeout     = lambda_cfg.timeout
-      environment_variables = merge(
-        lambda_cfg.environment_variables,
-        {
-          DYNAMO_DB_TABLE_NAME = var.learning_content_table.table_name
-        },
-        key == "product" ? {
-          MEDIA_PRIVATE_BUCKET_NAME = module.media_private_bucket.bucket_name
-        } : {}
-      )
-      publish          = lambda_cfg.publish
-      dynamodb_actions = try(lambda_cfg.dynamodb_actions, null)
-      s3_bucket_read_arns = length(try(lambda_cfg.s3_bucket_read_arns, [])) > 0 ? lambda_cfg.s3_bucket_read_arns : (
-        key == "product" ? [module.media_private_bucket.bucket_arn] : []
-      )
-      s3_actions = try(lambda_cfg.s3_actions, null)
+      name                  = lambda_cfg.name
+      description           = try(lambda_cfg.description, null)
+      source_dir            = lambda_cfg.source_dir
+      handler               = lambda_cfg.handler
+      runtime               = lambda_cfg.runtime
+      memory_size           = lambda_cfg.memory_size
+      timeout               = lambda_cfg.timeout
+      environment_variables = lambda_cfg.environment_variables
+      publish               = lambda_cfg.publish
+      dynamodb_access       = try(lambda_cfg.dynamodb_access, {})
+      s3_access             = try(lambda_cfg.s3_access, {})
     }
   }
-
-  dynamodb_table_arns = [module.learning_content_table.table_arn]
 
   api_gateway = {
     name                = var.service_api.api_gateway.name

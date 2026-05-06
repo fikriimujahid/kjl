@@ -40,7 +40,10 @@ export const isQuizOptionRecord = (value: unknown): value is QuizOptionRecord =>
   }
 
   const candidate = value as Record<string, unknown>;
-  return typeof candidate.text === "string";
+  return (
+    (candidate.id === undefined || typeof candidate.id === "string") &&
+    typeof candidate.text === "string"
+  );
 };
 
 export const isQuizQuestionRecord = (value: unknown): value is QuizQuestionRecord => {

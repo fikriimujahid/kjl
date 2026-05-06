@@ -29,25 +29,26 @@ module "service_api" {
 
   lambdas = {
     for key, lambda_cfg in var.service_api.lambdas : key => {
-      name        = lambda_cfg.name
-      description = try(lambda_cfg.description, null)
-      source_dir  = lambda_cfg.source_dir
-      handler     = lambda_cfg.handler
-      runtime     = lambda_cfg.runtime
-      memory_size = lambda_cfg.memory_size
-      timeout     = lambda_cfg.timeout
-      environment_variables = merge(
-        lambda_cfg.environment_variables,
-        {
-          DYNAMO_DB_TABLE_NAME = var.learning_content_table.table_name
-        }
-      )
-      publish          = lambda_cfg.publish
-      dynamodb_actions = try(lambda_cfg.dynamodb_actions, null)
+      name                  = lambda_cfg.name
+      description           = try(lambda_cfg.description, null)
+      source_dir            = lambda_cfg.source_dir
+      handler               = lambda_cfg.handler
+      runtime               = lambda_cfg.runtime
+      memory_size           = lambda_cfg.memory_size
+      timeout               = lambda_cfg.timeout
+      environment_variables = lambda_cfg.environment_variables
+      publish               = lambda_cfg.publish
+      dynamodb_access = {
+        for access_key, access_cfg in try(lambda_cfg.dynamodb_access, {}) : access_key => merge(
+          access_cfg,
+          access_key == "learning_content" ? {
+            table_arn = module.learning_content_table.table_arn
+          } : {}
+        )
+      }
+      s3_access = try(lambda_cfg.s3_access, {})
     }
   }
-
-  dynamodb_table_arns = [module.learning_content_table.table_arn]
 
   api_gateway = {
     name                = var.service_api.api_gateway.name

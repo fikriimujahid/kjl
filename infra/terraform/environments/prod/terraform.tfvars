@@ -173,29 +173,56 @@ service_api = {
       timeout               = 10
       environment_variables = {}
       publish               = true
+      s3_access = {
+        media_private = {
+          s3_arn = "arn:aws:s3:::kejepangdulu-prod-media-private"
+          read   = true
+          write  = false
+        }
+      }
     }
 
     payment = {
-      name        = "kejepangdulu-prod-payment-api"
-      description = "Midtrans Payment API Lambda."
-      source_dir  = "../../../../backend/payment-service/lambda"
-      handler     = "handler.handler"
-      runtime     = "nodejs22.x"
-      memory_size = 256
-      timeout     = 15
-      environment_variables = {
-        MIDTRANS_SERVER_KEY    = ""
-        MIDTRANS_IS_PRODUCTION = "true"
-        PRODUCT_DATA_URL       = "https://kjl.fikri.dev/public-data/product.json"
-        APP_BASE_URL           = "https://kejepangdulu.click"
+      name                  = "kejepangdulu-prod-payment-api"
+      description           = "Midtrans Payment API Lambda."
+      source_dir            = "../../../../backend/payment-service/lambda"
+      handler               = "handler.handler"
+      runtime               = "nodejs22.x"
+      memory_size           = 256
+      timeout               = 15
+      environment_variables = {}
+      publish               = true
+      dynamodb_access = {
+        learning_content = {
+          read  = true
+          write = true
+        }
       }
-      publish = true
-      dynamodb_actions = [
-        "dynamodb:GetItem",
-        "dynamodb:PutItem",
-        "dynamodb:Query",
-        "dynamodb:UpdateItem"
-      ]
+    }
+
+    quiz = {
+      name                  = "kejepangdulu-prod-quiz-api"
+      description           = "Quiz submit API Lambda."
+      source_dir            = "../../../../backend/quiz-service/build/lambda"
+      handler               = "handler.handler"
+      runtime               = "nodejs22.x"
+      memory_size           = 256
+      timeout               = 15
+      environment_variables = {}
+      publish               = true
+      dynamodb_access = {
+        learning_content = {
+          read  = true
+          write = true
+        }
+      }
+      s3_access = {
+        media_private = {
+          s3_arn = "arn:aws:s3:::kejepangdulu-prod-media-private"
+          read   = true
+          write  = false
+        }
+      }
     }
   }
 
@@ -240,6 +267,12 @@ service_api = {
         authorization_type = "NONE"
         operation_name     = "PaymentWebhookUnderApi"
         integration_key    = "payment"
+      }
+      submit_quiz_exam_under_api = {
+        route_key          = "POST /api/quiz/exam/submit"
+        authorization_type = "JWT"
+        operation_name     = "SubmitQuizExamUnderApi"
+        integration_key    = "quiz"
       }
     }
   }
