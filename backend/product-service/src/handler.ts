@@ -25,7 +25,7 @@ export const handler = async (
     return getPurchasedProducts(event);
   }
 
-  if (event.routeKey === "GET /api/purchased-products/{userId}/products/{products}") {
+  if (event.routeKey === "GET /api/purchased-product/{userId}/product/{productId}") {
     return getPurchasedProductDetails(event);
   }
 

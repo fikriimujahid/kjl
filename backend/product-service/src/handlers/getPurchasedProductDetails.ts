@@ -10,7 +10,7 @@ export const getPurchasedProductDetails = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   const userId = event.pathParameters?.userId;
-  const productId = event.pathParameters?.productId ?? event.pathParameters?.products;
+  const productId = event.pathParameters?.productId;
   const claims = (event as APIGatewayProxyEventV2WithJWTAuthorizer).requestContext.authorizer?.jwt?.claims as Record<string, string> | undefined;
   const authenticatedUserId = claims?.sub ?? claims?.["cognito:username"];
 
