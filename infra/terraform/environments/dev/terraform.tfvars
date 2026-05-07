@@ -267,6 +267,12 @@ service_api = {
         operation_name     = "GetPurchasedProductsByUserUnderApi"
         integration_key    = "product"
       }
+      get_purchased_product_details_by_user_under_api = {
+        route_key          = "GET /api/purchased-product/{userId}/product/{productId}"
+        authorization_type = "JWT"
+        operation_name     = "GetPurchasedProductDetailsByUserUnderApi"
+        integration_key    = "product"
+      }
       get_product_session_details_under_api = {
         route_key          = "GET /api/products/{productId}/topics/{topicId}/sessions/{sessionId}"
         authorization_type = "JWT"

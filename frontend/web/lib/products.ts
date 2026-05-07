@@ -124,7 +124,7 @@ export async function fetchPurchasedProductDetails({
       : {};
 
     const response = await fetch(
-      `${API_BASE_URL}${PURCHASED_PRODUCTS_ENDPOINT}/${encodeURIComponent(userId)}/products/${encodeURIComponent(productId)}`,
+      `${API_BASE_URL}/purchased-product/${encodeURIComponent(userId)}/product/${encodeURIComponent(productId)}`,
       {
         signal,
         cache,
