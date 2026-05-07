@@ -81,6 +81,17 @@ function resolveRoute(method, pathname) {
     };
   }
 
+  const purchasedProductDetailsMatch = pathname.match(/^\/api\/purchased-products\/([^/]+)\/products\/([^/]+)$/);
+  if (method === "GET" && purchasedProductDetailsMatch) {
+    return {
+      routeKey: "GET /api/purchased-products/{userId}/products/{products}",
+      pathParameters: {
+        userId: decodeURIComponent(purchasedProductDetailsMatch[1]),
+        products: decodeURIComponent(purchasedProductDetailsMatch[2])
+      }
+    };
+  }
+
   return null;
 }
 
