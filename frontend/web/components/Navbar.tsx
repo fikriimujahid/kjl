@@ -16,7 +16,7 @@ export function Navbar() {
   const navLinks = [
     { title: 'Produk', path: '/products', icon: <BookOpen size={20} /> },
     { title: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} />, protected: true },
-    { title: 'Belajarku', path: '/my-learning', icon: <ChevronRight size={20} />, protected: true },
+    // { title: 'Belajarku', path: '/my-learning', icon: <ChevronRight size={20} />, protected: true },
   ];
 
   const filteredLinks = navLinks.filter((link) => !link.protected || status === 'authenticated');

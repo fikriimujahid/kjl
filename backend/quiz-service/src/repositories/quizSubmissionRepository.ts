@@ -10,7 +10,7 @@ interface SaveQuizSubmissionInput {
   productId: string;
   topicId: string;
   sessionId: string;
-  submittedAt: string;
+  createdAt: string;
   scoreSummary: QuizScoreSummary;
   passingScore: number;
   passed: boolean;
@@ -20,9 +20,14 @@ interface SaveQuizSubmissionInput {
 export const saveQuizSubmission = async (
   input: SaveQuizSubmissionInput
 ): Promise<void> => {
+  const submittedAnswers = input.answers.map((answer) => ({
+    questionId: answer.questionId,
+    selectedOptionId: answer.selectedOptionId
+  }));
+
   const userHistoryItem = {
     PK: `USER#${input.userId}`,
-    SK: `QUIZ_SUBMISSION#${input.productId}#${input.topicId}#${input.sessionId}#${input.submittedAt}#${input.submissionId}`,
+    SK: `QUIZ_SUBMISSION#${input.productId}#${input.topicId}#${input.sessionId}#${input.createdAt}#${input.submissionId}`,
     entityType: "QUIZ_SUBMISSION",
     submissionId: input.submissionId,
     userId: input.userId,
@@ -30,7 +35,7 @@ export const saveQuizSubmission = async (
     productId: input.productId,
     topicId: input.topicId,
     sessionId: input.sessionId,
-    submittedAt: input.submittedAt,
+    createdAt: input.createdAt,
     passingScore: input.passingScore,
     passed: input.passed,
     obtainedScore: input.scoreSummary.obtainedScore,
@@ -38,17 +43,16 @@ export const saveQuizSubmission = async (
     percentage: input.scoreSummary.percentage,
     answeredCount: input.scoreSummary.answeredCount,
     totalQuestions: input.scoreSummary.totalQuestions,
-    answers: input.answers,
-    details: input.scoreSummary.details
+    answers: submittedAnswers
   };
 
   const quizAnalyticsItem = {
     PK: `QUIZ#${input.productId}#${input.topicId}#${input.sessionId}`,
-    SK: `SUBMISSION#${input.submittedAt}#${input.submissionId}`,
+    SK: `SUBMISSION#${input.createdAt}#${input.submissionId}`,
     entityType: "QUIZ_ANALYTICS",
     submissionId: input.submissionId,
     userId: input.userId,
-    submittedAt: input.submittedAt,
+    createdAt: input.createdAt,
     passingScore: input.passingScore,
     passed: input.passed,
     obtainedScore: input.scoreSummary.obtainedScore,

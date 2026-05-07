@@ -35,6 +35,14 @@ interface FetchProductSessionDetailsOptions {
   accessToken?: string;
 }
 
+interface FetchPurchasedProductDetailsOptions {
+  userId: string;
+  productId: string;
+  signal?: AbortSignal;
+  cache?: RequestCache;
+  accessToken?: string;
+}
+
 export async function fetchProducts({
   signal,
   cache = 'no-store',
@@ -97,6 +105,38 @@ export async function fetchPurchasedProductsByUser({
     }
 
     const data: PurchasedProduct[] = await response.json();
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchPurchasedProductDetails({
+  userId,
+  productId,
+  signal,
+  cache = 'no-store',
+  accessToken,
+}: FetchPurchasedProductDetailsOptions): Promise<Product | null> {
+  try {
+    const headers: HeadersInit = accessToken
+      ? { Authorization: `Bearer ${accessToken}` }
+      : {};
+
+    const response = await fetch(
+      `${API_BASE_URL}${PURCHASED_PRODUCTS_ENDPOINT}/${encodeURIComponent(userId)}/products/${encodeURIComponent(productId)}`,
+      {
+        signal,
+        cache,
+        headers,
+      },
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data: Product = await response.json();
     return data;
   } catch {
     return null;

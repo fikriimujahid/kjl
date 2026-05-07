@@ -30,10 +30,16 @@ const readAnswerRecords = (payload: Record<string, unknown>): SubmitQuizAnswerRe
     throw new Error("Invalid answers");
   }
 
-  const normalizedAnswers = answers.filter(isSubmitQuizAnswerRecord).map((item) => ({
-    questionId: item.questionId.trim(),
-    selectedOptionId: item.selectedOptionId.trim()
-  }));
+  const normalizedAnswers = answers.map((item, index) => {
+    if (!isSubmitQuizAnswerRecord(item)) {
+      throw new Error(`Invalid answers[${index}]`);
+    }
+
+    return {
+      questionId: item.questionId.trim(),
+      selectedOptionId: item.selectedOptionId.trim()
+    };
+  });
 
   if (normalizedAnswers.length === 0) {
     throw new Error("Answers cannot be empty");
@@ -111,7 +117,7 @@ export const submitQuizExam = async (
   const scoreSummary = calculateQuizScore(answerKey, answers);
   const passed = scoreSummary.percentage >= passingScoreResult.passingScore;
   const submissionId = randomUUID();
-  const submittedAt = new Date().toISOString();
+  const createdAt = new Date().toISOString();
 
   try {
     await saveQuizSubmission({
@@ -122,7 +128,7 @@ export const submitQuizExam = async (
       productId,
       topicId,
       sessionId,
-      submittedAt,
+      createdAt,
       scoreSummary,
       passingScore: passingScoreResult.passingScore,
       passed,
@@ -134,7 +140,7 @@ export const submitQuizExam = async (
 
   return jsonResponse(200, {
     submissionId,
-    submittedAt,
+    createdAt,
     productId,
     topicId,
     sessionId,
