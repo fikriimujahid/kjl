@@ -33,10 +33,10 @@ Key patterns used:
   - `PK = PRODUCT#{productId}`
   - `SK = TOPIC#{topicId}`
 - Session item:
-  - `PK = TOPIC#{productId}#{topicId}`
-  - `SK = SESSION#{sessionId}`
+  - `PK = PRODUCT#{productId}`
+  - `SK = SESSION#{topicId}#{sessionId}`
 
-Note: Topic IDs in the provided JSON are reused across products (example: `t0`, `tIntro`), so session partition keys are namespaced with `productId` to avoid collisions.
+Note: Topic IDs in the provided JSON are reused across products (example: `t0`, `tIntro`). Sessions are colocated under each product partition, so the session sort key includes topicId to avoid collisions.
 
 ## Features
 

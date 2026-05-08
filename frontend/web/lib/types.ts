@@ -9,6 +9,26 @@ export interface Product {
   accessDurationDays: number;
 }
 
+export interface Topic {
+  id: string;
+  title: string;
+  sessions: Session[];
+}
+
+export interface Session {
+  id: string;
+  title: string;
+  type: 'quiz' | 'pdf' | 'audio' | 'images' | 'video';
+  contentUrl?: string;
+  topicId?: string;
+  questions?: Question[]; 
+}
+
+export interface ProductDetail extends Product {
+  description: string;
+  topics: Topic[];
+}
+
 export interface User {
   id: string;
   email: string;
@@ -31,14 +51,7 @@ export interface Question {
   correctAnswer: string;
 }
 
-export interface Session {
-  id: string;
-  title: string;
-  type: 'quiz' | 'pdf' | 'audio' | 'images' | 'video';
-  contentUrl?: string;
-  topicId?: string;
-  questions?: Question[]; 
-}
+
 
 export interface SessionDetail {
   id: string;
@@ -50,11 +63,7 @@ export interface SessionDetail {
   audio?: string;
 }
 
-export interface Topic {
-  id: string;
-  title: string;
-  sessions: Session[];
-}
+
 
 
 

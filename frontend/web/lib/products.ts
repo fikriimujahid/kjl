@@ -1,4 +1,4 @@
-import { Product, PurchasedProduct, SessionDetail } from '@/lib/types';
+import { Product, ProductDetail, PurchasedProduct, SessionDetail } from '@/lib/types';
 
 const API_BASE_URL = process.env.NEXT_API_BASE_URL ?? '/api';
 const PURCHASED_PRODUCTS_ENDPOINT = '/purchased-products';
@@ -24,6 +24,12 @@ interface FetchPurchasedProductsOptions {
   signal?: AbortSignal;
   cache?: RequestCache;
   accessToken?: string;
+}
+
+interface FetchProductDetailsOptions {
+  productId: string;
+  signal?: AbortSignal;
+  cache?: RequestCache;
 }
 
 interface FetchProductSessionDetailsOptions {
@@ -61,6 +67,31 @@ export async function fetchProducts({
     return data;
   } catch {
     return [];
+  }
+}
+
+export async function fetchProductDetails({
+  productId,
+  signal,
+  cache = 'no-store',
+}: FetchProductDetailsOptions): Promise<ProductDetail | null> {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}${PRODUCTS_ENDPOINT}/${encodeURIComponent(productId)}`,
+      {
+        signal,
+        cache,
+      },
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data: ProductDetail = await response.json();
+    return data;
+  } catch {
+    return null;
   }
 }
 

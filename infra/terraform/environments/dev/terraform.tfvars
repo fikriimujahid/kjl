@@ -256,7 +256,7 @@ service_api = {
         integration_key    = "product"
       }
       get_product_by_id_under_api = {
-        route_key          = "GET /api/products/{id}"
+        route_key          = "GET /api/product/{id}"
         authorization_type = "NONE"
         operation_name     = "GetProductByIdUnderApi"
         integration_key    = "product"

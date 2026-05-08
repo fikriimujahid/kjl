@@ -1,5 +1,4 @@
-import { PurchasedProduct } from "../models/product";
-import { PurchaseRecord } from "../types/productServiceTypes";
+import { PurchaseRecord, PurchasedProduct } from "../types/productTypes";
 
 export const mapPurchaseRecordToPurchasedProduct = (
   record: PurchaseRecord

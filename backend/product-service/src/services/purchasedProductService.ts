@@ -1,6 +1,6 @@
-import { Product } from "../models/product";
+import { Product } from "../types/productTypes";
 import { findPurchasedProductByUserAndProductId } from "../repositories/purchasedProductRepository";
-import { getProductById } from "./productService";
+import { getProductDetailsById } from "./productService";
 
 const isAccessActive = (accessExpiryDate: string): boolean => {
   const accessExpiryDateValue = Date.parse(accessExpiryDate);
@@ -32,7 +32,7 @@ export const getPurchasedProductDetailsByUser = async (
     return { status: "purchase-expired" };
   }
 
-  const product = await getProductById(productId);
+  const product = await getProductDetailsById(productId);
 
   if (!product) {
     return { status: "product-not-found" };

@@ -1,5 +1,4 @@
-import { SessionDetail } from "../models/product";
-import { QuizQuestionRecord } from "../types/productServiceTypes";
+import { QuizQuestionRecord, SessionDetail } from "../types/productTypes";
 
 export const mapQuizQuestionToSessionDetail = (
   question: QuizQuestionRecord

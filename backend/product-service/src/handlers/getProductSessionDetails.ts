@@ -3,7 +3,7 @@
 //   APIGatewayProxyEventV2WithJWTAuthorizer,
 //   APIGatewayProxyStructuredResultV2
 // } from "aws-lambda";
-// import { SessionDetail } from "../models/product";
+// import { SessionDetail } from "../types/productTypes";
 // import { getProductSessionDetails } from "../services/productService";
 // import { jsonResponse } from "../utils/response";
 
