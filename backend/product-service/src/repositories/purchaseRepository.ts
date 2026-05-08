@@ -1,7 +1,6 @@
 import { QueryCommand } from "@aws-sdk/lib-dynamodb";
-import { PurchasedProduct } from "../models/product";
+import { PurchaseRecord, PurchasedProduct } from "../types/productTypes";
 import { mapPurchaseRecordToPurchasedProduct } from "../mappers/purchaseMapper";
-import { PurchaseRecord } from "../types/productServiceTypes";
 import { logProductServiceError, logProductServiceInfo } from "../utils/logger";
 import { isPurchaseRecord } from "../utils/validators";
 import { dynamoDbDocumentClient } from "../clients/awsClients";

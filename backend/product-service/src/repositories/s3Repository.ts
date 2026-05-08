@@ -1,7 +1,7 @@
 import { GetObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3Client } from "../clients/awsClients";
-import { QuizQuestionRecord } from "../types/productServiceTypes";
+import { QuizQuestionRecord } from "../types/productTypes";
 import { logProductServiceError, logProductServiceInfo } from "../utils/logger";
 import { getBodyAsString } from "../utils/s3BodyParser";
 import { isQuizQuestionRecord } from "../utils/validators";

@@ -1,6 +1,6 @@
 import { mapQuizQuestionToSessionDetail } from "../mappers/quizMapper";
-import { Product, PurchasedProduct, Session, SessionDetail, Topic } from "../models/product";
-import { fetchProducts, findProductById } from "../repositories/productRepository";
+import { Product, ProductDetail, PurchasedProduct, Session, SessionDetail, Topic } from "../types/productTypes";
+import { fetchProducts, findProductDetailsById } from "../repositories/productRepository";
 import { getUserPurchase, listPurchasedProducts } from "../repositories/purchaseRepository";
 import {
   buildSignedObjectUrl,
@@ -84,8 +84,8 @@ export const listProducts = async (): Promise<Product[]> => {
   return fetchProducts();
 };
 
-export const getProductById = async (id: string): Promise<Product | null> => {
-  return findProductById(id);
+export const getProductDetailsById = async (id: string): Promise<ProductDetail | null> => {
+  return findProductDetailsById(id);
 };
 
 // export const getProductSessionDetails = async (

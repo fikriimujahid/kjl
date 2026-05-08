@@ -1,4 +1,4 @@
-import { PurchaseRecord } from "../types/productServiceTypes";
+import { PurchaseRecord } from "../types/productTypes";
 
 export const parseDateValue = (value: string): number => {
   const parsed = Date.parse(value);

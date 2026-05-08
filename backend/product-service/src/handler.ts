@@ -13,7 +13,7 @@ export const handler = async (
     return getProducts(event);
   }
 
-  if (event.routeKey === "GET /api/products/{id}") {
+  if (event.routeKey === "GET /api/product/{id}") {
     return getProductDetails(event);
   }
 

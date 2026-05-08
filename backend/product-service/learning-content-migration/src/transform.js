@@ -44,8 +44,8 @@ function transformProductsToItems(products) {
 
       sessions.forEach((session, sessionIndex) => {
         items.push({
-          PK: topicPartitionKey,
-          SK: `SESSION#${session.id}`,
+          PK: productPartitionKey,
+          SK: `SESSION#${topic.id}#${session.id}`,
           entityType: "SESSION",
           productId: product.id,
           topicId: topic.id,
