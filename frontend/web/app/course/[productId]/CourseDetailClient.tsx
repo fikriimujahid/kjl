@@ -152,7 +152,7 @@ export default function CourseDetailClient({ productId }: CourseDetailClientProp
                   <div className="p-5 text-xs font-semibold text-slate-500">Produk tidak ditemukan.</div>
                 )}
 
-                {!isLoadingProduct && !productError && selectedProduct?.topics.map((topic) => (
+                {/* {!isLoadingProduct && !productError && selectedProduct?.topics.map((topic) => (
                   <div key={topic.id} className="overflow-hidden">
                     <button
                       onClick={() => setExpandedTopic(expandedTopic === topic.id ? null : topic.id)}
@@ -193,7 +193,7 @@ export default function CourseDetailClient({ productId }: CourseDetailClientProp
                       )}
                     </AnimatePresence>
                   </div>
-                ))}
+                ))} */}
               </div>
             </div>
           </div>
