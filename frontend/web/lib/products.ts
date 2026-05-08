@@ -5,13 +5,13 @@ const PURCHASED_PRODUCTS_ENDPOINT = '/purchased-products';
 const PRODUCTS_ENDPOINT = '/products';
 const PUBLIC_PRODUCT_URL = process.env.NEXT_PUBLIC_PRODUCT_URL ?? '';
 
-interface FetchProductsOptions {
+interface FetchOptions {
   url?: string;
   signal?: AbortSignal;
   cache?: RequestCache;
 }
 
-interface LoadOwnedProductsOptions extends FetchProductsOptions {
+interface LoadOwnedProductsOptions extends FetchOptions {
   userId: string;
   purchases?: PurchasedProduct[];
   purchasesUrl?: string;
@@ -46,9 +46,9 @@ interface FetchPurchasedProductDetailsOptions {
 export async function fetchProducts({
   signal,
   cache = 'no-store',
-}: FetchProductsOptions = {}): Promise<Product[]> {
+}: FetchOptions = {}): Promise<Product[]> {
   try {
-    const response = await fetch(PUBLIC_PRODUCT_URL, {
+    const response = await fetch(`${API_BASE_URL}/products`, {
       signal,
       cache,
     });

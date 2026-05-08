@@ -12,7 +12,11 @@ export const isProduct = (value: unknown): value is Product => {
     typeof candidate.id === "string" &&
     typeof candidate.name === "string" &&
     typeof candidate.price === "number" &&
-    typeof candidate.description === "string"
+    typeof candidate.shortDescription === "string" &&
+    (candidate.level === "N5" || candidate.level === "N4" || candidate.level === "N3" || candidate.level === "N2" || candidate.level === "N1" || candidate.level === "JFT" || candidate.level === "Beginner") &&
+    typeof candidate.topicsCount === "number" &&
+    (candidate.featuredProducts === undefined || typeof candidate.featuredProducts === "boolean") &&
+    typeof candidate.accessDurationDays === "number"
   );
 };
 

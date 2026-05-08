@@ -5,9 +5,7 @@ import type { NextConfig } from 'next';
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 const catalogSourceUrl = process.env.CATALOG_SOURCE_URL ?? 'https://kjl.fikri.dev/public-data/catalog.json';
 
-const isStaticExport =
-  process.env.NEXT_OUTPUT_MODE === 'export' ||
-  process.env.npm_lifecycle_event === 'export';
+const isStaticExport = process.env.NEXT_OUTPUT_MODE === 'export';
 
 const nextConfig: NextConfig = {
   env: {
