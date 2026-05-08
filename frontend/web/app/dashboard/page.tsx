@@ -306,7 +306,7 @@ export default function DashboardPage() {
             {ownedProducts.map((product) => {
               const pct = PRODUCT_PROGRESS[product.id] ?? 0;
               return (
-                <Link href={`/course/${product.id}`} key={product.id} className="block p-4 rounded-2xl bg-white border border-slate-200 hover:border-indigo-200 hover:shadow-md transition-all group">
+                <Link href={`/course?productId=${encodeURIComponent(product.id)}`} key={product.id} className="block p-4 rounded-2xl bg-white border border-slate-200 hover:border-indigo-200 hover:shadow-md transition-all group">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold shrink-0 text-xs group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                       {product.level}

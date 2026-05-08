@@ -77,7 +77,7 @@ export async function fetchProductDetails({
 }: FetchProductDetailsOptions): Promise<ProductDetail | null> {
   try {
     const response = await fetch(
-      `${API_BASE_URL}${PRODUCTS_ENDPOINT}/${encodeURIComponent(productId)}`,
+      `${API_BASE_URL}/product/${encodeURIComponent(productId)}`,
       {
         signal,
         cache,

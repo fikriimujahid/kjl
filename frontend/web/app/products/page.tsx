@@ -1,20 +1,29 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Search, BookOpen } from 'lucide-react';
 import { ProductCard } from '@/components/ProductCard';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { Product } from '@/lib/types';
 import { fetchProducts } from '@/lib/products';
+import ProductDetailClient from './ProductDetailClient';
 
-export default function ProductsPage() {
+function ProductsPageContent() {
+  const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLevel, setSelectedLevel] = useState<string>('All');
   const [productItems, setProductItems] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const productId = searchParams.get('productId')?.trim();
+
   useEffect(() => {
+    if (productId) {
+      return;
+    }
+
     const controller = new AbortController();
 
     async function loadProducts() {
@@ -30,7 +39,11 @@ export default function ProductsPage() {
     return () => {
       controller.abort();
     };
-  }, []);
+  }, [productId]);
+
+  if (productId) {
+    return <ProductDetailClient productId={productId} />;
+  }
 
   const levels = ['All', 'JFT', 'Beginner'];
 
@@ -123,5 +136,13 @@ export default function ProductsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10" />}>
+      <ProductsPageContent />
+    </Suspense>
   );
 }

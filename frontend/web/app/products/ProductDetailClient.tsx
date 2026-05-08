@@ -18,14 +18,14 @@ function sessionTypeLabel(type: Session['type']): string {
   switch (type) {
     case 'quiz':
       return 'Kuis';
-    case 'pdf':
-      return 'PDF';
-    case 'audio':
-      return 'Audio';
-    case 'images':
-      return 'Gambar';
+    // case 'pdf':
+    //   return 'PDF';
+    // case 'audio':
+    //   return 'Audio';
+    // case 'images':
+    //   return 'Gambar';
     default:
-      return type;
+      return 'Materi';
   }
 }
 
@@ -35,12 +35,12 @@ function SessionTypeIcon({ type }: { type: Session['type'] }) {
   switch (type) {
     case 'quiz':
       return <HelpCircle {...props} />;
-    case 'pdf':
-      return <FileText {...props} />;
-    case 'audio':
-      return <Headphones {...props} />;
-    case 'images':
-      return <ImageIcon {...props} />;
+    // case 'pdf':
+    //   return <FileText {...props} />;
+    // case 'audio':
+    //   return <Headphones {...props} />;
+    // case 'images':
+    //   return <ImageIcon {...props} />;
     default:
       return <BookOpen {...props} />;
   }
@@ -54,29 +54,104 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
   const router = useRouter();
   const [openTopicId, setOpenTopicId] = useState<string | null>(null);
   const [productDetails, setProductDetails] = useState<ProductDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isBuying, setIsBuying] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
+    let isActive = true;
 
     async function loadProductDetails() {
-      const productDetails = await fetchProductDetails({
+      setIsLoading(true);
+      setProductDetails(null);
+      const result = await fetchProductDetails({
         productId,
         signal: controller.signal,
       });
-      setProductDetails(productDetails);
+
+      if (!isActive) {
+        return;
+      }
+
+      setProductDetails(result);
+      setIsLoading(false);
     }
 
     loadProductDetails();
 
     return () => {
+      isActive = false;
       controller.abort();
     };
   }, [productId]);
 
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16 animate-pulse">
+        <div className="h-5 w-40 bg-gray-200 rounded-full mb-10" />
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+          {/* Left column */}
+          <div className="space-y-8">
+            <div className="w-full aspect-[4/3] bg-gray-200 rounded-[3rem]" />
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between mb-6">
+                <div className="h-7 w-36 bg-gray-200 rounded-full" />
+                <div className="h-5 w-32 bg-gray-200 rounded-full" />
+              </div>
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-16 bg-white rounded-2xl border border-gray-100" />
+              ))}
+            </div>
+          </div>
+
+          {/* Right column */}
+          <div className="space-y-8">
+            <div className="space-y-4">
+              <div className="h-6 w-20 bg-gray-200 rounded-full" />
+              <div className="h-12 w-3/4 bg-gray-200 rounded-xl" />
+              <div className="h-4 w-full bg-gray-200 rounded-full" />
+              <div className="h-4 w-5/6 bg-gray-200 rounded-full" />
+              <div className="h-4 w-2/3 bg-gray-200 rounded-full" />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white p-4 rounded-3xl border border-gray-100 h-24" />
+              ))}
+            </div>
+
+            <div className="bg-indigo-50 p-8 rounded-[2.5rem] border border-indigo-100 h-28" />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-14 bg-white rounded-2xl border border-gray-50 shadow-sm" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!productDetails) {
-    return null;
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
+        <Link href="/products" className="inline-flex items-center gap-2 text-indigo-600 font-bold mb-10 hover:-translate-x-1 transition-transform">
+          <ChevronLeft size={20} />
+          Kembali ke Produk
+        </Link>
+        <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+          <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+            <BookOpen size={36} className="text-gray-300" />
+          </div>
+          <h2 className="text-2xl font-black text-gray-800 mb-2">Produk Tidak Ditemukan</h2>
+          <p className="text-gray-400 font-medium">Produk yang kamu cari tidak tersedia atau sudah tidak aktif.</p>
+        </div>
+      </div>
+    );
   }
 
   const totalSessions = productDetails.topics.reduce((acc, topic) => acc + topic.sessions.length, 0);
@@ -89,7 +164,7 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
     const session = readStoredAuthSession();
 
     if (!session) {
-      router.push(`/login?next=${encodeURIComponent(`/products/${productId}`)}`);
+      router.push(`/login?next=${encodeURIComponent(`/products?productId=${encodeURIComponent(productId)}`)}`);
       return;
     }
 
@@ -186,7 +261,7 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
               {productDetails.level}
             </span>
             <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-4 leading-tight">{productDetails.name}</h1>
-            {/* <p className="text-lg text-gray-500 leading-relaxed font-medium">{productDetails.description}</p> */}
+            <p className="text-lg text-gray-500 leading-relaxed font-medium">{productDetails.description}</p>
           </div>
 
           <div className="grid grid-cols-3 gap-4">

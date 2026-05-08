@@ -141,7 +141,11 @@ export default function CourseDetailClient({ productId }: CourseDetailClientProp
               </div>
               <div className="divide-y divide-slate-50">
                 {isLoadingProduct && (
-                  <div className="p-5 text-xs font-semibold text-slate-500">Memuat kurikulum produk...</div>
+                  <div className="p-4 space-y-2 animate-pulse">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div key={i} className="h-10 bg-slate-100 rounded-xl" />
+                    ))}
+                  </div>
                 )}
 
                 {!isLoadingProduct && productError && (
@@ -204,6 +208,16 @@ export default function CourseDetailClient({ productId }: CourseDetailClientProp
                 <div className="min-h-[400px]">
                   {/* {activeSession.type === 'images' && <ImageViewer title={activeSession.title} images={activeImagePages} />} */}
                 </div>
+              </div>
+            ) : isLoadingProduct ? (
+              <div className="animate-pulse bg-white rounded-2xl shadow-sm border border-slate-200 min-h-[600px] p-8 space-y-5">
+                <div className="h-7 w-1/3 bg-slate-200 rounded-full" />
+                <div className="h-4 w-full bg-slate-100 rounded-full" />
+                <div className="h-4 w-5/6 bg-slate-100 rounded-full" />
+                <div className="h-4 w-3/4 bg-slate-100 rounded-full" />
+                <div className="mt-6 h-56 w-full bg-slate-100 rounded-2xl" />
+                <div className="h-4 w-2/3 bg-slate-100 rounded-full" />
+                <div className="h-4 w-1/2 bg-slate-100 rounded-full" />
               </div>
             ) : (
               <div className="bg-white rounded-2xl shadow-sm border-2 border-dashed border-slate-200 min-h-[600px] flex flex-col items-center justify-center text-center p-12">

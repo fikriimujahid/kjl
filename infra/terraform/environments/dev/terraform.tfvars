@@ -86,6 +86,17 @@ auth_cognito = {
     "https://dev.myapp.com/logout"
   ]
 
+  token_validity = {
+    access_token_validity  = 1
+    id_token_validity      = 1
+    refresh_token_validity = 30
+    token_validity_units = {
+      access_token  = "hours"
+      id_token      = "hours"
+      refresh_token = "days"
+    }
+  }
+
   enabled_identity_providers = ["COGNITO"]
   verification_message_template = {
     default_email_option  = "CONFIRM_WITH_LINK"
