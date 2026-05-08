@@ -8,6 +8,8 @@ import { fetchPurchasedProductDetails } from '@/lib/products';
 import { ChevronDown, ChevronUp, Play, Book, Music, FileText } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
+import QuizViewer from '@/components/QuizViewer';
+import ImageViewer from '@/components/ImageViewer';
 
 interface CourseDetailClientProps {
   productId: string;
@@ -65,13 +67,15 @@ export default function CourseDetailClient({ productId }: CourseDetailClientProp
           accessToken: accessToken ?? undefined,
         });
 
-        if (!product) {
-          setSelectedProduct(null);
-          setProductError('Produk tidak tersedia atau kamu belum memiliki akses.');
+        // In local dev, React Strict Mode can abort an initial request.
+        // Ignore any result from an inactive effect run.
+        if (!isActive) {
           return;
         }
 
-        if (!isActive) {
+        if (!product) {
+          setSelectedProduct(null);
+          setProductError('Produk tidak tersedia atau kamu belum memiliki akses.');
           return;
         }
 
@@ -125,12 +129,12 @@ export default function CourseDetailClient({ productId }: CourseDetailClientProp
 
   return (
     <RequireAuth>
-      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="mx-auto px-3 sm:px-6 lg:px-8 py-10">
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-10">
-          <div className="lg:col-span-4 space-y-8 order-2 lg:order-1 overflow-visible">
+          <div className="lg:col-span-3 space-y-8 order-2 lg:order-1 overflow-visible">
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="p-6 bg-slate-50/50 border-b border-slate-100">
-                <h3 className="font-bold text-slate-800 tracking-tight text-sm">Kurikulum Belajar</h3>
+                <h3 className="font-bold text-slate-800 tracking-tight text-sm">Kurikulum Belajar {selectedProduct ? `${selectedProduct.name}` : ''}</h3>
                 {/* <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">
                   {selectedProduct ? `${selectedProduct.topics.length} Topik Tersedia` : 'Topik Tersedia'}
                 </p> */}
@@ -148,7 +152,7 @@ export default function CourseDetailClient({ productId }: CourseDetailClientProp
                   <div className="p-5 text-xs font-semibold text-slate-500">Produk tidak ditemukan.</div>
                 )}
 
-                {!isLoadingProduct && !productError && selectedProduct?.topics.map((topic) => (
+                {/* {!isLoadingProduct && !productError && selectedProduct?.topics.map((topic) => (
                   <div key={topic.id} className="overflow-hidden">
                     <button
                       onClick={() => setExpandedTopic(expandedTopic === topic.id ? null : topic.id)}
@@ -189,13 +193,27 @@ export default function CourseDetailClient({ productId }: CourseDetailClientProp
                       )}
                     </AnimatePresence>
                   </div>
-                ))}
+                ))} */}
               </div>
             </div>
           </div>
 
-          <div className="lg:col-span-8 order-1 lg:order-2">
-
+          <div className="lg:col-span-9 order-1 lg:order-2">
+            {activeSession ? (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"> 
+                <div className="min-h-[400px]">
+                  {/* {activeSession.type === 'images' && <ImageViewer title={activeSession.title} images={activeImagePages} />} */}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-sm border-2 border-dashed border-slate-200 min-h-[600px] flex flex-col items-center justify-center text-center p-12">
+                <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-8 text-slate-300">
+                  <Play size={48} />
+                </div>
+                <h2 className="text-2xl font-bold text-slate-800 mb-4 tracking-tight">Siap Mulai Belajar?</h2>
+                <p className="text-slate-400 max-w-sm font-medium text-sm leading-relaxed">Pilih sebuah sesi dari kurikulum di sebelah kiri untuk menampilkan materi, kuis, atau audio pembelajaran.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

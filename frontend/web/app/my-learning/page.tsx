@@ -224,9 +224,9 @@ export default function MyLearningPage() {
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="p-6 bg-slate-50/50 border-b border-slate-100">
                 <h3 className="font-bold text-slate-800 tracking-tight text-sm">Kurikulum Belajar</h3>
-                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">{selectedProduct.topics.length} Topik Tersedia</p>
+                {/* <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">{selectedProduct.topics.length} Topik Tersedia</p> */}
               </div>
-              <div className="divide-y divide-slate-50">
+              {/* <div className="divide-y divide-slate-50">
                 {selectedProduct.topics.map((topic) => (
                   <div key={topic.id} className="overflow-hidden">
                     <button
@@ -269,7 +269,7 @@ export default function MyLearningPage() {
                     </AnimatePresence>
                   </div>
                 ))}
-              </div>
+              </div> */}
             </div>
           )}
         </div>

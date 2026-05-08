@@ -93,7 +93,7 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
     return null;
   }
 
-  const totalSessions = product.topics.reduce((acc, topic) => acc + topic.sessions.length, 0);
+  // const totalSessions = product.topics.reduce((acc, topic) => acc + topic.sessions.length, 0);
 
   const handleBuy = async () => {
     const session = readStoredAuthSession();
@@ -151,7 +151,7 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
             </div>
           </motion.div>
 
-          {product.topics.length > 0 && (
+          {/* {product.topics.length > 0 && (
             <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-black text-gray-900">Daftar Topik</h2>
@@ -191,7 +191,7 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
                 ))}
               </div>
             </motion.section>
-          )}
+          )} */}
         </div>
 
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
@@ -200,7 +200,7 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
               {product.level}
             </span>
             <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-4 leading-tight">{product.name}</h1>
-            <p className="text-lg text-gray-500 leading-relaxed font-medium">{product.description}</p>
+            {/* <p className="text-lg text-gray-500 leading-relaxed font-medium">{product.description}</p> */}
           </div>
 
           <div className="grid grid-cols-3 gap-4">
