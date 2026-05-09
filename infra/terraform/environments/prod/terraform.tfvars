@@ -85,6 +85,17 @@ auth_cognito = {
     "https://dev.myapp.com/logout"
   ]
 
+  token_validity = {
+    access_token_validity  = 1
+    id_token_validity      = 1
+    refresh_token_validity = 30
+    token_validity_units = {
+      access_token  = "hours"
+      id_token      = "hours"
+      refresh_token = "days"
+    }
+  }
+
   enabled_identity_providers = ["COGNITO"]
   verification_message_template = {
     default_email_option  = "CONFIRM_WITH_LINK"
@@ -224,6 +235,18 @@ service_api = {
         }
       }
     }
+
+    auth = {
+      name        = "kejepangdulu-prod-auth-api"
+      description = "Auth API Lambda."
+      source_dir  = "../../../../backend/auth-service/lambda"
+      handler     = "handler.handler"
+      runtime     = "nodejs22.x"
+      memory_size = 256
+      timeout     = 15
+      environment_variables = {}
+      publish = true
+    }
   }
 
   api_gateway = {
@@ -273,6 +296,48 @@ service_api = {
         authorization_type = "JWT"
         operation_name     = "SubmitQuizExamUnderApi"
         integration_key    = "quiz"
+      }
+      register_under_api = {
+        route_key          = "POST /api/auth/register"
+        authorization_type = "NONE"
+        operation_name     = "RegisterUnderApi"
+        integration_key    = "auth"
+      }
+      login_under_api = {
+        route_key          = "POST /api/auth/login"
+        authorization_type = "NONE"
+        operation_name     = "LoginUnderApi"
+        integration_key    = "auth"
+      }
+      refresh_session_under_api = {
+        route_key          = "POST /api/auth/refresh"
+        authorization_type = "NONE"
+        operation_name     = "RefreshSessionUnderApi"
+        integration_key    = "auth"
+      }
+      forgot_password_under_api = {
+        route_key          = "POST /api/auth/forgot-password"
+        authorization_type = "NONE"
+        operation_name     = "ForgotPasswordUnderApi"
+        integration_key    = "auth"
+      }
+      confirm_forgot_password_under_api = {
+        route_key          = "POST /api/auth/forgot-password/confirm"
+        authorization_type = "NONE"
+        operation_name     = "ConfirmForgotPasswordUnderApi"
+        integration_key    = "auth"
+      }
+      get_session_under_api = {
+        route_key          = "GET /api/auth/session"
+        authorization_type = "NONE"
+        operation_name     = "GetSessionUnderApi"
+        integration_key    = "auth"
+      }
+      logout_under_api = {
+        route_key          = "POST /api/auth/logout"
+        authorization_type = "NONE"
+        operation_name     = "LogoutUnderApi"
+        integration_key    = "auth"
       }
     }
   }

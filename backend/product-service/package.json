@@ -6,8 +6,10 @@
   "scripts": {
     "clean": "node -e \"require('fs').rmSync('build',{recursive:true,force:true})\"",
     "build": "npm run clean && tsc -p tsconfig.json",
-    "start:local": "npm run build && node local-server.js",
-    "seed:purchases": "node scripts/seedDummyPurchases.js"
+    "start:local": "npm run build && node --env-file=.env local-server.js",
+    "seed:purchases": "node scripts/seedDummyPurchases.js",
+    "test": "jest",
+    "test:unit": "jest --runInBand"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "3.1040.0",
@@ -17,7 +19,10 @@
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.147",
+    "@types/jest": "^29.5.14",
     "@types/node": "^22.15.21",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
     "typescript": "^5.8.3"
   }
 }

@@ -47,6 +47,8 @@ jobs:
       - name: Create .env.local
         run: |
           cat <<'EOF' > .env.local
+          PRODUCT_API_BASE_URL=${{ secrets.FRONTEND_PRODUCT_API_BASE_URL }}
+          AUTH_API_BASE_URL=${{ secrets.FRONTEND_AUTH_API_BASE_URL }}
           NEXT_PUBLIC_PRODUCT_URL=${{ secrets.PRODUCT_DATA_URL }}
           NEXT_API_BASE_URL=${{ secrets.NEXT_API_BASE_URL }}
           NEXT_PUBLIC_COGNITO_API_ENDPOINT=${{ secrets.NEXT_PUBLIC_COGNITO_API_ENDPOINT }}

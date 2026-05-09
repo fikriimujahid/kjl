@@ -55,7 +55,7 @@ export function ProductCard({ product, isOwned }: ProductCardProps) {
           </div>
 
           <Link
-            href={isOwned ? '/my-learning' : `/products/${product.id}`}
+            href={isOwned ? '/my-learning' : `/products?productId=${encodeURIComponent(product.id)}`}
             className={cn(
               'px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 text-xs font-bold shadow-sm',
               isOwned
@@ -63,7 +63,7 @@ export function ProductCard({ product, isOwned }: ProductCardProps) {
                 : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-100 border border-indigo-600',
             )}
           >
-            {isOwned ? 'Mulai Belajar' : 'Daftar'}
+            {isOwned ? 'Mulai Belajar' : 'Beli'}
           </Link>
         </div>
       </div>

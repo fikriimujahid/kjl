@@ -57,6 +57,17 @@ module "cognito" {
     "https://dev.myapp.com/logout"
   ]
 
+  token_validity = {
+    access_token_validity  = 30
+    id_token_validity      = 30
+    refresh_token_validity = 30
+    token_validity_units = {
+      access_token  = "minutes"
+      id_token      = "minutes"
+      refresh_token = "days"
+    }
+  }
+
   google_client_id     = var.google_client_id
   google_client_secret = var.google_client_secret
 }
@@ -68,6 +79,7 @@ module "cognito" {
 - `environment` (string): Environment name.
 - `callback_urls` (list(string)): OAuth callback URLs.
 - `logout_urls` (list(string)): OAuth logout URLs.
+- `token_validity` (object): Optional token lifetime settings for access, ID, and refresh tokens.
 - `google_client_id` (string): Google OAuth client ID.
 - `google_client_secret` (string, sensitive): Google OAuth client secret.
 

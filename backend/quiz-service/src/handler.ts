@@ -1,5 +1,6 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
 import { submitQuizExam } from "./handlers/submitQuizExam";
+import { ROUTES } from "./routes";
 import { jsonResponse, optionsResponse } from "./utils/response";
 
 export const handler = async (
@@ -9,7 +10,7 @@ export const handler = async (
     return optionsResponse();
   }
 
-  if (event.routeKey === "POST /api/quiz/exam/submit") {
+  if (event.routeKey === ROUTES.SUBMIT_QUIZ_EXAM.routeKey) {
     return submitQuizExam(event);
   }
 

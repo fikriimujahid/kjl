@@ -148,6 +148,8 @@ module "cognito" {
 
   logout_urls = var.auth_cognito.logout_urls
 
+  token_validity = try(var.auth_cognito.token_validity, {})
+
   enabled_identity_providers    = var.auth_cognito.enabled_identity_providers
   verification_message_template = try(var.auth_cognito.verification_message_template, null)
   google_client_id              = try(var.auth_cognito.google_client_id, null)

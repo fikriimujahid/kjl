@@ -4,9 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Mail, Lock, Loader2, CheckCircle2, User, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
-
-const COGNITO_API_ENDPOINT = process.env.NEXT_PUBLIC_COGNITO_API_ENDPOINT ?? '';
-const COGNITO_USER_POOL_CLIENT_ID = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID ?? '';
+import { registerWithPassword } from '@/lib/auth/api';
 
 function getPasswordStrength(password: string): {
   score: number;
@@ -59,21 +57,6 @@ function getPasswordStrength(password: string): {
   };
 }
 
-function getSignupErrorMessage(errorType?: string, fallbackMessage?: string): string {
-  switch (errorType) {
-    case 'UsernameExistsException':
-      return 'Email ini sudah terdaftar. Silakan gunakan email lain.';
-    case 'InvalidPasswordException':
-      return 'Password belum memenuhi aturan Cognito. Gunakan minimal 8 karakter dengan kombinasi huruf dan angka.';
-    case 'InvalidParameterException':
-      return fallbackMessage ?? 'Data pendaftaran tidak valid. Periksa kembali form kamu.';
-    case 'TooManyRequestsException':
-      return 'Terlalu banyak percobaan. Coba lagi beberapa saat lagi.';
-    default:
-      return fallbackMessage ?? 'Pendaftaran gagal. Silakan coba lagi.';
-  }
-}
-
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -87,42 +70,10 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
 
-    if (!COGNITO_API_ENDPOINT || !COGNITO_USER_POOL_CLIENT_ID) {
-      setError('Konfigurasi autentikasi belum tersedia. Hubungi admin untuk melengkapi environment variable frontend.');
-      return;
-    }
-
     setLoading(true);
 
     try {
-      const response = await fetch(COGNITO_API_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-amz-json-1.1',
-          'X-Amz-Target': 'AWSCognitoIdentityProviderService.SignUp',
-        },
-        body: JSON.stringify({
-          ClientId: COGNITO_USER_POOL_CLIENT_ID,
-          Username: email,
-          Password: password,
-          UserAttributes: [
-            {
-              Name: 'email',
-              Value: email,
-            },
-            {
-              Name: 'name',
-              Value: fullName,
-            },
-          ],
-        }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        const errorType = typeof data?.__type === 'string' ? data.__type.split('#').pop() : undefined;
-        throw new Error(getSignupErrorMessage(errorType, data?.message));
-      }
+      await registerWithPassword(fullName, email, password);
 
       setLoading(false);
       setSuccess(true);

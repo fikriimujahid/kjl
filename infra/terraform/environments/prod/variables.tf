@@ -164,6 +164,17 @@ variable "auth_cognito" {
     callback_urls = list(string)
     logout_urls   = list(string)
 
+    token_validity = optional(object({
+      access_token_validity  = optional(number)
+      id_token_validity      = optional(number)
+      refresh_token_validity = optional(number)
+      token_validity_units = optional(object({
+        access_token  = optional(string, "hours")
+        id_token      = optional(string, "hours")
+        refresh_token = optional(string, "days")
+      }), {})
+    }), {})
+
     enabled_identity_providers = optional(list(string), ["COGNITO"])
     verification_message_template = optional(object({
       default_email_option  = optional(string)

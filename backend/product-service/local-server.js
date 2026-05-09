@@ -1,8 +1,10 @@
 const http = require("http");
 const { URL } = require("url");
 const { handler } = require("./build/lambda/handler.js");
+const { ROUTES } = require("./build/lambda/routes.js");
 
 const PORT = Number(process.env.PORT || 3001);
+const routeDefinitions = Object.values(ROUTES);
 
 function normalizeHeaders(headers) {
   const normalized = {};
@@ -48,47 +50,64 @@ function readRequestBody(req) {
   });
 }
 
+function splitPath(pathname) {
+  return pathname.split("/").filter(Boolean);
+}
+
+function isPathParameterSegment(segment) {
+  return segment.startsWith("{") && segment.endsWith("}");
+}
+
+function safeDecodeURIComponent(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function matchPath(templatePath, pathname) {
+  const templateSegments = splitPath(templatePath);
+  const actualSegments = splitPath(pathname);
+
+  if (templateSegments.length !== actualSegments.length) {
+    return null;
+  }
+
+  const pathParameters = {};
+
+  for (let index = 0; index < templateSegments.length; index += 1) {
+    const templateSegment = templateSegments[index];
+    const actualSegment = actualSegments[index];
+
+    if (isPathParameterSegment(templateSegment)) {
+      const parameterName = templateSegment.slice(1, -1);
+      pathParameters[parameterName] = safeDecodeURIComponent(actualSegment);
+      continue;
+    }
+
+    if (templateSegment !== actualSegment) {
+      return null;
+    }
+  }
+
+  return Object.keys(pathParameters).length > 0 ? pathParameters : undefined;
+}
+
 function resolveRoute(method, pathname) {
-  if (method === "GET" && pathname === "/api/products") {
-    return { routeKey: "GET /api/products", pathParameters: undefined };
-  }
+  for (const route of routeDefinitions) {
+    if (route.method !== method) {
+      continue;
+    }
 
-  const productIdMatch = pathname.match(/^\/api\/products\/([^/]+)$/);
-  if (method === "GET" && productIdMatch) {
-    return {
-      routeKey: "GET /api/products/{id}",
-      pathParameters: { id: decodeURIComponent(productIdMatch[1]) }
-    };
-  }
+    const pathParameters = matchPath(route.path, pathname);
+    if (pathParameters === null) {
+      continue;
+    }
 
-  const productSessionMatch = pathname.match(/^\/api\/products\/([^/]+)\/topics\/([^/]+)\/sessions\/([^/]+)$/);
-  if (method === "GET" && productSessionMatch) {
     return {
-      routeKey: "GET /api/products/{productId}/topics/{topicId}/sessions/{sessionId}",
-      pathParameters: {
-        productId: decodeURIComponent(productSessionMatch[1]),
-        topicId: decodeURIComponent(productSessionMatch[2]),
-        sessionId: decodeURIComponent(productSessionMatch[3])
-      }
-    };
-  }
-
-  const purchasedProductsMatch = pathname.match(/^\/api\/purchased-products\/([^/]+)$/);
-  if (method === "GET" && purchasedProductsMatch) {
-    return {
-      routeKey: "GET /api/purchased-products/{userId}",
-      pathParameters: { userId: decodeURIComponent(purchasedProductsMatch[1]) }
-    };
-  }
-
-  const purchasedProductDetailsMatch = pathname.match(/^\/api\/purchased-products\/([^/]+)\/products\/([^/]+)$/);
-  if (method === "GET" && purchasedProductDetailsMatch) {
-    return {
-      routeKey: "GET /api/purchased-products/{userId}/products/{products}",
-      pathParameters: {
-        userId: decodeURIComponent(purchasedProductDetailsMatch[1]),
-        products: decodeURIComponent(purchasedProductDetailsMatch[2])
-      }
+      routeKey: route.routeKey,
+      pathParameters,
     };
   }
 
@@ -118,13 +137,13 @@ const server = http.createServer(async (req, res) => {
     requestContext: {
       http: {
         method: req.method || "GET",
-        path: requestUrl.pathname
+        path: requestUrl.pathname,
       },
-      authorizer: claims ? { jwt: { claims } } : undefined
+      authorizer: claims ? { jwt: { claims } } : undefined,
     },
     pathParameters: route.pathParameters,
     isBase64Encoded: false,
-    body: rawBody || undefined
+    body: rawBody || undefined,
   };
 
   try {
@@ -142,7 +161,7 @@ const server = http.createServer(async (req, res) => {
     res.end(
       JSON.stringify({
         message: "Local server error",
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       })
     );
   }

@@ -77,6 +77,16 @@ resource "aws_cognito_user_pool_client" "this" {
   callback_urls                        = var.callback_urls
   logout_urls                          = var.logout_urls
 
+  access_token_validity  = try(var.token_validity.access_token_validity, null)
+  id_token_validity      = try(var.token_validity.id_token_validity, null)
+  refresh_token_validity = try(var.token_validity.refresh_token_validity, null)
+
+  token_validity_units {
+    access_token  = try(var.token_validity.token_validity_units.access_token, "hours")
+    id_token      = try(var.token_validity.token_validity_units.id_token, "hours")
+    refresh_token = try(var.token_validity.token_validity_units.refresh_token, "days")
+  }
+
   # Hides user existence details from authentication error responses.
   prevent_user_existence_errors = "ENABLED"
 }
