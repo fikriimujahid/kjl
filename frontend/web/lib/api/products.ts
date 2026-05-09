@@ -1,6 +1,6 @@
 import { Product, ProductDetail, PurchasedProduct, SessionDetail } from '@/lib/types';
 
-const PRODUCT_API_BASE_URL = process.env.PRODUCT_API_BASE_URL ?? '/api';
+const PRODUCT_API_BASE_URL = (process.env.PRODUCT_API_BASE_URL ?? '/api').replace(/\/+$/, '');
 const PURCHASED_PRODUCTS_ENDPOINT = '/purchased-products';
 const PRODUCTS_ENDPOINT = '/products';
 
@@ -53,7 +53,7 @@ export async function fetchProducts({
   cache = 'no-store',
 }: FetchOptions = {}): Promise<Product[]> {
   try {
-    const response = await fetch(`${PRODUCT_API_BASE_URL}/`, {
+    const response = await fetch(`${PRODUCT_API_BASE_URL}`, {
       signal,
       cache,
     });
