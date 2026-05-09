@@ -6,7 +6,7 @@ import { CreditCard, ChevronRight, CheckCircle2, Clock } from 'lucide-react';
 import { MOCK_USER, MOCK_PAYMENTS } from '@/lib/mock-data';
 import { formatPrice, cn } from '@/lib/utils';
 import { RequireAuth } from '@/components/RequireAuth';
-import { useAuth } from '@/components/AuthProvider';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function ProfilePage() {
   const { user } = useAuth();

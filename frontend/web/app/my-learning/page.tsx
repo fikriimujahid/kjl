@@ -9,7 +9,7 @@ import QuizViewer from '@/components/QuizViewer';
 import ImageViewer from '../../components/ImageViewer';
 import { cn } from '@/lib/utils';
 import { RequireAuth } from '@/components/RequireAuth';
-import { useAuth } from '@/components/AuthProvider';
+import { useAuth } from '@/hooks/useAuth';
 import { fetchProductSessionDetails, loadOwnedProducts } from '@/lib/products';
 
 export default function MyLearningPage() {

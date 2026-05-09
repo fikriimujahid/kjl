@@ -10,7 +10,7 @@ import {
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { RequireAuth } from '@/components/RequireAuth';
-import { useAuth } from '@/components/AuthProvider';
+import { useAuth } from '@/hooks/useAuth';
 import { Product } from '@/lib/types';
 import { loadOwnedProducts } from '@/lib/products';
 

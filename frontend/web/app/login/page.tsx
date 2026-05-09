@@ -6,27 +6,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useAuth } from '@/components/AuthProvider';
-import { getAuthUserFromIdToken } from '@/lib/auth';
-
-const COGNITO_API_ENDPOINT = process.env.NEXT_PUBLIC_COGNITO_API_ENDPOINT ?? '';
-const COGNITO_USER_POOL_CLIENT_ID = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID ?? '';
-
-function getLoginErrorMessage(errorType?: string, fallbackMessage?: string): string {
-  switch (errorType) {
-    case 'UserNotFoundException':
-    case 'NotAuthorizedException':
-      return 'Email atau password salah. Silakan coba lagi.';
-    case 'UserNotConfirmedException':
-      return 'Akun kamu belum terverifikasi. Silakan cek email dan klik tautan verifikasi.';
-    case 'TooManyRequestsException':
-      return 'Terlalu banyak percobaan login. Coba lagi beberapa saat lagi.';
-    case 'InvalidParameterException':
-      return fallbackMessage ?? 'Data login tidak valid. Periksa kembali input kamu.';
-    default:
-      return fallbackMessage ?? 'Login gagal. Silakan coba lagi.';
-  }
-}
+import { useAuth } from '@/hooks/useAuth';
+import { loginWithPassword } from '@/lib/auth/api';
 
 function normalizeNextPath(nextPath: string | null): string {
   if (!nextPath) {
@@ -70,65 +51,12 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
 
-    if (!COGNITO_API_ENDPOINT || !COGNITO_USER_POOL_CLIENT_ID) {
-      setError('Konfigurasi autentikasi belum tersedia. Hubungi admin untuk melengkapi environment variable frontend.');
-      return;
-    }
-
     setLoading(true);
 
     try {
-      const response = await fetch(COGNITO_API_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-amz-json-1.1',
-          'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth',
-        },
-        body: JSON.stringify({
-          AuthFlow: 'USER_PASSWORD_AUTH',
-          ClientId: COGNITO_USER_POOL_CLIENT_ID,
-          AuthParameters: {
-            USERNAME: email,
-            PASSWORD: password,
-          },
-        }),
-      });
+      const nextSession = await loginWithPassword(email, password);
+      login(nextSession);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        const errorType = typeof data?.__type === 'string' ? data.__type.split('#').pop() : undefined;
-        throw new Error(getLoginErrorMessage(errorType, data?.message));
-      }
-
-      if (data?.ChallengeName) {
-        throw new Error('Akun memerlukan challenge tambahan. Flow ini belum mendukung challenge tersebut.');
-      }
-
-      const accessToken = data?.AuthenticationResult?.AccessToken;
-      const idToken = data?.AuthenticationResult?.IdToken;
-
-      if (!accessToken || !idToken) {
-        throw new Error('Respons login tidak lengkap. Token autentikasi tidak ditemukan.');
-      }
-
-      const userFromToken = getAuthUserFromIdToken(idToken);
-      const safeUser = userFromToken ?? {
-        id: email,
-        email,
-        name: email.split('@')[0] || 'Pengguna',
-      };
-
-      login({
-        accessToken,
-        idToken,
-        refreshToken: data?.AuthenticationResult?.RefreshToken,
-        expiresIn: data?.AuthenticationResult?.ExpiresIn,
-        tokenType: data?.AuthenticationResult?.TokenType,
-        user: safeUser,
-      });
-
-      //setLoading(false);
       router.push(nextPath);
     } catch (loginError) {
       setLoading(false);

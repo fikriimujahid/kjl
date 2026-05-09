@@ -1,7 +1,7 @@
 'use client';
 
 import { RequireAuth } from '@/components/RequireAuth';
-import { useAuth } from '@/components/AuthProvider';
+import { useAuth } from '@/hooks/useAuth';
 import { Product, Session } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { fetchPurchasedProductDetails } from '@/lib/products';

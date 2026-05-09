@@ -246,6 +246,18 @@ service_api = {
         }
       }
     }
+
+    auth = {
+      name        = "kejepangdulu-dev-auth-api"
+      description = "Auth API Lambda."
+      source_dir  = "../../../../backend/auth-service/build"
+      handler     = "handler.handler"
+      runtime     = "nodejs22.x"
+      memory_size = 256
+      timeout     = 15
+      environment_variables = {} 
+      publish = true
+    }
   }
 
   api_gateway = {
@@ -267,11 +279,12 @@ service_api = {
         integration_key    = "product"
       }
       get_product_by_id_under_api = {
-        route_key          = "GET /api/product/{id}"
+        route_key          = "GET /api/products/{id}"
         authorization_type = "NONE"
         operation_name     = "GetProductByIdUnderApi"
         integration_key    = "product"
       }
+      
       get_purchased_products_by_user_under_api = {
         route_key          = "GET /api/purchased-products/{userId}"
         authorization_type = "JWT"
@@ -307,6 +320,48 @@ service_api = {
         authorization_type = "JWT"
         operation_name     = "SubmitQuizExamUnderApi"
         integration_key    = "quiz"
+      }
+      register_under_api = {
+        route_key          = "POST /api/auth/register"
+        authorization_type = "NONE"
+        operation_name     = "RegisterUnderApi"
+        integration_key    = "auth"
+      }
+      login_under_api = {
+        route_key          = "POST /api/auth/login"
+        authorization_type = "NONE"
+        operation_name     = "LoginUnderApi"
+        integration_key    = "auth"
+      }
+      refresh_session_under_api = {
+        route_key          = "POST /api/auth/refresh"
+        authorization_type = "NONE"
+        operation_name     = "RefreshSessionUnderApi"
+        integration_key    = "auth"
+      }
+      forgot_password_under_api = {
+        route_key          = "POST /api/auth/forgot-password"
+        authorization_type = "NONE"
+        operation_name     = "ForgotPasswordUnderApi"
+        integration_key    = "auth"
+      }
+      confirm_forgot_password_under_api = {
+        route_key          = "POST /api/auth/forgot-password/confirm"
+        authorization_type = "NONE"
+        operation_name     = "ConfirmForgotPasswordUnderApi"
+        integration_key    = "auth"
+      }
+      get_session_under_api = {
+        route_key          = "GET /api/auth/session"
+        authorization_type = "NONE"
+        operation_name     = "GetSessionUnderApi"
+        integration_key    = "auth"
+      }
+      logout_under_api = {
+        route_key          = "POST /api/auth/logout"
+        authorization_type = "NONE"
+        operation_name     = "LogoutUnderApi"
+        integration_key    = "auth"
       }
     }
   }

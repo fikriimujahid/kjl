@@ -1,0 +1,24 @@
+name: Auth Service Lambda CI
+on:
+  pull_request:
+    branches: [dev, prod]
+    paths:
+      - backend/auth-service/**
+      - .github/workflows/auth-service-lambda-ci.yml
+      - .github/workflows/auth-service-lambda-deploy.yml
+jobs:
+  auth-service-lambda-ci:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/auth-service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+      - name: Build TypeScript
+        run: npm run build

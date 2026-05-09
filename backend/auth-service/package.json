@@ -1,0 +1,21 @@
+{
+  "name": "auth-service",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Auth API Lambda service for KeJepangDulu",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "clean": "node -e \"require('fs').rmSync('build',{recursive:true,force:true});require('fs').rmSync('lambda',{recursive:true,force:true})\"",
+    "build": "npm run clean && tsc -p tsconfig.json && node scripts/syncBuildToLambda.js",
+    "build:local": "npm run clean && tsc -p tsconfig.json",
+    "start:local": "npm run build:local && node --env-file=.env local-server.js"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.147",
+    "@types/node": "^22.15.21",
+    "typescript": "^5.8.3"
+  }
+}

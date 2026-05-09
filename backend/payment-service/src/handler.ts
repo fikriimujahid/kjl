@@ -1,6 +1,7 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
 import { createPayment } from "./handlers/createPayment";
 import { handleWebhook } from "./handlers/handleWebhook";
+import { ROUTES } from "./routes";
 import { jsonResponse, optionsResponse } from "./utils/response";
 
 export const handler = async (
@@ -10,11 +11,11 @@ export const handler = async (
     return optionsResponse();
   }
 
-  if (event.routeKey === "POST /api/payments/create") {
+  if (event.routeKey === ROUTES.CREATE_PAYMENT.routeKey) {
     return createPayment(event);
   }
 
-  if (event.routeKey === "POST /api/payments/webhook") {
+  if (event.routeKey === ROUTES.HANDLE_WEBHOOK.routeKey) {
     return handleWebhook(event);
   }
 
