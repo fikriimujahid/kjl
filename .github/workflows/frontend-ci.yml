@@ -25,5 +25,21 @@ jobs:
           if [ -f package-lock.json ]; then npm ci; else npm install; fi
       - name: Validate static export
         run: npm run export
+      - name: Ensure out artifact exists
+        run: |
+          if [ ! -d out ]; then
+            echo "Error: out directory was not generated."
+            exit 1
+          fi
+
+          if [ -z "$(ls -A out)" ]; then
+            echo "Error: out directory is empty."
+            exit 1
+          fi
+
+          if [ ! -f out/index.html ]; then
+            echo "Error: out/index.html is missing."
+            exit 1
+          fi
       #- run: npm run lint
       #- run: npm run test

@@ -1,17 +1,16 @@
-import { Product, PurchasedProduct, SessionDetail } from '@/lib/types';
+import { Product, ProductDetail, PurchasedProduct, SessionDetail } from '@/lib/types';
 
-const API_BASE_URL = process.env.NEXT_API_BASE_URL ?? '/api';
+const PRODUCT_API_BASE_URL = process.env.PRODUCT_API_BASE_URL ?? '/api';
 const PURCHASED_PRODUCTS_ENDPOINT = '/purchased-products';
 const PRODUCTS_ENDPOINT = '/products';
-const PUBLIC_PRODUCT_URL = process.env.NEXT_PUBLIC_PRODUCT_URL ?? '';
 
-interface FetchProductsOptions {
+interface FetchOptions {
   url?: string;
   signal?: AbortSignal;
   cache?: RequestCache;
 }
 
-interface LoadOwnedProductsOptions extends FetchProductsOptions {
+interface LoadOwnedProductsOptions extends FetchOptions {
   userId: string;
   purchases?: PurchasedProduct[];
   purchasesUrl?: string;
@@ -26,6 +25,12 @@ interface FetchPurchasedProductsOptions {
   accessToken?: string;
 }
 
+interface FetchProductDetailsOptions {
+  productId: string;
+  signal?: AbortSignal;
+  cache?: RequestCache;
+}
+
 interface FetchProductSessionDetailsOptions {
   productId: string;
   topicId: string;
@@ -35,12 +40,20 @@ interface FetchProductSessionDetailsOptions {
   accessToken?: string;
 }
 
+interface FetchPurchasedProductDetailsOptions {
+  userId: string;
+  productId: string;
+  signal?: AbortSignal;
+  cache?: RequestCache;
+  accessToken?: string;
+}
+
 export async function fetchProducts({
   signal,
   cache = 'no-store',
-}: FetchProductsOptions = {}): Promise<Product[]> {
+}: FetchOptions = {}): Promise<Product[]> {
   try {
-    const response = await fetch(PUBLIC_PRODUCT_URL, {
+    const response = await fetch(`${PRODUCT_API_BASE_URL}/`, {
       signal,
       cache,
     });
@@ -55,6 +68,38 @@ export async function fetchProducts({
     return [];
   }
 }
+
+export async function fetchProductDetails({
+  productId,
+  signal,
+  cache = 'no-store',
+}: FetchProductDetailsOptions): Promise<ProductDetail | null> {
+  try {
+    const response = await fetch(
+      `${PRODUCT_API_BASE_URL}/${encodeURIComponent(productId)}`,
+      {
+        signal,
+        cache,
+      },
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data: ProductDetail = await response.json();
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+
+
+
+
+
+
 
 export async function loadOwnedProducts({
   signal,
@@ -87,7 +132,7 @@ export async function fetchPurchasedProductsByUser({
       ? { Authorization: `Bearer ${accessToken}` }
       : {};
 
-    const response = await fetch(`${API_BASE_URL}${PURCHASED_PRODUCTS_ENDPOINT}/${encodeURIComponent(userId)}`, {
+    const response = await fetch(`${PRODUCT_API_BASE_URL}${PURCHASED_PRODUCTS_ENDPOINT}/${encodeURIComponent(userId)}`, {
       signal,
       headers,
     });
@@ -97,6 +142,38 @@ export async function fetchPurchasedProductsByUser({
     }
 
     const data: PurchasedProduct[] = await response.json();
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchPurchasedProductDetails({
+  userId,
+  productId,
+  signal,
+  cache = 'no-store',
+  accessToken,
+}: FetchPurchasedProductDetailsOptions): Promise<Product | null> {
+  try {
+    const headers: HeadersInit = accessToken
+      ? { Authorization: `Bearer ${accessToken}` }
+      : {};
+
+    const response = await fetch(
+      `${PRODUCT_API_BASE_URL}/purchased-product/${encodeURIComponent(userId)}/product/${encodeURIComponent(productId)}`,
+      {
+        signal,
+        cache,
+        headers,
+      },
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data: Product = await response.json();
     return data;
   } catch {
     return null;
@@ -117,7 +194,7 @@ export async function fetchProductSessionDetails({
       : {};
 
     const response = await fetch(
-      `${API_BASE_URL}${PRODUCTS_ENDPOINT}/${encodeURIComponent(productId)}/topics/${encodeURIComponent(topicId)}/sessions/${encodeURIComponent(sessionId)}`,
+      `${PRODUCT_API_BASE_URL}${PRODUCTS_ENDPOINT}/${encodeURIComponent(productId)}/topics/${encodeURIComponent(topicId)}/sessions/${encodeURIComponent(sessionId)}`,
       {
         signal,
         cache,

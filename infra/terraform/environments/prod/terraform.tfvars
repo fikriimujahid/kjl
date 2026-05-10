@@ -85,6 +85,17 @@ auth_cognito = {
     "https://dev.myapp.com/logout"
   ]
 
+  token_validity = {
+    access_token_validity  = 1
+    id_token_validity      = 1
+    refresh_token_validity = 30
+    token_validity_units = {
+      access_token  = "hours"
+      id_token      = "hours"
+      refresh_token = "days"
+    }
+  }
+
   enabled_identity_providers = ["COGNITO"]
   verification_message_template = {
     default_email_option  = "CONFIRM_WITH_LINK"
@@ -173,29 +184,68 @@ service_api = {
       timeout               = 10
       environment_variables = {}
       publish               = true
+      s3_access = {
+        media_private = {
+          s3_arn = "arn:aws:s3:::kejepangdulu-prod-media-private"
+          read   = true
+          write  = false
+        }
+      }
     }
 
     payment = {
-      name        = "kejepangdulu-prod-payment-api"
-      description = "Midtrans Payment API Lambda."
-      source_dir  = "../../../../backend/payment-service/lambda"
+      name                  = "kejepangdulu-prod-payment-api"
+      description           = "Midtrans Payment API Lambda."
+      source_dir            = "../../../../backend/payment-service/lambda"
+      handler               = "handler.handler"
+      runtime               = "nodejs22.x"
+      memory_size           = 256
+      timeout               = 15
+      environment_variables = {}
+      publish               = true
+      dynamodb_access = {
+        learning_content = {
+          read  = true
+          write = true
+        }
+      }
+    }
+
+    quiz = {
+      name                  = "kejepangdulu-prod-quiz-api"
+      description           = "Quiz submit API Lambda."
+      source_dir            = "../../../../backend/quiz-service/build/lambda"
+      handler               = "handler.handler"
+      runtime               = "nodejs22.x"
+      memory_size           = 256
+      timeout               = 15
+      environment_variables = {}
+      publish               = true
+      dynamodb_access = {
+        learning_content = {
+          read  = true
+          write = true
+        }
+      }
+      s3_access = {
+        media_private = {
+          s3_arn = "arn:aws:s3:::kejepangdulu-prod-media-private"
+          read   = true
+          write  = false
+        }
+      }
+    }
+
+    auth = {
+      name        = "kejepangdulu-prod-auth-api"
+      description = "Auth API Lambda."
+      source_dir  = "../../../../backend/auth-service/lambda"
       handler     = "handler.handler"
       runtime     = "nodejs22.x"
       memory_size = 256
       timeout     = 15
-      environment_variables = {
-        MIDTRANS_SERVER_KEY    = ""
-        MIDTRANS_IS_PRODUCTION = "true"
-        PRODUCT_DATA_URL       = "https://kjl.fikri.dev/public-data/product.json"
-        APP_BASE_URL           = "https://kejepangdulu.click"
-      }
+      environment_variables = {}
       publish = true
-      dynamodb_actions = [
-        "dynamodb:GetItem",
-        "dynamodb:PutItem",
-        "dynamodb:Query",
-        "dynamodb:UpdateItem"
-      ]
     }
   }
 
@@ -240,6 +290,54 @@ service_api = {
         authorization_type = "NONE"
         operation_name     = "PaymentWebhookUnderApi"
         integration_key    = "payment"
+      }
+      submit_quiz_exam_under_api = {
+        route_key          = "POST /api/quiz/exam/submit"
+        authorization_type = "JWT"
+        operation_name     = "SubmitQuizExamUnderApi"
+        integration_key    = "quiz"
+      }
+      register_under_api = {
+        route_key          = "POST /api/auth/register"
+        authorization_type = "NONE"
+        operation_name     = "RegisterUnderApi"
+        integration_key    = "auth"
+      }
+      login_under_api = {
+        route_key          = "POST /api/auth/login"
+        authorization_type = "NONE"
+        operation_name     = "LoginUnderApi"
+        integration_key    = "auth"
+      }
+      refresh_session_under_api = {
+        route_key          = "POST /api/auth/refresh"
+        authorization_type = "NONE"
+        operation_name     = "RefreshSessionUnderApi"
+        integration_key    = "auth"
+      }
+      forgot_password_under_api = {
+        route_key          = "POST /api/auth/forgot-password"
+        authorization_type = "NONE"
+        operation_name     = "ForgotPasswordUnderApi"
+        integration_key    = "auth"
+      }
+      confirm_forgot_password_under_api = {
+        route_key          = "POST /api/auth/forgot-password/confirm"
+        authorization_type = "NONE"
+        operation_name     = "ConfirmForgotPasswordUnderApi"
+        integration_key    = "auth"
+      }
+      get_session_under_api = {
+        route_key          = "GET /api/auth/session"
+        authorization_type = "NONE"
+        operation_name     = "GetSessionUnderApi"
+        integration_key    = "auth"
+      }
+      logout_under_api = {
+        route_key          = "POST /api/auth/logout"
+        authorization_type = "NONE"
+        operation_name     = "LogoutUnderApi"
+        integration_key    = "auth"
       }
     }
   }

@@ -4,48 +4,20 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import { Mail, ShieldCheck, KeyRound, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
-
-const COGNITO_API_ENDPOINT = process.env.NEXT_PUBLIC_COGNITO_API_ENDPOINT ?? '';
-const COGNITO_USER_POOL_CLIENT_ID = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID ?? '';
+import { confirmPasswordReset, requestPasswordReset } from '@/lib/auth/api';
 
 type ForgotPasswordOperation = 'request' | 'confirm';
 
-function getForgotPasswordErrorMessage(
-  operation: ForgotPasswordOperation,
-  errorType?: string,
-  fallbackMessage?: string,
-): string {
-  if (operation === 'request') {
-    switch (errorType) {
-      case 'UserNotFoundException':
-        return 'Jika email terdaftar, kode reset akan dikirim ke email tersebut.';
-      case 'InvalidParameterException':
-        return fallbackMessage ?? 'Data email tidak valid. Periksa kembali input kamu.';
-      case 'TooManyRequestsException':
-      case 'LimitExceededException':
-        return 'Terlalu banyak permintaan. Coba lagi beberapa saat lagi.';
-      default:
-        return fallbackMessage ?? 'Gagal mengirim kode reset. Silakan coba lagi.';
-    }
+function getForgotPasswordErrorMessage(operation: ForgotPasswordOperation, fallbackMessage?: string): string {
+  if (fallbackMessage && fallbackMessage.trim().length > 0) {
+    return fallbackMessage;
   }
 
-  switch (errorType) {
-    case 'CodeMismatchException':
-      return 'Kode verifikasi tidak sesuai. Cek kembali kode dari email kamu.';
-    case 'ExpiredCodeException':
-      return 'Kode verifikasi sudah kedaluwarsa. Kirim ulang kode dan coba lagi.';
-    case 'InvalidPasswordException':
-      return 'Password baru belum memenuhi aturan Cognito. Gunakan minimal 8 karakter dengan kombinasi huruf dan angka.';
-    case 'UserNotFoundException':
-      return 'Akun tidak ditemukan untuk email ini.';
-    case 'TooManyFailedAttemptsException':
-    case 'TooManyRequestsException':
-      return 'Terlalu banyak percobaan. Coba lagi beberapa saat lagi.';
-    case 'InvalidParameterException':
-      return fallbackMessage ?? 'Data reset password tidak valid. Periksa kembali input kamu.';
-    default:
-      return fallbackMessage ?? 'Gagal mengubah password. Silakan coba lagi.';
+  if (operation === 'request') {
+    return 'Gagal mengirim kode reset. Silakan coba lagi.';
   }
+
+  return 'Gagal mengubah password. Silakan coba lagi.';
 }
 
 export default function ForgotPasswordPage() {
@@ -58,47 +30,20 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
 
-  const ensureConfig = (): boolean => {
-    if (!COGNITO_API_ENDPOINT || !COGNITO_USER_POOL_CLIENT_ID) {
-      setError('Konfigurasi autentikasi belum tersedia. Hubungi admin untuk melengkapi environment variable frontend.');
-      return false;
-    }
-
-    return true;
-  };
-
   const requestResetCode = async (): Promise<void> => {
-    if (!ensureConfig()) {
-      return;
-    }
-
     setLoading(true);
     setError('');
     setInfo('');
 
     try {
-      const response = await fetch(COGNITO_API_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-amz-json-1.1',
-          'X-Amz-Target': 'AWSCognitoIdentityProviderService.ForgotPassword',
-        },
-        body: JSON.stringify({
-          ClientId: COGNITO_USER_POOL_CLIENT_ID,
-          Username: email,
-        }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        const errorType = typeof data?.__type === 'string' ? data.__type.split('#').pop() : undefined;
-        throw new Error(getForgotPasswordErrorMessage('request', errorType, data?.message));
-      }
+      await requestPasswordReset(email);
 
       setIsCodeSent(true);
       setInfo('Kode verifikasi sudah dikirim ke email kamu. Masukkan kode tersebut beserta password baru.');
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : 'Gagal mengirim kode reset. Silakan coba lagi.');
+      setError(
+        getForgotPasswordErrorMessage('request', requestError instanceof Error ? requestError.message : undefined),
+      );
     } finally {
       setLoading(false);
     }
@@ -112,37 +57,17 @@ export default function ForgotPasswordPage() {
   const handleConfirmReset = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!ensureConfig()) {
-      return;
-    }
-
     setLoading(true);
     setError('');
 
     try {
-      const response = await fetch(COGNITO_API_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-amz-json-1.1',
-          'X-Amz-Target': 'AWSCognitoIdentityProviderService.ConfirmForgotPassword',
-        },
-        body: JSON.stringify({
-          ClientId: COGNITO_USER_POOL_CLIENT_ID,
-          Username: email,
-          ConfirmationCode: code,
-          Password: newPassword,
-        }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        const errorType = typeof data?.__type === 'string' ? data.__type.split('#').pop() : undefined;
-        throw new Error(getForgotPasswordErrorMessage('confirm', errorType, data?.message));
-      }
+      await confirmPasswordReset(email, code, newPassword);
 
       setIsSuccess(true);
     } catch (confirmError) {
-      setError(confirmError instanceof Error ? confirmError.message : 'Gagal mengubah password. Silakan coba lagi.');
+      setError(
+        getForgotPasswordErrorMessage('confirm', confirmError instanceof Error ? confirmError.message : undefined),
+      );
     } finally {
       setLoading(false);
     }

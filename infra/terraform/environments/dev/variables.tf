@@ -89,9 +89,16 @@ variable "service_api" {
       timeout               = number
       environment_variables = map(string)
       publish               = bool
-      dynamodb_actions      = optional(list(string))
-      s3_bucket_read_arns   = optional(list(string), [])
-      s3_actions            = optional(list(string))
+      dynamodb_access = optional(map(object({
+        table_arn = optional(string)
+        read      = optional(bool, false)
+        write     = optional(bool, false)
+      })), {})
+      s3_access = optional(map(object({
+        s3_arn = string
+        read   = optional(bool, false)
+        write  = optional(bool, false)
+      })), {})
     }))
 
     api_gateway = object({
@@ -156,6 +163,17 @@ variable "auth_cognito" {
   type = object({
     callback_urls = list(string)
     logout_urls   = list(string)
+
+    token_validity = optional(object({
+      access_token_validity  = optional(number)
+      id_token_validity      = optional(number)
+      refresh_token_validity = optional(number)
+      token_validity_units = optional(object({
+        access_token  = optional(string, "hours")
+        id_token      = optional(string, "hours")
+        refresh_token = optional(string, "days")
+      }), {})
+    }), {})
 
     enabled_identity_providers = optional(list(string), ["COGNITO"])
     verification_message_template = optional(object({

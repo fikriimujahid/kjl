@@ -111,7 +111,7 @@
           { "id": "sIntroA", "title": "Apa itu Katakana ?", "type": "pdf" },
           { "id": "sIntroB", "title": "Cara Belajar Katakana dengan Efektif", "type": "pdf" },
           { "id": "sIntroC", "title": "Tips Menghafal Katakana dengan Cepat", "type": "pdf" },
-          { "id": "sIntroD", "title": "Quiz Pengenalan Katakana", "type": "quiz" }
+          { "id": "sIntroD", "title": "Quiz Pengenalan Katakana", "type": "quiz", "passingScore": 70 }
         ]
       },
       {
@@ -122,8 +122,8 @@
           { "id": "s0b", "title": "Cara Menulis Katakana A-I-U-E-O", "type": "pdf" },
           { "id": "s0c", "title": "Contoh Kata Katakana A-I-U-E-O", "type": "pdf" },
           { "id": "s0d", "title": "Latihan Membaca Katakana A-I-U-E-O", "type": "pdf" },
-          { "id": "s0e", "title": "Latihan Soal Katakana A-I-U-E-O", "type": "quiz" },
-          { "id": "s0f", "title": "Ujian Katakana A-I-U-E-O", "type": "quiz" }
+          { "id": "s0e", "title": "Latihan Soal Katakana A-I-U-E-O", "type": "quiz", "passingScore": 70 },
+          { "id": "s0f", "title": "Ujian Katakana A-I-U-E-O", "type": "quiz", "passingScore": 70 }
         ]
       },
 
@@ -135,8 +135,8 @@
           { "id": "s1b", "title": "Cara Menulis Katakana KA-KI-KU-KE-KO", "type": "pdf" },
           { "id": "s1c", "title": "Contoh Kata Katakana KA-KI-KU-KE-KO", "type": "pdf" },
           { "id": "s1d", "title": "Latihan Membaca Katakana KA-KI-KU-KE-KO", "type": "pdf" },
-          { "id": "s1e", "title": "Latihan Soal Katakana KA-KI-KU-KE-KO", "type": "quiz" },
-          { "id": "s1f", "title": "Ujian Katakana KA-KI-KU-KE-KO", "type": "quiz" }
+          { "id": "s1e", "title": "Latihan Soal Katakana KA-KI-KU-KE-KO", "type": "quiz", "passingScore": 70 },
+          { "id": "s1f", "title": "Ujian Katakana KA-KI-KU-KE-KO", "type": "quiz", "passingScore": 70 }
         ]
       },
 
@@ -148,8 +148,8 @@
           { "id": "s2b", "title": "Cara Menulis Katakana SA-SHI-SU-SE-SO", "type": "pdf" },
           { "id": "s2c", "title": "Contoh Kata Katakana SA-SHI-SU-SE-SO", "type": "pdf" },
           { "id": "s2d", "title": "Latihan Membaca Katakana SA-SHI-SU-SE-SO", "type": "pdf" },
-          { "id": "s2e", "title": "Latihan Soal Katakana SA-SHI-SU-SE-SO", "type": "quiz" },
-          { "id": "s2f", "title": "Ujian Katakana SA-SHI-SU-SE-SO", "type": "quiz" }
+          { "id": "s2e", "title": "Latihan Soal Katakana SA-SHI-SU-SE-SO", "type": "quiz", "passingScore": 70 },
+          { "id": "s2f", "title": "Ujian Katakana SA-SHI-SU-SE-SO", "type": "quiz", "passingScore": 70 }
         ]
       },
 
@@ -161,8 +161,8 @@
           { "id": "s3b", "title": "Cara Menulis Katakana TA-CHI-TSU-TE-TO", "type": "pdf" },
           { "id": "s3c", "title": "Contoh Kata Katakana TA-CHI-TSU-TE-TO", "type": "pdf" },
           { "id": "s3d", "title": "Latihan Membaca Katakana TA-CHI-TSU-TE-TO", "type": "pdf" },
-          { "id": "s3e", "title": "Latihan Soal Katakana TA-CHI-TSU-TE-TO", "type": "quiz" },
-          { "id": "s3f", "title": "Ujian Katakana TA-CHI-TSU-TE-TO", "type": "quiz" }
+          { "id": "s3e", "title": "Latihan Soal Katakana TA-CHI-TSU-TE-TO", "type": "quiz", "passingScore": 70 },
+          { "id": "s3f", "title": "Ujian Katakana TA-CHI-TSU-TE-TO", "type": "quiz", "passingScore": 70 }
         ]
       },
 
@@ -174,8 +174,8 @@
           { "id": "s4b", "title": "Cara Menulis Katakana NA-NI-NU-NE-NO", "type": "pdf" },
           { "id": "s4c", "title": "Contoh Kata Katakana NA-NI-NU-NE-NO", "type": "pdf" },
           { "id": "s4d", "title": "Latihan Membaca Katakana NA-NI-NU-NE-NO", "type": "pdf" },
-          { "id": "s4e", "title": "Latihan Soal Katakana NA-NI-NU-NE-NO", "type": "quiz" },
-          { "id": "s4f", "title": "Ujian Katakana NA-NI-NU-NE-NO", "type": "quiz" }
+          { "id": "s4e", "title": "Latihan Soal Katakana NA-NI-NU-NE-NO", "type": "quiz", "passingScore": 70 },
+          { "id": "s4f", "title": "Ujian Katakana NA-NI-NU-NE-NO", "type": "quiz", "passingScore": 70 }
         ]
       },
 

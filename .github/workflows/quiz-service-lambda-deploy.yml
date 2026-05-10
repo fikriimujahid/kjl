@@ -1,0 +1,136 @@
+name: Quiz Service Lambda Deploy
+
+on:
+  push:
+    branches: [dev, prod]
+    paths:
+      - backend/quiz-service/**
+      - .github/workflows/quiz-service-lambda-deploy.yml
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+
+jobs:
+  deploy-quiz-service-lambda:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'prod' && 'prod' || 'dev' }}
+
+    permissions:
+      id-token: write
+      contents: read
+
+    defaults:
+      run:
+        working-directory: backend/quiz-service
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Package Lambda
+        run: |
+          if [ ! -d build/lambda ]; then
+            echo "Expected build/lambda directory is missing."
+            exit 1
+          fi
+
+          rm -f quiz-service-lambda.zip
+          cd build/lambda
+          zip -r ../../quiz-service-lambda.zip .
+
+      - name: Upload Lambda artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: quiz-service-lambda
+          path: backend/quiz-service/quiz-service-lambda.zip
+          if-no-files-found: error
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ github.ref_name == 'prod' && secrets.AWS_PROD_ROLE_ARN || secrets.AWS_DEV_ROLE_ARN }}
+
+      - name: Create Lambda env file
+        run: |
+          DYNAMO_DB_TABLE_NAME="${{ secrets.DYNAMO_DB_TABLE_NAME }}"
+          MEDIA_PRIVATE_BUCKET_NAME="${{ secrets.MEDIA_PRIVATE_BUCKET_NAME }}"
+          PRODUCT_DATA_URL="${{ secrets.PRODUCT_DATA_URL }}"
+
+          if [ -z "${DYNAMO_DB_TABLE_NAME}" ]; then
+            echo "DYNAMO_DB_TABLE_NAME is missing. Set vars.DYNAMO_DB_TABLE_NAME or secrets.DYNAMO_DB_TABLE_NAME."
+            exit 1
+          fi
+
+          if [ -z "${MEDIA_PRIVATE_BUCKET_NAME}" ]; then
+            echo "MEDIA_PRIVATE_BUCKET_NAME is missing. Set vars.MEDIA_PRIVATE_BUCKET_NAME or secrets.MEDIA_PRIVATE_BUCKET_NAME."
+            exit 1
+          fi
+
+          cat > .env.lambda <<EOF
+          DYNAMO_DB_TABLE_NAME=${DYNAMO_DB_TABLE_NAME}
+          MEDIA_PRIVATE_BUCKET_NAME=${MEDIA_PRIVATE_BUCKET_NAME}
+          PRODUCT_DATA_URL=${PRODUCT_DATA_URL}
+          EOF
+
+      - name: Update Lambda environment variables
+        env:
+          LAMBDA_FUNCTION_NAME: ${{ secrets.QUIZ_SERVICE_LAMBDA_FUNCTION_NAME }}
+        run: |
+          if [ -z "${LAMBDA_FUNCTION_NAME}" ]; then
+            echo "QUIZ_SERVICE_LAMBDA_FUNCTION_NAME secret is missing."
+            exit 1
+          fi
+
+          set -a
+          source ./.env.lambda
+          set +a
+
+          CURRENT_ENV_VARS=$(aws lambda get-function-configuration \
+            --function-name "${LAMBDA_FUNCTION_NAME}" \
+            --query 'Environment.Variables' \
+            --output json)
+
+          UPDATED_ENV_VARS=$(echo "${CURRENT_ENV_VARS}" | jq -c \
+            --arg dynamoDbTableName "${DYNAMO_DB_TABLE_NAME}" \
+            --arg mediaPrivateBucketName "${MEDIA_PRIVATE_BUCKET_NAME}" \
+            --arg productDataUrl "${PRODUCT_DATA_URL}" \
+            '. + {
+              DYNAMO_DB_TABLE_NAME: $dynamoDbTableName,
+              MEDIA_PRIVATE_BUCKET_NAME: $mediaPrivateBucketName
+            }
+            | if $productDataUrl == "" then del(.PRODUCT_DATA_URL) else . + {PRODUCT_DATA_URL: $productDataUrl} end')
+
+          UPDATE_PAYLOAD=$(jq -cn \
+            --arg functionName "${LAMBDA_FUNCTION_NAME}" \
+            --argjson variables "${UPDATED_ENV_VARS}" \
+            '{FunctionName: $functionName, Environment: {Variables: $variables}}')
+
+          aws lambda update-function-configuration \
+            --cli-input-json "${UPDATE_PAYLOAD}"
+
+          aws lambda wait function-updated \
+            --function-name "${LAMBDA_FUNCTION_NAME}"
+
+      - name: Deploy Lambda code
+        env:
+          LAMBDA_FUNCTION_NAME: ${{ secrets.QUIZ_SERVICE_LAMBDA_FUNCTION_NAME }}
+        run: |
+          if [ -z "${LAMBDA_FUNCTION_NAME}" ]; then
+            echo "QUIZ_SERVICE_LAMBDA_FUNCTION_NAME secret is missing."
+            exit 1
+          fi
+
+          aws lambda update-function-code \
+            --function-name "${LAMBDA_FUNCTION_NAME}" \
+            --zip-file fileb://quiz-service-lambda.zip

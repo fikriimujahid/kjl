@@ -12,6 +12,7 @@ module "base" {
   callback_urls                 = var.callback_urls
   logout_urls                   = var.logout_urls
   verification_message_template = var.verification_message_template
+  token_validity                = var.token_validity
 }
 
 resource "aws_cognito_identity_provider" "google" {
@@ -60,6 +61,16 @@ resource "aws_cognito_user_pool_client" "api_google" {
   allowed_oauth_scopes                 = ["email", "openid", "profile"]
   callback_urls                        = var.callback_urls
   logout_urls                          = var.logout_urls
+
+  access_token_validity  = try(var.token_validity.access_token_validity, null)
+  id_token_validity      = try(var.token_validity.id_token_validity, null)
+  refresh_token_validity = try(var.token_validity.refresh_token_validity, null)
+
+  token_validity_units {
+    access_token  = try(var.token_validity.token_validity_units.access_token, "hours")
+    id_token      = try(var.token_validity.token_validity_units.id_token, "hours")
+    refresh_token = try(var.token_validity.token_validity_units.refresh_token, "days")
+  }
 
   prevent_user_existence_errors = "ENABLED"
 

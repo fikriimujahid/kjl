@@ -1,0 +1,160 @@
+name: Auth Service Lambda Deploy
+
+on:
+  push:
+    branches: [dev, prod]
+    paths:
+      - backend/auth-service/**
+      - .github/workflows/auth-service-lambda-deploy.yml
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+
+jobs:
+  deploy-auth-service-lambda:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'prod' && 'prod' || 'dev' }}
+
+    permissions:
+      id-token: write
+      contents: read
+
+    defaults:
+      run:
+        working-directory: backend/auth-service
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Package Lambda
+        run: |
+          if [ ! -d lambda ]; then
+            echo "Expected lambda directory is missing."
+            exit 1
+          fi
+
+          rm -f auth-service-lambda.zip
+          cd lambda
+          zip -r ../auth-service-lambda.zip .
+
+      - name: Upload Lambda artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: auth-service-lambda
+          path: backend/auth-service/auth-service-lambda.zip
+          if-no-files-found: error
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ github.ref_name == 'prod' && secrets.AWS_PROD_ROLE_ARN || secrets.AWS_DEV_ROLE_ARN }}
+
+      - name: Create Lambda env file
+        run: |
+          AUTH_ALLOWED_ORIGIN="${{ secrets.AUTH_SERVICE_AUTH_ALLOWED_ORIGIN }}"
+          AUTH_COOKIE_DOMAIN="${{ secrets.AUTH_SERVICE_AUTH_COOKIE_DOMAIN }}"
+          AUTH_COOKIE_SAME_SITE="${{ secrets.AUTH_SERVICE_AUTH_COOKIE_SAME_SITE }}"
+          AUTH_COOKIE_SECURE="${{ secrets.AUTH_SERVICE_AUTH_COOKIE_SECURE }}"
+          AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS="${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS }}"
+          AUTH_REFRESH_COOKIE_NAME="${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_NAME }}"
+          AUTH_REFRESH_COOKIE_PATH="${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_PATH }}"
+          COGNITO_API_ENDPOINT="${{ secrets.AUTH_SERVICE_COGNITO_API_ENDPOINT }}"
+          COGNITO_USER_POOL_CLIENT_ID="${{ secrets.AUTH_SERVICE_COGNITO_USER_POOL_CLIENT_ID }}"
+
+          if [ -z "${COGNITO_API_ENDPOINT}" ]; then
+            echo "COGNITO_API_ENDPOINT secret is missing."
+            exit 1
+          fi
+
+          if [ -z "${COGNITO_USER_POOL_CLIENT_ID}" ]; then
+            echo "COGNITO_USER_POOL_CLIENT_ID secret is missing."
+            exit 1
+          fi
+
+          cat > .env.lambda <<EOF
+          COGNITO_API_ENDPOINT=${COGNITO_API_ENDPOINT}
+          COGNITO_USER_POOL_CLIENT_ID=${COGNITO_USER_POOL_CLIENT_ID}
+          AUTH_ALLOWED_ORIGIN=${AUTH_ALLOWED_ORIGIN}
+          AUTH_COOKIE_DOMAIN=${AUTH_COOKIE_DOMAIN}
+          AUTH_COOKIE_SECURE=${AUTH_COOKIE_SECURE}
+          AUTH_COOKIE_SAME_SITE=${AUTH_COOKIE_SAME_SITE}
+          AUTH_REFRESH_COOKIE_NAME=${AUTH_REFRESH_COOKIE_NAME}
+          AUTH_REFRESH_COOKIE_PATH=${AUTH_REFRESH_COOKIE_PATH}
+          AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS=${AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS}
+          EOF
+
+      - name: Update Lambda environment variables
+        env:
+          LAMBDA_FUNCTION_NAME: ${{ secrets.AUTH_SERVICE_LAMBDA_FUNCTION_NAME }}
+        run: |
+          if [ -z "${LAMBDA_FUNCTION_NAME}" ]; then
+            echo "AUTH_SERVICE_LAMBDA_FUNCTION_NAME secret is missing."
+            exit 1
+          fi
+
+          set -a
+          source ./.env.lambda
+          set +a
+
+          CURRENT_ENV_VARS=$(aws lambda get-function-configuration \
+            --function-name "${LAMBDA_FUNCTION_NAME}" \
+            --query 'Environment.Variables' \
+            --output json)
+
+          UPDATED_ENV_VARS=$(echo "${CURRENT_ENV_VARS}" | jq -c \
+            --arg cognitoApiEndpoint "${COGNITO_API_ENDPOINT}" \
+            --arg cognitoUserPoolClientId "${COGNITO_USER_POOL_CLIENT_ID}" \
+            --arg authAllowedOrigin "${AUTH_ALLOWED_ORIGIN}" \
+            --arg authCookieDomain "${AUTH_COOKIE_DOMAIN}" \
+            --arg authCookieSecure "${AUTH_COOKIE_SECURE}" \
+            --arg authCookieSameSite "${AUTH_COOKIE_SAME_SITE}" \
+            --arg authRefreshCookieName "${AUTH_REFRESH_COOKIE_NAME}" \
+            --arg authRefreshCookiePath "${AUTH_REFRESH_COOKIE_PATH}" \
+            --arg authRefreshCookieMaxAgeSeconds "${AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS}" \
+            '. + {
+              COGNITO_API_ENDPOINT: $cognitoApiEndpoint,
+              COGNITO_USER_POOL_CLIENT_ID: $cognitoUserPoolClientId
+            }
+            | if $authAllowedOrigin == "" then del(.AUTH_ALLOWED_ORIGIN) else . + {AUTH_ALLOWED_ORIGIN: $authAllowedOrigin} end
+            | if $authCookieDomain == "" then del(.AUTH_COOKIE_DOMAIN) else . + {AUTH_COOKIE_DOMAIN: $authCookieDomain} end
+            | if $authCookieSecure == "" then del(.AUTH_COOKIE_SECURE) else . + {AUTH_COOKIE_SECURE: $authCookieSecure} end
+            | if $authCookieSameSite == "" then del(.AUTH_COOKIE_SAME_SITE) else . + {AUTH_COOKIE_SAME_SITE: $authCookieSameSite} end
+            | if $authRefreshCookieName == "" then del(.AUTH_REFRESH_COOKIE_NAME) else . + {AUTH_REFRESH_COOKIE_NAME: $authRefreshCookieName} end
+            | if $authRefreshCookiePath == "" then del(.AUTH_REFRESH_COOKIE_PATH) else . + {AUTH_REFRESH_COOKIE_PATH: $authRefreshCookiePath} end
+            | if $authRefreshCookieMaxAgeSeconds == "" then del(.AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS) else . + {AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS: $authRefreshCookieMaxAgeSeconds} end')
+
+          UPDATE_PAYLOAD=$(jq -cn \
+            --arg functionName "${LAMBDA_FUNCTION_NAME}" \
+            --argjson variables "${UPDATED_ENV_VARS}" \
+            '{FunctionName: $functionName, Environment: {Variables: $variables}}')
+
+          aws lambda update-function-configuration \
+            --cli-input-json "${UPDATE_PAYLOAD}"
+
+          aws lambda wait function-updated \
+            --function-name "${LAMBDA_FUNCTION_NAME}"
+
+      - name: Deploy Lambda code
+        env:
+          LAMBDA_FUNCTION_NAME: ${{ secrets.AUTH_SERVICE_LAMBDA_FUNCTION_NAME }}
+        run: |
+          if [ -z "${LAMBDA_FUNCTION_NAME}" ]; then
+            echo "AUTH_SERVICE_LAMBDA_FUNCTION_NAME secret is missing."
+            exit 1
+          fi
+
+          aws lambda update-function-code \
+            --function-name "${LAMBDA_FUNCTION_NAME}" \
+            --zip-file fileb://auth-service-lambda.zip

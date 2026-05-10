@@ -96,7 +96,10 @@ jobs:
             --query 'Environment.Variables' \
             --output json)
 
-          UPDATED_ENV_VARS=$(echo "${CURRENT_ENV_VARS}" | jq -c --arg dynamoDbTableName "${DYNAMO_DB_TABLE_NAME}" '. + {DYNAMO_DB_TABLE_NAME: $dynamoDbTableName}')
+          UPDATED_ENV_VARS=$(echo "${CURRENT_ENV_VARS}" | jq -c \
+            --arg dynamoDbTableName "${DYNAMO_DB_TABLE_NAME}" \
+            --arg mediaPrivateBucketName "${MEDIA_PRIVATE_BUCKET_NAME}" \
+            '. + {DYNAMO_DB_TABLE_NAME: $dynamoDbTableName, MEDIA_PRIVATE_BUCKET_NAME: $mediaPrivateBucketName}')
 
           UPDATE_PAYLOAD=$(jq -cn \
             --arg functionName "${LAMBDA_FUNCTION_NAME}" \

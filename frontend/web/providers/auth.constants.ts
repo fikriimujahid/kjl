@@ -1,0 +1,2 @@
+export const REFRESH_LEAD_TIME_MS = 60_000;
+export const MIN_REFRESH_DELAY_MS = 10_000;

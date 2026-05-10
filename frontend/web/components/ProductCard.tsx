@@ -6,7 +6,7 @@ import { motion } from 'motion/react';
 import { Product } from '@/lib/types';
 import { formatPrice, cn } from '@/lib/utils';
 
-interface ProductCardProps {
+interface ProductCardProps { 
   product: Product;
   isOwned?: boolean;
 }
@@ -40,7 +40,7 @@ export function ProductCard({ product, isOwned }: ProductCardProps) {
         <div className="flex flex-wrap items-center gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-auto pt-6">
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
-            {product.topicsCount} Modul
+            {product.topicsCount} Topics
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-teal-400" />
@@ -50,12 +50,12 @@ export function ProductCard({ product, isOwned }: ProductCardProps) {
 
         <div className="flex items-center justify-between pt-6 border-t border-slate-100 mt-6">
           <div>
-            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest block mb-1 lg:mb-0">Akses Penuh</span>
+            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest block mb-1 lg:mb-0">Akses {product.accessDurationDays} Hari</span>
             <span className="text-lg font-bold text-slate-900 tracking-tight">{formatPrice(product.price)}</span>
           </div>
 
           <Link
-            href={isOwned ? '/my-learning' : `/products/${product.id}`}
+            href={isOwned ? '/my-learning' : `/products?productId=${encodeURIComponent(product.id)}`}
             className={cn(
               'px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 text-xs font-bold shadow-sm',
               isOwned
@@ -63,7 +63,7 @@ export function ProductCard({ product, isOwned }: ProductCardProps) {
                 : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-100 border border-indigo-600',
             )}
           >
-            {isOwned ? 'Mulai Belajar' : 'Daftar'}
+            {isOwned ? 'Mulai Belajar' : 'Beli'}
           </Link>
         </div>
       </div>

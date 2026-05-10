@@ -10,7 +10,7 @@ import {
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { RequireAuth } from '@/components/RequireAuth';
-import { useAuth } from '@/components/AuthProvider';
+import { useAuth } from '@/hooks/useAuth';
 import { Product } from '@/lib/types';
 import { loadOwnedProducts } from '@/lib/products';
 
@@ -292,24 +292,6 @@ export default function DashboardPage() {
       </main>
 
       <aside className="w-full xl:w-[320px] bg-white border-l border-slate-200 flex flex-col shrink-0 overflow-y-auto">
-        <div className="p-6 border-b border-slate-100">
-          <div className="flex items-center gap-2 mb-4">
-            <Calendar size={14} className="text-rose-500" />
-            <p className="text-xs font-bold text-slate-800 uppercase tracking-wider">Countdown Ujian</p>
-          </div>
-          <div className="bg-gradient-to-br from-rose-50 to-orange-50 border border-rose-100 rounded-2xl p-4 text-center">
-            <p className="text-5xl font-black text-rose-600 mb-1">{daysLeft}</p>
-            <p className="text-xs font-bold text-rose-400 uppercase tracking-wider">hari lagi</p>
-            <div className="mt-3 pt-3 border-t border-rose-100">
-              <p className="text-[11px] text-slate-600 font-medium">JFT-Basic · 15 Mei 2026</p>
-              <div className="mt-2 h-1.5 bg-rose-100 rounded-full overflow-hidden">
-                <div className="h-full bg-rose-400 rounded-full" style={{ width: `${Math.min(100, Math.round((1 - daysLeft / 60) * 100))}%` }} />
-              </div>
-              <p className="text-[10px] text-slate-400 mt-1">{Math.min(100, Math.round((1 - daysLeft / 60) * 100))}% waktu persiapan terpakai</p>
-            </div>
-          </div>
-        </div>
-
         <div className="p-6 border-b border-slate-100 flex-1">
           <div className="flex items-center justify-between mb-4">
             <p className="text-xs font-bold text-slate-800 uppercase tracking-widest">Produk Saya</p>
@@ -324,7 +306,7 @@ export default function DashboardPage() {
             {ownedProducts.map((product) => {
               const pct = PRODUCT_PROGRESS[product.id] ?? 0;
               return (
-                <Link href="/my-learning" key={product.id} className="block p-4 rounded-2xl bg-white border border-slate-200 hover:border-indigo-200 hover:shadow-md transition-all group">
+                <Link href={`/course?productId=${encodeURIComponent(product.id)}`} key={product.id} className="block p-4 rounded-2xl bg-white border border-slate-200 hover:border-indigo-200 hover:shadow-md transition-all group">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold shrink-0 text-xs group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                       {product.level}

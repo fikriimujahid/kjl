@@ -1,30 +1,25 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
 import { getProductDetails } from "./handlers/getProductDetails";
-import { getProductSessionDetailsHandler } from "./handlers/getProductSessionDetails";
-import { getPurchasedProducts } from "./handlers/getPurchasedProducts";
 import { getProducts } from "./handlers/getProducts";
+import { ROUTES } from "./routes";
 import { jsonResponse } from "./utils/response";
 
 export const handler = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
-  if (event.routeKey === "GET /api/products") {
-    return getProducts(event);
-  }
+  console.log("[INCOMING_REQUEST]", {
+    routeKey: event.routeKey,
+    requestId: event.requestContext?.requestId,
+  });
 
-  if (event.routeKey === "GET /api/products/{id}") {
-    return getProductDetails(event);
+  switch (event.routeKey) {
+    case ROUTES.GET_PRODUCTS.routeKey:
+      return getProducts(event);
+    case ROUTES.GET_PRODUCT_DETAIL.routeKey:
+      return getProductDetails(event);
+    default:
+      return jsonResponse(404, { message: "Route not found" });
   }
-
-  if (event.routeKey === "GET /api/products/{productId}/topics/{topicId}/sessions/{sessionId}") {
-    return getProductSessionDetailsHandler(event);
-  }
-
-  if (event.routeKey === "GET /api/purchased-products/{userId}") {
-    return getPurchasedProducts(event);
-  }
-
-  return jsonResponse(404, { message: "Route not found" });
 };
 
 export const main = handler;
