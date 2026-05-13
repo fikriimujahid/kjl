@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Product, ProductDetail } from '@/lib/types';
 import { fetchProductDetails, fetchProducts } from '@/lib/api/products';
 import { useAuth } from '@/hooks/useAuth';
-import { createPayment } from '@/lib/payments';
+import { createPayment, PaymentApiError } from '@/lib/payments';
 
 interface UseProductsOptions {
   enabled?: boolean;
@@ -113,12 +113,17 @@ export function useProductDetails(productId: string, options: UseProductDetailsO
   };
 }
 
+export type PaymentModalState =
+  | { type: 'error'; message: string }
+  | { type: 'already_owned'; productId: string }
+  | null;
+
 export function usePurchaseProduct() {
   const router = useRouter();
   const { status, idToken } = useAuth();
 
   const [isBuying, setIsBuying] = useState(false);
-  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [paymentModal, setPaymentModal] = useState<PaymentModalState>(null);
 
   const purchaseProduct = useCallback(
     async ({ productId, loginNextPath, successPath = '/payment-success' }: PurchaseProductOptions) => {
@@ -129,7 +134,7 @@ export function usePurchaseProduct() {
       }
 
       setIsBuying(true);
-      setPaymentError(null);
+      setPaymentModal(null);
 
       try {
         const payment = await createPayment({
@@ -143,8 +148,12 @@ export function usePurchaseProduct() {
         }
 
         router.push(successPath);
-      } catch {
-        setPaymentError('Gagal membuat pembayaran. Silakan coba lagi.');
+      } catch (error) {
+        if (error instanceof PaymentApiError && error.statusCode === 409) {
+          setPaymentModal({ type: 'already_owned', productId });
+        } else {
+          setPaymentModal({ type: 'error', message: 'Gagal membuat pembayaran. Silakan coba lagi.' });
+        }
       } finally {
         setIsBuying(false);
       }
@@ -152,14 +161,14 @@ export function usePurchaseProduct() {
     [idToken, router, status]
   );
 
-  const clearPaymentError = useCallback(() => {
-    setPaymentError(null);
+  const clearPaymentModal = useCallback(() => {
+    setPaymentModal(null);
   }, []);
 
   return {
     isBuying,
-    paymentError,
+    paymentModal,
     purchaseProduct,
-    clearPaymentError,
+    clearPaymentModal,
   };
 }

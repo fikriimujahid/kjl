@@ -83,7 +83,7 @@ export const hasActiveProductAccess = async (
     new GetCommand({
       TableName: tableName,
       Key: {
-        PK: `USER#${userId}`,
+        PK: `OWN_PRODUCT#${userId}`,
         SK: `PURCHASE#${productId}`
       }
     })
@@ -110,44 +110,16 @@ export const grantProductAccess = async (
   nowIsoString: string
 ): Promise<string> => {
   const purchaseKey = {
-    PK: `USER#${order.userId}`,
+    PK: `OWN_PRODUCT#${order.userId}`,
     SK: `PURCHASE#${order.productId}`
   };
-
-  const existingPurchaseResponse = await dynamoDbClient.send(
-    new GetCommand({
-      TableName: tableName,
-      Key: purchaseKey
-    })
-  );
-
-  const existingPurchase = (existingPurchaseResponse.Item as Record<string, unknown> | undefined) ?? null;
-
-  if (
-    existingPurchase &&
-    typeof existingPurchase.purchaseId === "string" &&
-    existingPurchase.purchaseId === order.orderId &&
-    typeof existingPurchase.expiryDate === "string"
-  ) {
-    return existingPurchase.expiryDate;
-  }
 
   const accessDurationDays = Number.isFinite(order.accessDurationDays)
     ? Math.max(1, Math.floor(order.accessDurationDays))
     : 30;
 
   const nowDate = new Date(nowIsoString);
-  let baseDate = nowDate;
-
-  if (existingPurchase && typeof existingPurchase.expiryDate === "string") {
-    const currentExpiryDate = new Date(existingPurchase.expiryDate);
-
-    if (!Number.isNaN(currentExpiryDate.getTime()) && currentExpiryDate > nowDate) {
-      baseDate = currentExpiryDate;
-    }
-  }
-
-  const nextExpiryDate = new Date(baseDate.getTime() + accessDurationDays * DAY_IN_MILLISECONDS).toISOString();
+  const nextExpiryDate = new Date(nowDate.getTime() + accessDurationDays * DAY_IN_MILLISECONDS).toISOString();
 
   await dynamoDbClient.send(
     new PutCommand({
@@ -160,9 +132,6 @@ export const grantProductAccess = async (
         purchaseId: order.orderId,
         purchaseDate: nowIsoString,
         expiryDate: nextExpiryDate,
-        paymentProvider: "MIDTRANS",
-        paymentStatus: "SUCCESS",
-        amount: order.amount,
         updatedAt: nowIsoString
       }
     })

@@ -10,6 +10,7 @@ export const handler = async (
   console.log("[INCOMING_REQUEST]", {
     routeKey: event.routeKey,
     requestId: event.requestContext?.requestId,
+    payload: event.body,
   });
 
   if (event.requestContext.http.method === "OPTIONS") {

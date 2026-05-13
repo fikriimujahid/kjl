@@ -6,6 +6,8 @@ import { ChevronLeft } from 'lucide-react';
 import { ProductDetailHeroCard } from '@/components/products/detail/ProductDetailHeroCard';
 import { ProductOverviewPanel } from '@/components/products/detail/ProductOverviewPanel';
 import { ProductTopicsSection } from '@/components/products/detail/ProductTopicsSection';
+import { PaymentErrorModal } from '@/components/products/detail/PaymentErrorModal';
+import { AlreadyOwnedModal } from '@/components/products/detail/AlreadyOwnedModal';
 import { useProductDetails, usePurchaseProduct } from '@/hooks/useProducts';
 import { getTotalSessions } from '@/lib/utils/product';
 import ProductDetailSkeleton from '@/components/products/detail/ProductDetailSkeleton';
@@ -17,7 +19,7 @@ interface ProductDetailClientProps {
 
 export default function ProductDetailClient({ productId }: ProductDetailClientProps) {
   const { productDetails, isLoading } = useProductDetails(productId);
-  const { isBuying, paymentError, purchaseProduct } = usePurchaseProduct();
+  const { isBuying, paymentModal, purchaseProduct, clearPaymentModal } = usePurchaseProduct();
   const [openTopicId, setOpenTopicId] = useState<string | null>(null);
 
   if (isLoading) {
@@ -62,10 +64,16 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
         <ProductOverviewPanel
           productDetails={productDetails}
           isBuying={isBuying}
-          paymentError={paymentError}
           onBuy={handleBuy}
         />
       </div>
+
+      {paymentModal?.type === 'error' && (
+        <PaymentErrorModal message={paymentModal.message} onClose={clearPaymentModal} />
+      )}
+      {paymentModal?.type === 'already_owned' && (
+        <AlreadyOwnedModal productId={paymentModal.productId} onClose={clearPaymentModal} />
+      )}
     </div>
   );
 }

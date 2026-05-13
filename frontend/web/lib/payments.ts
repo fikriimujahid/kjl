@@ -1,5 +1,12 @@
 const PAYMENT_API_BASE_URL = (process.env.PAYMENT_API_BASE_URL ?? "").replace(/\/$/, ""); 
 
+export class PaymentApiError extends Error {
+  constructor(readonly statusCode: number, message: string) {
+    super(message);
+    this.name = "PaymentApiError";
+  }
+}
+
 export interface CreatePaymentResponse {
   orderId: string;
   snapToken: string;
@@ -22,7 +29,16 @@ export async function createPayment({ productId, idToken }: CreatePaymentOptions
   });
 
   if (!response.ok) {
-    throw new Error("Failed to create payment");
+    let message = "Failed to create payment";
+    try {
+      const body = await response.json() as { message?: string };
+      if (typeof body.message === "string") {
+        message = body.message;
+      }
+    } catch {
+      // keep default message
+    }
+    throw new PaymentApiError(response.status, message);
   }
 
   return response.json() as Promise<CreatePaymentResponse>;

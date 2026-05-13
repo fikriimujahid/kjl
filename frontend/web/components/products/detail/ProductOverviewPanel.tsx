@@ -7,14 +7,12 @@ import { PRODUCT_LEARNING_FEATURES } from '@/lib/utils/product';
 interface ProductOverviewPanelProps {
   productDetails: ProductDetail;
   isBuying: boolean;
-  paymentError: string | null;
   onBuy: () => void | Promise<void>;
 }
 
 export function ProductOverviewPanel({
   productDetails,
   isBuying,
-  paymentError,
   onBuy,
 }: ProductOverviewPanelProps) {
   return (
@@ -59,8 +57,6 @@ export function ProductOverviewPanel({
           <ShoppingCart size={28} />
         </button>
       </div>
-
-      {paymentError ? <p className="text-sm font-semibold text-red-600">{paymentError}</p> : null}
 
       <section>
         <h2 className="text-xl font-black text-gray-900 mb-4">Yang akan kamu pelajari:</h2>

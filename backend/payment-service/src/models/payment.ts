@@ -18,7 +18,6 @@ export interface PaymentOrderRecord {
   amount: number;
   grossAmount: string;
   accessDurationDays: number;
-  snapToken: string;
   snapRedirectUrl: string | null;
   status: PaymentStatus;
   paymentProvider: "MIDTRANS";
