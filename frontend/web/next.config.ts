@@ -8,7 +8,7 @@ const isStaticExport = process.env.NEXT_OUTPUT_MODE === 'export';
 
 const nextConfig: NextConfig = {
   env: {
-    NEXT_API_BASE_URL: process.env.NEXT_API_BASE_URL,
+    PAYMENT_API_BASE_URL: process.env.PAYMENT_API_BASE_URL,
     PRODUCT_API_BASE_URL: process.env.PRODUCT_API_BASE_URL,
     AUTH_API_BASE_URL: process.env.AUTH_API_BASE_URL,
   },

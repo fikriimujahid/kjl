@@ -7,6 +7,11 @@ import { jsonResponse, optionsResponse } from "./utils/response";
 export const handler = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
+  console.log("[INCOMING_REQUEST]", {
+    routeKey: event.routeKey,
+    requestId: event.requestContext?.requestId,
+  });
+
   if (event.requestContext.http.method === "OPTIONS") {
     return optionsResponse();
   }

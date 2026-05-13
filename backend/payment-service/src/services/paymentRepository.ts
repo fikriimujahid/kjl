@@ -5,16 +5,56 @@ import { PaymentOrderRecord } from "../models/payment";
 const DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
 const dynamoDbClient = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
+const extractUserIdFromOrderId = (orderId: string): string | null => {
+  const parts = orderId.split("~");
+
+  if (parts.length !== 3) {
+    return null;
+  }
+
+  if (parts[0] !== "KJL") {
+    return null;
+  }
+
+  const userId = parts[1]?.trim();
+
+  if (!userId) {
+    return null;
+  }
+
+  return userId;
+};
+
+const readExpiryDate = (value: unknown): Date | null => {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return parsed;
+};
+
 export const readPaymentOrder = async (
   tableName: string,
   orderId: string
 ): Promise<PaymentOrderRecord | null> => {
+  const userId = extractUserIdFromOrderId(orderId);
+
+  if (!userId) {
+    return null;
+  }
+
   const response = await dynamoDbClient.send(
     new GetCommand({
       TableName: tableName,
       Key: {
-        PK: `PAYMENT#${orderId}`,
-        SK: "PAYMENT"
+        PK: `PAYMENT#${userId}`,
+        SK: `PAYMENT#${orderId}`
       }
     })
   );
@@ -32,6 +72,36 @@ export const savePaymentOrder = async (
       Item: order
     })
   );
+};
+
+export const hasActiveProductAccess = async (
+  tableName: string,
+  userId: string,
+  productId: string
+): Promise<boolean> => {
+  const response = await dynamoDbClient.send(
+    new GetCommand({
+      TableName: tableName,
+      Key: {
+        PK: `USER#${userId}`,
+        SK: `PURCHASE#${productId}`
+      }
+    })
+  );
+
+  const purchaseRecord = (response.Item as Record<string, unknown> | undefined) ?? null;
+
+  if (!purchaseRecord) {
+    return false;
+  }
+
+  const expiryDate = readExpiryDate(purchaseRecord.expiryDate);
+
+  if (!expiryDate) {
+    return false;
+  }
+
+  return expiryDate > new Date();
 };
 
 export const grantProductAccess = async (

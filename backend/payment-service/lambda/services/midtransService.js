@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.normalizePaymentStatus = exports.validateWebhookSignature = exports.createSnapTransaction = exports.getMidtransSnapApiUrl = void 0;
+exports.normalizePaymentStatus = exports.validateWebhookSignature = exports.createSnapTransaction = void 0;
 const crypto_1 = require("crypto");
 const safeEqualString = (left, right) => {
     const leftBuffer = Buffer.from(left, "utf8");
@@ -23,15 +23,6 @@ const readStringField = (payload, fieldName) => {
     const value = payload[fieldName];
     return typeof value === "string" ? value : null;
 };
-const getMidtransSnapApiUrl = (isProduction, configuredUrl) => {
-    if (configuredUrl && configuredUrl.trim()) {
-        return configuredUrl.trim();
-    }
-    return isProduction
-        ? "https://app.midtrans.com/snap/v1/transactions"
-        : "https://app.sandbox.midtrans.com/snap/v1/transactions";
-};
-exports.getMidtransSnapApiUrl = getMidtransSnapApiUrl;
 const createSnapTransaction = async (input) => {
     const response = await fetch(input.snapApiUrl, {
         method: "POST",
