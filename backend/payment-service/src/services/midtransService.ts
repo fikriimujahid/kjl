@@ -46,6 +46,23 @@ const readStringField = (payload: Record<string, unknown>, fieldName: string): s
   return typeof value === "string" ? value : null;
 };
 
+const readSignatureComponent = (
+  payload: Record<string, unknown>,
+  fieldName: string
+): string | null => {
+  const value = payload[fieldName];
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
+
+  return null;
+};
+
 const truncateText = (value: string): string => {
   if (value.length <= MAX_LOG_TEXT_LENGTH) {
     return value;
@@ -126,45 +143,45 @@ export const validateWebhookSignature = (
 ): boolean => {
   const orderId = readStringField(payload, "order_id");
   const signatureKey = readStringField(payload, "signature_key");
+  const statusCode = readSignatureComponent(payload, "status_code");
+  const grossAmount = readSignatureComponent(payload, "gross_amount");
 
-  if (!orderId || !signatureKey) {
-    return false;
-  }
-
-  const statusCodeValue = payload.status_code;
-  const grossAmountValue = payload.gross_amount;
-  const statusCode = statusCodeValue == null ? "" : String(statusCodeValue);
-  const grossAmount = grossAmountValue == null ? "" : String(grossAmountValue);
-
-  if (!statusCode || !grossAmount) {
+  if (!orderId || !signatureKey || !statusCode || !grossAmount) {
     return false;
   }
 
   const expectedSignature = calculateMidtransSignature(orderId, statusCode, grossAmount, serverKey);
-  return safeEqualString(expectedSignature, signatureKey);
+  return safeEqualString(expectedSignature, signatureKey.trim().toLowerCase());
 };
 
 export const normalizePaymentStatus = (
   transactionStatus: string | null,
   fraudStatus: string | null
 ): PaymentStatus => {
-  if (transactionStatus === "settlement") {
+  const normalizedTransactionStatus = transactionStatus?.toLowerCase() ?? "";
+  const normalizedFraudStatus = fraudStatus?.toLowerCase() ?? null;
+
+  if (normalizedTransactionStatus === "settlement") {
     return "SUCCESS";
   }
 
-  if (transactionStatus === "capture") {
-    return fraudStatus === "accept" || !fraudStatus ? "SUCCESS" : "PENDING_REVIEW";
+  if (normalizedTransactionStatus === "capture") {
+    return normalizedFraudStatus === "accept" || !normalizedFraudStatus ? "SUCCESS" : "PENDING_REVIEW";
   }
 
-  if (transactionStatus === "pending") {
+  if (normalizedTransactionStatus === "pending" || normalizedTransactionStatus === "authorize") {
     return "PENDING";
   }
 
-  if (["cancel", "deny", "expire", "failure"].includes(transactionStatus ?? "")) {
+  if (["cancel", "deny", "expire", "failure"].includes(normalizedTransactionStatus)) {
     return "FAILED";
   }
 
-  if (["refund", "partial_refund", "chargeback"].includes(transactionStatus ?? "")) {
+  if (
+    ["refund", "partial_refund", "chargeback", "partial_chargeback"].includes(
+      normalizedTransactionStatus
+    )
+  ) {
     return "REFUNDED";
   }
 
