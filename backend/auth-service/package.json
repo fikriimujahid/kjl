@@ -7,8 +7,8 @@
     "node": ">=22"
   },
   "scripts": {
-    "clean": "node -e \"require('fs').rmSync('build',{recursive:true,force:true});require('fs').rmSync('lambda',{recursive:true,force:true})\"",
-    "build": "npm run clean && tsc -p tsconfig.json && node scripts/syncBuildToLambda.js",
+    "clean": "node -e \"require('fs').rmSync('build',{recursive:true,force:true})\"",
+    "build": "npm run clean && tsc -p tsconfig.json",
     "build:local": "npm run clean && tsc -p tsconfig.json",
     "start:local": "npm run build:local && node --env-file=.env local-server.js"
   },

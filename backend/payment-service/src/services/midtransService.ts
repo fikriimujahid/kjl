@@ -12,6 +12,8 @@ interface MidtransSnapResult {
   redirectUrl: string | null;
 }
 
+const MAX_LOG_TEXT_LENGTH = 2000;
+
 const safeEqualString = (left: string, right: string): boolean => {
   const leftBuffer = Buffer.from(left, "utf8");
   const rightBuffer = Buffer.from(right, "utf8");
@@ -44,19 +46,40 @@ const readStringField = (payload: Record<string, unknown>, fieldName: string): s
   return typeof value === "string" ? value : null;
 };
 
-export const getMidtransSnapApiUrl = (isProduction: boolean, configuredUrl?: string): string => {
-  if (configuredUrl && configuredUrl.trim()) {
-    return configuredUrl.trim();
+const truncateText = (value: string): string => {
+  if (value.length <= MAX_LOG_TEXT_LENGTH) {
+    return value;
   }
 
-  return isProduction
-    ? "https://app.midtrans.com/snap/v1/transactions"
-    : "https://app.sandbox.midtrans.com/snap/v1/transactions";
+  return `${value.slice(0, MAX_LOG_TEXT_LENGTH)}...<truncated>`;
+};
+
+const tryParseJson = (value: string): unknown => {
+  if (!value.trim()) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(value) as unknown;
+  } catch {
+    return truncateText(value);
+  }
 };
 
 export const createSnapTransaction = async (
   input: CreateSnapTransactionInput
 ): Promise<MidtransSnapResult> => {
+  // const transactionDetails =
+  //   typeof input.payload.transaction_details === "object" && input.payload.transaction_details != null
+  //     ? (input.payload.transaction_details as Record<string, unknown>)
+  //     : null;
+
+  // console.log("[MIDTRANS_SNAP_REQUEST]", {
+  //   snapApiUrl: input.snapApiUrl,
+  //   transactionDetails,
+  //   payload: input.payload
+  // });
+
   const response = await fetch(input.snapApiUrl, {
     method: "POST",
     headers: {
@@ -67,11 +90,24 @@ export const createSnapTransaction = async (
     body: JSON.stringify(input.payload)
   });
 
+  const rawResponseBody = await response.text();
+  const responseBody = tryParseJson(rawResponseBody);
+
+  console.log("[MIDTRANS_SNAP_RESPONSE]", {
+    status: response.status,
+    statusText: response.statusText,
+    body: responseBody
+  });
+
   if (!response.ok) {
-    throw new Error("Midtrans rejected payment creation");
+    throw new Error(`Midtrans rejected payment creation with status ${response.status}`);
   }
 
-  const data = (await response.json()) as Record<string, unknown>;
+  if (typeof responseBody !== "object" || responseBody == null || Array.isArray(responseBody)) {
+    throw new Error("Midtrans Snap response payload is not a valid object");
+  }
+
+  const data = responseBody as Record<string, unknown>;
   const token = readStringField(data, "token");
 
   if (!token) {

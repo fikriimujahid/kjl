@@ -10,9 +10,7 @@ const paymentRepository_1 = require("../services/paymentRepository");
 const productService_1 = require("../services/productService");
 const DYNAMO_DB_TABLE_NAME = process.env.DYNAMO_DB_TABLE_NAME;
 const MIDTRANS_SERVER_KEY = process.env.MIDTRANS_SERVER_KEY;
-const MIDTRANS_IS_PRODUCTION = (process.env.MIDTRANS_IS_PRODUCTION ?? "false").toLowerCase() === "true";
-const MIDTRANS_SNAP_API_URL = (0, midtransService_1.getMidtransSnapApiUrl)(MIDTRANS_IS_PRODUCTION, process.env.MIDTRANS_SNAP_API_URL);
-const PRODUCT_DATA_URL = process.env.PRODUCT_DATA_URL ?? "https://kjl.fikri.dev/public-data/product.json";
+const MIDTRANS_SNAP_API_URL = process.env.MIDTRANS_SNAP_API_URL;
 const APP_BASE_URL = (process.env.APP_BASE_URL ?? "").trim().replace(/\/$/, "");
 const createPayment = async (event) => {
     if (!DYNAMO_DB_TABLE_NAME) {
@@ -20,6 +18,9 @@ const createPayment = async (event) => {
     }
     if (!MIDTRANS_SERVER_KEY) {
         return (0, response_1.jsonResponse)(500, { message: "Missing MIDTRANS_SERVER_KEY environment variable" });
+    }
+    if (!MIDTRANS_SNAP_API_URL) {
+        return (0, response_1.jsonResponse)(500, { message: "Missing MIDTRANS_SNAP_API_URL environment variable" });
     }
     const authenticatedUser = (0, auth_1.getAuthenticatedUser)(event);
     if (!authenticatedUser) {
@@ -36,9 +37,18 @@ const createPayment = async (event) => {
     if (!productId) {
         return (0, response_1.jsonResponse)(400, { message: "Missing productId" });
     }
+    try {
+        const hasActiveAccess = await (0, paymentRepository_1.hasActiveProductAccess)(DYNAMO_DB_TABLE_NAME, authenticatedUser.id, productId);
+        if (hasActiveAccess) {
+            return (0, response_1.jsonResponse)(409, { message: "User already has the product" });
+        }
+    }
+    catch {
+        return (0, response_1.jsonResponse)(502, { message: "Failed to validate existing product access" });
+    }
     let product;
     try {
-        product = await (0, productService_1.fetchProductById)(productId, PRODUCT_DATA_URL);
+        product = await (0, productService_1.fetchProductById)(productId, DYNAMO_DB_TABLE_NAME);
     }
     catch {
         return (0, response_1.jsonResponse)(502, { message: "Failed to load product data" });
@@ -50,7 +60,12 @@ const createPayment = async (event) => {
     if (amount <= 0) {
         return (0, response_1.jsonResponse)(400, { message: "Invalid product price" });
     }
-    const orderId = `KJL-${Date.now()}-${(0, crypto_1.randomUUID)().slice(0, 8)}`;
+    const orderIdTimestamp = Date.now().toString(36);
+    const orderIdRandomChar = (0, crypto_1.randomUUID)().replace(/-/g, "").slice(0, 1);
+    const orderId = `KJL~${authenticatedUser.id}~${orderIdTimestamp}${orderIdRandomChar}`;
+    if (orderId.length > 50) {
+        return (0, response_1.jsonResponse)(400, { message: "Unable to create valid order id for this user" });
+    }
     const snapPayload = {
         transaction_details: {
             order_id: orderId,
@@ -89,8 +104,8 @@ const createPayment = async (event) => {
     }
     const now = new Date().toISOString();
     const paymentOrder = {
-        PK: `PAYMENT#${orderId}`,
-        SK: "PAYMENT",
+        PK: `PAYMENT#${authenticatedUser.id}`,
+        SK: `PAYMENT#${orderId}`,
         entityType: "PAYMENT_ORDER",
         orderId,
         userId: authenticatedUser.id,

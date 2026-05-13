@@ -1,4 +1,4 @@
-const API_BASE_URL = (process.env.NEXT_API_BASE_URL ?? "").replace(/\/$/, "");
+const PAYMENT_API_BASE_URL = (process.env.PAYMENT_API_BASE_URL ?? "").replace(/\/$/, ""); 
 
 export interface CreatePaymentResponse {
   orderId: string;
@@ -12,7 +12,7 @@ interface CreatePaymentOptions {
 }
 
 export async function createPayment({ productId, idToken }: CreatePaymentOptions): Promise<CreatePaymentResponse> {
-  const response = await fetch(API_BASE_URL+'/payments/create', {
+  const response = await fetch(PAYMENT_API_BASE_URL+'/create', {
     method: "POST",
     headers: {
       "content-type": "application/json",

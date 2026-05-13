@@ -4,19 +4,13 @@ import { PaymentOrderRecord } from "../models/payment";
 import { getAuthenticatedUser } from "../utils/auth";
 import { parseEventBody } from "../utils/request";
 import { jsonResponse } from "../utils/response";
-import { createSnapTransaction, getMidtransSnapApiUrl } from "../services/midtransService";
-import { savePaymentOrder } from "../services/paymentRepository";
+import { createSnapTransaction } from "../services/midtransService";
+import { hasActiveProductAccess, savePaymentOrder } from "../services/paymentRepository";
 import { fetchProductById } from "../services/productService";
 
 const DYNAMO_DB_TABLE_NAME = process.env.DYNAMO_DB_TABLE_NAME;
 const MIDTRANS_SERVER_KEY = process.env.MIDTRANS_SERVER_KEY;
-const MIDTRANS_IS_PRODUCTION =
-  (process.env.MIDTRANS_IS_PRODUCTION ?? "false").toLowerCase() === "true";
-const MIDTRANS_SNAP_API_URL = getMidtransSnapApiUrl(
-  MIDTRANS_IS_PRODUCTION,
-  process.env.MIDTRANS_SNAP_API_URL
-);
-const PRODUCT_DATA_URL = process.env.PRODUCT_DATA_URL ?? "https://kjl.fikri.dev/public-data/product.json";
+const MIDTRANS_SNAP_API_URL = process.env.MIDTRANS_SNAP_API_URL;
 const APP_BASE_URL = (process.env.APP_BASE_URL ?? "").trim().replace(/\/$/, "");
 
 export const createPayment = async (
@@ -28,6 +22,10 @@ export const createPayment = async (
 
   if (!MIDTRANS_SERVER_KEY) {
     return jsonResponse(500, { message: "Missing MIDTRANS_SERVER_KEY environment variable" });
+  }
+
+  if (!MIDTRANS_SNAP_API_URL) {
+    return jsonResponse(500, { message: "Missing MIDTRANS_SNAP_API_URL environment variable" });
   }
 
   const authenticatedUser = getAuthenticatedUser(event);
@@ -50,10 +48,24 @@ export const createPayment = async (
     return jsonResponse(400, { message: "Missing productId" });
   }
 
+  try {
+    const hasActiveAccess = await hasActiveProductAccess(
+      DYNAMO_DB_TABLE_NAME,
+      authenticatedUser.id,
+      productId
+    );
+
+    if (hasActiveAccess) {
+      return jsonResponse(409, { message: "User already has the product" });
+    }
+  } catch {
+    return jsonResponse(502, { message: "Failed to validate existing product access" });
+  }
+
   let product;
 
   try {
-    product = await fetchProductById(productId, PRODUCT_DATA_URL);
+    product = await fetchProductById(productId, DYNAMO_DB_TABLE_NAME);
   } catch {
     return jsonResponse(502, { message: "Failed to load product data" });
   }
@@ -68,7 +80,13 @@ export const createPayment = async (
     return jsonResponse(400, { message: "Invalid product price" });
   }
 
-  const orderId = `KJL-${Date.now()}-${randomUUID().slice(0, 8)}`;
+  const orderIdTimestamp = Date.now().toString(36);
+  const orderIdRandomChar = randomUUID().replace(/-/g, "").slice(0, 1);
+  const orderId = `KJL~${authenticatedUser.id}~${orderIdTimestamp}${orderIdRandomChar}`;
+
+  if (orderId.length > 50) {
+    return jsonResponse(400, { message: "Unable to create valid order id for this user" });
+  }
 
   const snapPayload: Record<string, unknown> = {
     transaction_details: {
@@ -105,15 +123,23 @@ export const createPayment = async (
       snapApiUrl: MIDTRANS_SNAP_API_URL,
       payload: snapPayload
     });
-  } catch {
+  } catch (error) {
+    console.error("[MIDTRANS_SNAP_CREATE_FAILED]", {
+      orderId,
+      userId: authenticatedUser.id,
+      productId,
+      snapApiUrl: MIDTRANS_SNAP_API_URL,
+      error: error instanceof Error ? error.message : String(error)
+    });
+
     return jsonResponse(502, { message: "Midtrans rejected payment creation" });
   }
 
   const now = new Date().toISOString();
 
   const paymentOrder: PaymentOrderRecord = {
-    PK: `PAYMENT#${orderId}`,
-    SK: "PAYMENT",
+    PK: `PAYMENT#${authenticatedUser.id}`,
+    SK: `PAYMENT#${orderId}`,
     entityType: "PAYMENT_ORDER",
     orderId,
     userId: authenticatedUser.id,

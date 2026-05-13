@@ -1,16 +1,44 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.grantProductAccess = exports.savePaymentOrder = exports.readPaymentOrder = void 0;
+exports.grantProductAccess = exports.hasActiveProductAccess = exports.savePaymentOrder = exports.readPaymentOrder = void 0;
 const client_dynamodb_1 = require("@aws-sdk/client-dynamodb");
 const lib_dynamodb_1 = require("@aws-sdk/lib-dynamodb");
 const DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
 const dynamoDbClient = lib_dynamodb_1.DynamoDBDocumentClient.from(new client_dynamodb_1.DynamoDBClient({}));
+const extractUserIdFromOrderId = (orderId) => {
+    const parts = orderId.split("~");
+    if (parts.length !== 3) {
+        return null;
+    }
+    if (parts[0] !== "KJL") {
+        return null;
+    }
+    const userId = parts[1]?.trim();
+    if (!userId) {
+        return null;
+    }
+    return userId;
+};
+const readExpiryDate = (value) => {
+    if (typeof value !== "string") {
+        return null;
+    }
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+        return null;
+    }
+    return parsed;
+};
 const readPaymentOrder = async (tableName, orderId) => {
+    const userId = extractUserIdFromOrderId(orderId);
+    if (!userId) {
+        return null;
+    }
     const response = await dynamoDbClient.send(new lib_dynamodb_1.GetCommand({
         TableName: tableName,
         Key: {
-            PK: `PAYMENT#${orderId}`,
-            SK: "PAYMENT"
+            PK: `PAYMENT#${userId}`,
+            SK: `PAYMENT#${orderId}`
         }
     }));
     return response.Item ?? null;
@@ -23,6 +51,25 @@ const savePaymentOrder = async (tableName, order) => {
     }));
 };
 exports.savePaymentOrder = savePaymentOrder;
+const hasActiveProductAccess = async (tableName, userId, productId) => {
+    const response = await dynamoDbClient.send(new lib_dynamodb_1.GetCommand({
+        TableName: tableName,
+        Key: {
+            PK: `USER#${userId}`,
+            SK: `PURCHASE#${productId}`
+        }
+    }));
+    const purchaseRecord = response.Item ?? null;
+    if (!purchaseRecord) {
+        return false;
+    }
+    const expiryDate = readExpiryDate(purchaseRecord.expiryDate);
+    if (!expiryDate) {
+        return false;
+    }
+    return expiryDate > new Date();
+};
+exports.hasActiveProductAccess = hasActiveProductAccess;
 const grantProductAccess = async (tableName, order, nowIsoString) => {
     const purchaseKey = {
         PK: `USER#${order.userId}`,

@@ -1,5 +1,10 @@
 const http = require("http");
 const { URL } = require("url");
+const path = require("path");
+const dotenv = require("dotenv");
+
+dotenv.config({ path: path.resolve(__dirname, ".env") });
+
 const { handler } = require("./build/lambda/handler.js");
 const { ROUTES } = require("./build/lambda/routes.js");
 

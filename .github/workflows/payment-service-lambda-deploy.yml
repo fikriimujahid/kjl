@@ -40,14 +40,14 @@ jobs:
 
       - name: Package Lambda
         run: |
-          if [ ! -d lambda ]; then
-            echo "Expected lambda directory is missing."
+          if [ ! -d build/lambda ]; then
+            echo "Expected build/lambda directory is missing."
             exit 1
           fi
 
           rm -f payment-service-lambda.zip
-          cd lambda
-          zip -r ../payment-service-lambda.zip .
+          cd build/lambda
+          zip -r ../../payment-service-lambda.zip .
 
       - name: Upload Lambda artifact
         uses: actions/upload-artifact@v4
@@ -63,12 +63,10 @@ jobs:
 
       - name: Create Lambda env file
         run: |
-          DYNAMO_DB_TABLE_NAME="${{ secrets.DYNAMO_DB_TABLE_NAME }}"
-          MIDTRANS_SERVER_KEY="${{ secrets.MIDTRANS_SERVER_KEY }}"
-          MIDTRANS_IS_PRODUCTION="${{ secrets.MIDTRANS_IS_PRODUCTION }}"
-          PRODUCT_DATA_URL="${{ secrets.PRODUCT_DATA_URL }}"
-          APP_BASE_URL="${{ secrets.APP_BASE_URL }}"
-          MIDTRANS_SNAP_API_URL="${{ secrets.MIDTRANS_SNAP_API_URL }}"
+          DYNAMO_DB_TABLE_NAME="${{ secrets.PAYMENT_SERVICE_DYNAMO_DB_TABLE_NAME }}"
+          MIDTRANS_SERVER_KEY="${{ secrets.PAYMENT_SERVICE_MIDTRANS_SERVER_KEY }}"
+          MIDTRANS_SNAP_API_URL="${{ secrets.PAYMENT_SERVICE_MIDTRANS_SNAP_API_URL }}"
+          APP_BASE_URL="${{ secrets.PAYMENT_SERVICE_APP_BASE_URL }}"
 
           if [ -z "${DYNAMO_DB_TABLE_NAME}" ]; then
             echo "DYNAMO_DB_TABLE_NAME is missing. Set vars.DYNAMO_DB_TABLE_NAME or secrets.DYNAMO_DB_TABLE_NAME."
@@ -83,10 +81,8 @@ jobs:
           cat > .env.lambda <<EOF
           DYNAMO_DB_TABLE_NAME=${DYNAMO_DB_TABLE_NAME}
           MIDTRANS_SERVER_KEY=${MIDTRANS_SERVER_KEY}
-          MIDTRANS_IS_PRODUCTION=${MIDTRANS_IS_PRODUCTION}
-          PRODUCT_DATA_URL=${PRODUCT_DATA_URL}
-          APP_BASE_URL=${APP_BASE_URL}
           MIDTRANS_SNAP_API_URL=${MIDTRANS_SNAP_API_URL}
+          APP_BASE_URL=${APP_BASE_URL}
           EOF
 
       - name: Update Lambda environment variables
@@ -110,18 +106,14 @@ jobs:
           UPDATED_ENV_VARS=$(echo "${CURRENT_ENV_VARS}" | jq -c \
             --arg dynamoDbTableName "${DYNAMO_DB_TABLE_NAME}" \
             --arg midtransServerKey "${MIDTRANS_SERVER_KEY}" \
-            --arg midtransIsProduction "${MIDTRANS_IS_PRODUCTION}" \
-            --arg productDataUrl "${PRODUCT_DATA_URL}" \
-            --arg appBaseUrl "${APP_BASE_URL}" \
             --arg midtransSnapApiUrl "${MIDTRANS_SNAP_API_URL}" \
+            --arg appBaseUrl "${APP_BASE_URL}" \
             '. + {
               DYNAMO_DB_TABLE_NAME: $dynamoDbTableName,
               MIDTRANS_SERVER_KEY: $midtransServerKey,
-              MIDTRANS_IS_PRODUCTION: $midtransIsProduction,
-              PRODUCT_DATA_URL: $productDataUrl,
+              MIDTRANS_SNAP_API_URL: $midtransSnapApiUrl,
               APP_BASE_URL: $appBaseUrl
-            }
-            | if $midtransSnapApiUrl == "" then del(.MIDTRANS_SNAP_API_URL) else . + {MIDTRANS_SNAP_API_URL: $midtransSnapApiUrl} end')
+            }')
 
           UPDATE_PAYLOAD=$(jq -cn \
             --arg functionName "${LAMBDA_FUNCTION_NAME}" \

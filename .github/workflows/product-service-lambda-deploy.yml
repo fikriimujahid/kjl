@@ -65,8 +65,8 @@ jobs:
 
       - name: Create Lambda env file
         run: |
-          DYNAMO_DB_TABLE_NAME="${{ secrets.DYNAMO_DB_TABLE_NAME }}"
-          MEDIA_PRIVATE_BUCKET_NAME="${{ secrets.MEDIA_PRIVATE_BUCKET_NAME }}"
+          DYNAMO_DB_TABLE_NAME="${{ secrets.PRODUCT_SERVICE_DYNAMO_DB_TABLE_NAME }}"
+          MEDIA_PRIVATE_BUCKET_NAME="${{ secrets.MEDIA_PRIVATE_BUCKET_NAME }}" 
 
           if [ -z "${MEDIA_PRIVATE_BUCKET_NAME}" ]; then
             echo "MEDIA_PRIVATE_BUCKET_NAME is missing. Set vars.MEDIA_PRIVATE_BUCKET_NAME or secrets.MEDIA_PRIVATE_BUCKET_NAME."
