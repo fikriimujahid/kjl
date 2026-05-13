@@ -54,6 +54,7 @@ export function Navbar() {
         id={MOBILE_MENU_ID}
         isOpen={isOpen}
         links={filteredLinks}
+        pathname={pathname}
         isAuthenticated={isAuthenticated}
         user={user}
         onClose={() => setIsOpen(false)}

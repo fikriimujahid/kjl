@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { MouseEvent } from 'react';
 import { LogOut, User } from 'lucide-react';
 import type { NavLink, NavbarAuthState } from '@/components/navbar/types';
 
@@ -6,14 +7,37 @@ interface MobileNavProps extends NavbarAuthState {
   id: string;
   isOpen: boolean;
   links: NavLink[];
+  pathname: string;
   onClose: () => void;
   onLogout: () => Promise<void>;
 }
 
-export function MobileNav({ id, isOpen, links, isAuthenticated, user, onClose, onLogout }: MobileNavProps) {
+export function MobileNav({
+  id,
+  isOpen,
+  links,
+  pathname,
+  isAuthenticated,
+  user,
+  onClose,
+  onLogout,
+}: MobileNavProps) {
   if (!isOpen) {
     return null;
   }
+
+  const handleLinkClick = (event: MouseEvent<HTMLAnchorElement>, targetPath: string) => {
+    const hasQueryParams = typeof window !== 'undefined' && window.location.search.length > 0;
+
+    if (targetPath === '/products' && pathname === '/products' && hasQueryParams) {
+      // Force a full navigation so query params are reliably cleared in all environments.
+      event.preventDefault();
+      window.location.assign('/products');
+      return;
+    }
+
+    onClose();
+  };
 
   return (
     <div id={id} className="md:hidden bg-white border-t border-slate-100 animate-in slide-in-from-top duration-300">
@@ -25,7 +49,7 @@ export function MobileNav({ id, isOpen, links, isAuthenticated, user, onClose, o
             <Link
               key={link.path}
               href={link.path}
-              onClick={onClose}
+              onClick={(event) => handleLinkClick(event, link.path)}
               className="block px-3 py-3 text-sm font-bold text-slate-700 hover:text-indigo-600 hover:bg-slate-50 rounded-lg flex items-center gap-3"
             >
               <Icon size={20} />

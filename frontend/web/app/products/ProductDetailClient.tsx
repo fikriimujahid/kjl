@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type MouseEvent } from 'react';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import { ProductDetailHeroCard } from '@/components/products/detail/ProductDetailHeroCard';
@@ -43,9 +43,19 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
     });
   };
 
+  const handleBackClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    // Keep this as a hard navigation because this page is query-driven on /products.
+    event.preventDefault();
+    window.location.assign('/products');
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
-      <Link href="/products" className="inline-flex items-center gap-2 text-indigo-600 font-bold mb-10 hover:-translate-x-1 transition-transform">
+      <Link
+        href="/products"
+        onClick={handleBackClick}
+        className="inline-flex items-center gap-2 text-indigo-600 font-bold mb-10 hover:-translate-x-1 transition-transform"
+      >
         <ChevronLeft size={20} />
         Kembali ke Produk
       </Link>
