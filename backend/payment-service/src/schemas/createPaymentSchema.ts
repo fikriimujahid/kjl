@@ -1,4 +1,25 @@
-import { z } from "zod";
+interface CreatePaymentPayload {
+  productId: string;
+}
+
+interface SafeParseSuccess<T> {
+  success: true;
+  data: T;
+}
+
+interface SafeParseFailure {
+  success: false;
+  error: string;
+}
+
+type SafeParseResult<T> = SafeParseSuccess<T> | SafeParseFailure;
+
+const readProductId = (payload: Record<string, unknown>): string | null => {
+  const value = payload.productId;
+  const normalizedValue = typeof value === "string" ? value.trim() : "";
+
+  return normalizedValue.length > 0 ? normalizedValue : null;
+};
 
 const normalizePayloadObject = (input: unknown): Record<string, unknown> => {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
@@ -8,14 +29,23 @@ const normalizePayloadObject = (input: unknown): Record<string, unknown> => {
   return input as Record<string, unknown>;
 };
 
-const productIdSchema = z.preprocess(
-  (value) => (typeof value === "string" ? value.trim() : ""),
-  z.string().min(1, { message: "Missing productId" })
-);
+export const createPaymentSchema = {
+  safeParse: (input: unknown): SafeParseResult<CreatePaymentPayload> => {
+    const payload = normalizePayloadObject(input);
+    const productId = readProductId(payload);
 
-export const createPaymentSchema = z.preprocess(
-  normalizePayloadObject,
-  z.object({
-    productId: productIdSchema
-  })
-);
+    if (!productId) {
+      return {
+        success: false,
+        error: "productId is required"
+      };
+    }
+
+    return {
+      success: true,
+      data: {
+        productId
+      }
+    };
+  }
+};

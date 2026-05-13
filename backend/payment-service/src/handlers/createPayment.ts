@@ -30,7 +30,7 @@ export const createPayment = async (
     const parsedPayload = createPaymentSchema.safeParse(payload);
 
     if (!parsedPayload.success) {
-      throw new ValidationError("Missing productId");
+      throw new ValidationError(parsedPayload.error);
     }
 
     const result = await createPaymentUseCase({
