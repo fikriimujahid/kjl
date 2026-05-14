@@ -2,6 +2,7 @@ import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { PurchaseRecord, PurchasedProduct } from "../types/productTypes";
 import { mapPurchaseRecordToPurchasedProduct } from "../mappers/purchaseMapper";
 import { logProductServiceError, logProductServiceInfo } from "../utils/logger";
+import { isPurchaseActive } from "../utils/dateUtils";
 import { isPurchaseRecord } from "../utils/validators";
 import { dynamoDbDocumentClient } from "../clients/awsClients";
 
@@ -80,18 +81,16 @@ export const getUserPurchase = async (
   }
 };
 
-export const listPurchasedProducts = async (
+export const listOwnedProducts = async ( 
   userId: string
 ): Promise<PurchasedProduct[]> => {
   const tableName = getTableName();
   const logContext = {
     userId,
     tableName,
-    purchasePartitionKey: `USER#${userId}`,
+    purchasePartitionKey: `OWNED_PRODUCT#${userId}`,
     purchaseSortKeyPrefix: "PURCHASE#"
   };
-
-  logProductServiceInfo("dynamodb.listPurchases.start", logContext);
 
   try {
     const response = await dynamoDbDocumentClient.send(
@@ -103,21 +102,17 @@ export const listPurchasedProducts = async (
           "#sk": "SK"
         },
         ExpressionAttributeValues: {
-          ":pk": `USER#${userId}`,
+          ":pk": `OWNED_PRODUCT#${userId}`,
           ":skPrefix": "PURCHASE#"
         }
       })
     );
 
-    const purchasedProducts = (response.Items ?? [])
+    const activePurchaseRecords = (response.Items ?? [])
       .filter(isPurchaseRecord)
-      .map(mapPurchaseRecordToPurchasedProduct);
+      .filter(isPurchaseActive);
 
-    logProductServiceInfo("dynamodb.listPurchases.success", {
-      ...logContext,
-      itemCount: response.Items?.length ?? 0,
-      purchaseCount: purchasedProducts.length
-    });
+    const purchasedProducts = activePurchaseRecords.map(mapPurchaseRecordToPurchasedProduct);
 
     return purchasedProducts;
   } catch (error) {

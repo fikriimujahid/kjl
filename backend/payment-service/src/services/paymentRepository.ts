@@ -83,7 +83,7 @@ export const hasActiveProductAccess = async (
     new GetCommand({
       TableName: tableName,
       Key: {
-        PK: `OWN_PRODUCT#${userId}`,
+        PK: `OWNED_PRODUCT#${userId}`,
         SK: `PURCHASE#${productId}`
       }
     })
@@ -110,7 +110,7 @@ export const grantProductAccess = async (
   nowIsoString: string
 ): Promise<string> => {
   const purchaseKey = {
-    PK: `OWN_PRODUCT#${order.userId}`,
+    PK: `OWNED_PRODUCT#${order.userId}`,
     SK: `PURCHASE#${order.productId}`
   };
 

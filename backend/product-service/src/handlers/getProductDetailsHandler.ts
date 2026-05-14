@@ -2,7 +2,7 @@ import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-l
 import { getProductDetailsById } from "../services/productService";
 import { jsonResponse } from "../utils/response";
 
-export const getProductDetails = async (
+export const getProductDetailsHandler = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   const productId = event.pathParameters?.id;

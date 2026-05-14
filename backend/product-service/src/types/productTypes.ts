@@ -9,6 +9,11 @@ export interface Product {
   accessDurationDays: number;
 }
 
+export interface ProductDetail extends Product {
+  description: string;
+  topics: Topic[];
+}
+
 export interface Topic {
   id: string;
   title: string;
@@ -21,9 +26,14 @@ export interface Session {
   type: 'quiz' | 'pdf' | 'audio' | 'images' | 'video';
 }
 
-export interface ProductDetail extends Product {
-  description: string;
-  topics: Topic[];
+export interface OwnedProduct {
+  id: string;
+  productId: string;
+  userId: string;
+  level: string;
+  name: string;
+  purchaseDate: string;
+  accessExpiryDate: string;
 }
 
 export interface SessionDetail {
@@ -36,13 +46,7 @@ export interface SessionDetail {
   audio?: string;
 }
 
-export interface PurchasedProduct {
-  id: string;
-  productId: string;
-  userId: string;
-  purchaseDate: string;
-  accessExpiryDate: string;
-}
+
 
 export interface PurchaseRecord {
   PK: string;
