@@ -1,0 +1,25 @@
+{
+  "name": "kjl-backend-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "services/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace auth-service",
+    "build:auth": "npm run build --workspace auth-service",
+    "swagger:auth": "npm run build:auth && node scripts/generate-auth-swagger.cjs",
+    "swagger:auth:only": "node scripts/generate-auth-swagger.cjs",
+    "test:auth": "npm run test --workspace auth-service",
+    "build:shared-utils": "npm run build --workspace @kjl/shared-utils",
+    "build:shared-auth": "npm run build --workspace @kjl/shared-auth",
+    "build:shared-types": "npm run build --workspace @kjl/shared-types",
+    "build:shared-dynamodb": "npm run build --workspace @kjl/shared-dynamodb",
+    "build:shared-swagger": "npm run build --workspace @kjl/shared-swagger"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "typescript": "^5.8.3"
+  }
+}

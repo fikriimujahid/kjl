@@ -10,7 +10,7 @@ import ImageViewer from '../../components/ImageViewer';
 import { cn } from '@/lib/utils';
 import { RequireAuth } from '@/components/RequireAuth';
 import { useAuth } from '@/hooks/useAuth';
-import { fetchProductSessionDetails, loadOwnedProducts } from '@/lib/products';
+import { fetchProductSessionDetails, getOwnedProducts } from '@/lib/products';
 
 export default function MyLearningPage() {
   const { status, user, accessToken } = useAuth();
@@ -40,7 +40,7 @@ export default function MyLearningPage() {
     let isActive = true;
 
     async function loadPageOwnedProducts() {
-      const nextOwnedProducts = await loadOwnedProducts({
+      const nextOwnedProducts = await getOwnedProducts({
         signal: controller.signal,
         userId,
         accessToken: accessToken ?? undefined,

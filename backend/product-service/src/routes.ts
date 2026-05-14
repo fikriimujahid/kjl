@@ -9,16 +9,17 @@ export const ROUTES = {
     path: "/api/products/{id}",
     routeKey: "GET /api/products/{id}",
   },
+  GET_OWNED_PRODUCTS: {
+    method: "GET",
+    path: "/api/products/owned/{userId}",
+    routeKey: "GET /api/products/owned/{userId}",
+  },
   GET_PRODUCT_SESSION_DETAIL: {
     method: "GET",
     path: "/api/products/{productId}/topics/{topicId}/sessions/{sessionId}",
     routeKey: "GET /api/products/{productId}/topics/{topicId}/sessions/{sessionId}",
   },
-  GET_PURCHASED_PRODUCTS: {
-    method: "GET",
-    path: "/api/purchased-products/{userId}",
-    routeKey: "GET /api/purchased-products/{userId}",
-  },
+  
   GET_PURCHASED_PRODUCT_DETAIL: {
     method: "GET",
     path: "/api/purchased-product/{userId}/product/{productId}",

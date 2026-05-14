@@ -1,5 +1,5 @@
 import { AUTH_ENDPOINTS } from './constants';
-import { postJson, readErrorMessage } from './http';
+import { postJson, readErrorMessage, readSuccessData } from './http';
 import { normalizeSessionPayload } from './session';
 import { PasswordResetCodeDelivery, SessionPayload, StoredAuthSession } from './types';
 
@@ -10,7 +10,7 @@ export async function loginWithPassword(email: string, password: string): Promis
     throw new Error(await readErrorMessage(response));
   }
 
-  const payload = (await response.json()) as SessionPayload;
+  const payload = await readSuccessData<SessionPayload>(response);
   const session = normalizeSessionPayload(payload);
 
   if (!session) {
@@ -48,9 +48,9 @@ export async function requestPasswordReset(email: string): Promise<PasswordReset
   }
 
   try {
-    const payload = (await response.json()) as {
+    const payload = await readSuccessData<{
       codeDeliveryDetails?: PasswordResetCodeDelivery;
-    };
+    }>(response);
 
     return payload?.codeDeliveryDetails ?? null;
   } catch {

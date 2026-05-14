@@ -5,6 +5,12 @@ const { ROUTES } = require("./build/lambda/routes.js");
 
 const PORT = Number(process.env.PORT || 3001);
 const routeDefinitions = Object.values(ROUTES);
+const CORS_HEADERS = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+  "access-control-allow-headers": "content-type,authorization",
+  "access-control-max-age": "86400",
+};
 
 function normalizeHeaders(headers) {
   const normalized = {};
@@ -115,11 +121,20 @@ function resolveRoute(method, pathname) {
 }
 
 const server = http.createServer(async (req, res) => {
+  if ((req.method || "GET") === "OPTIONS") {
+    res.writeHead(204, CORS_HEADERS);
+    res.end();
+    return;
+  }
+
   const requestUrl = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
   const route = resolveRoute(req.method || "GET", requestUrl.pathname);
 
   if (!route) {
-    res.writeHead(404, { "content-type": "application/json" });
+    res.writeHead(404, {
+      "content-type": "application/json",
+      ...CORS_HEADERS,
+    });
     res.end(JSON.stringify({ message: "Route not found" }));
     return;
   }
@@ -154,10 +169,19 @@ const server = http.createServer(async (req, res) => {
       responseHeaders["content-type"] = "application/json";
     }
 
+    for (const [headerName, headerValue] of Object.entries(CORS_HEADERS)) {
+      if (!responseHeaders[headerName]) {
+        responseHeaders[headerName] = headerValue;
+      }
+    }
+
     res.writeHead(result.statusCode || 200, responseHeaders);
     res.end(result.body || "");
   } catch (error) {
-    res.writeHead(500, { "content-type": "application/json" });
+    res.writeHead(500, {
+      "content-type": "application/json",
+      ...CORS_HEADERS,
+    });
     res.end(
       JSON.stringify({
         message: "Local server error",

@@ -250,8 +250,8 @@ service_api = {
     auth = {
       name        = "kejepangdulu-dev-auth-api"
       description = "Auth API Lambda."
-      source_dir  = "../../../../backend/auth-service/build/lambda"
-      handler     = "handler.handler"
+      source_dir  = "../../../../backend/services/auth-service/build/lambda"
+      handler     = "services/auth-service/src/handler.handler"
       runtime     = "nodejs22.x"
       memory_size = 256
       timeout     = 15
@@ -284,13 +284,13 @@ service_api = {
         operation_name     = "GetProductByIdUnderApi"
         integration_key    = "product"
       }
-      
-      get_purchased_products_by_user_under_api = {
-        route_key          = "GET /api/purchased-products/{userId}"
+      get_owned_products_by_user_under_api = {
+        route_key          = "GET /api/products/owned/{userId}"
         authorization_type = "JWT"
-        operation_name     = "GetPurchasedProductsByUserUnderApi"
+        operation_name     = "GetOwnedProductsByUserUnderApi"
         integration_key    = "product"
       }
+
       get_purchased_product_details_by_user_under_api = {
         route_key          = "GET /api/purchased-product/{userId}/product/{productId}"
         authorization_type = "JWT"

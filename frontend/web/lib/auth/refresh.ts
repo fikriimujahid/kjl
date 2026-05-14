@@ -1,5 +1,5 @@
 import { AUTH_ENDPOINTS } from './constants';
-import { getJson, postJson, readErrorMessage } from './http';
+import { getJson, postJson, readErrorMessage, readSuccessData } from './http';
 import { normalizeSessionPayload } from './session';
 import { SessionEnvelopePayload, SessionPayload, StoredAuthSession } from './types';
 
@@ -10,7 +10,7 @@ export async function refreshAuthSession(): Promise<StoredAuthSession> {
     throw new Error(await readErrorMessage(response));
   }
 
-  const payload = (await response.json()) as SessionPayload;
+  const payload = await readSuccessData<SessionPayload>(response);
   const session = normalizeSessionPayload(payload);
 
   if (!session) {
@@ -28,7 +28,7 @@ export async function fetchAuthSession(): Promise<StoredAuthSession | null> {
   }
 
   try {
-    const payload = (await response.json()) as SessionEnvelopePayload;
+    const payload = await readSuccessData<SessionEnvelopePayload>(response);
 
     if (!payload?.authenticated || !payload.session) {
       return null;

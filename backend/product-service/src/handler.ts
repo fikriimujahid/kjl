@@ -1,6 +1,7 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
-import { getProductDetails } from "./handlers/getProductDetails";
-import { getProducts } from "./handlers/getProducts";
+import { getProductDetailsHandler } from "./handlers/getProductDetailsHandler";
+import { getOwnedProductsHandler } from "./handlers/getOwnedProductsHandler";
+import { getProductsHandler } from "./handlers/getProductsHandler";
 import { ROUTES } from "./routes";
 import { jsonResponse } from "./utils/response";
 
@@ -14,9 +15,11 @@ export const handler = async (
 
   switch (event.routeKey) {
     case ROUTES.GET_PRODUCTS.routeKey:
-      return getProducts(event);
+      return getProductsHandler(event);
     case ROUTES.GET_PRODUCT_DETAIL.routeKey:
-      return getProductDetails(event);
+      return getProductDetailsHandler(event);
+    case ROUTES.GET_OWNED_PRODUCTS.routeKey:
+      return getOwnedProductsHandler(event);
     default:
       return jsonResponse(404, { message: "Route not found" });
   }

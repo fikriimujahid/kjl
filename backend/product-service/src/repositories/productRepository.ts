@@ -1,93 +1,42 @@
-import { QueryCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
-import { dynamoDbDocumentClient } from "../clients/awsClients";
-import { Product, ProductDetail, Session, Topic } from "../types/productTypes";
+import { queryAll } from "../lib/dynamodb/queryAll";
+import { OwnedProduct, ProductDetail, PurchaseRecord, Session, Topic } from "../types/productTypes";
 import {
-  isProduct,
   isProductMetadataRecord,
+  isPurchaseRecord,
   isSessionRecord,
   isTopicRecord
 } from "../utils/validators";
+import { isPurchaseActive } from "../utils/dateUtils";
 import { logProductServiceError } from "../utils/logger";
+import {
+  PRODUCT_METADATA_SORT_KEY,
+  PRODUCT_PARTITION_KEY_PREFIX,
+  SESSION_SORT_KEY_PREFIX,
+  TOPIC_SORT_KEY_PREFIX,
+  getProductTableName
+} from "./product.constants";
+export { findProducts } from "./findProducts";
+export { saveProduct } from "./saveProduct";
 
-const DYNAMO_DB_TABLE_NAME = process.env.DYNAMO_DB_TABLE_NAME;
-const PRODUCT_PARTITION_KEY_PREFIX = "PRODUCT#";
-const TOPIC_SORT_KEY_PREFIX = "TOPIC#";
-const SESSION_SORT_KEY_PREFIX = "SESSION#";
-const PRODUCT_METADATA_SORT_KEY = "METADATA";
+const mapPurchaseRecordToOwnedProduct = (record: PurchaseRecord): OwnedProduct => {
+  const candidate = record as unknown as Record<string, unknown>;
+  const derivedId = record.SK.startsWith("PURCHASE#")
+    ? record.SK.slice("PURCHASE#".length)
+    : record.SK;
 
-const getTableName = (): string => {
-  if (!DYNAMO_DB_TABLE_NAME) {
-    throw new Error("Missing DYNAMO_DB_TABLE_NAME environment variable");
-  }
-
-  return DYNAMO_DB_TABLE_NAME;
-};
-
-export const fetchProducts = async (): Promise<Product[]> => {
-  const tableName = getTableName();
-  const logContext = {
-    tableName,
-    entityType: "PRODUCT",
-    metadataSortKey: PRODUCT_METADATA_SORT_KEY
+  return {
+    id: record.purchaseId ?? derivedId,
+    productId: record.productId,
+    userId: record.userId,
+    level: typeof candidate.level === "string" ? candidate.level : "",
+    name: typeof candidate.name === "string" ? candidate.name : "",
+    purchaseDate: record.purchaseDate,
+    accessExpiryDate: record.expiryDate
   };
-
-  try {
-    const products: Product[] = [];
-    let lastEvaluatedKey: Record<string, unknown> | undefined;
-
-    do {
-      const response = await dynamoDbDocumentClient.send(
-        new ScanCommand({
-          TableName: tableName,
-          ProjectionExpression: "#pk, #sk, #entityType, #id, #name, #price, #shortDescription, #level, #topicsCount, #featuredProducts, #accessDurationDays",
-          FilterExpression: "#entityType = :productEntityType AND #sk = :metadataSortKey",
-          ExpressionAttributeNames: {
-            "#pk": "PK",
-            "#sk": "SK",
-            "#entityType": "entityType",
-            "#id": "id",
-            "#name": "name",
-            "#price": "price",
-            "#shortDescription": "shortDescription",
-            "#level": "level",
-            "#topicsCount": "topicsCount",
-            "#featuredProducts": "featuredProducts",
-            "#accessDurationDays": "accessDurationDays"
-          },
-          ExpressionAttributeValues: {
-            ":productEntityType": "PRODUCT",
-            ":metadataSortKey": PRODUCT_METADATA_SORT_KEY
-          },
-          ExclusiveStartKey: lastEvaluatedKey
-        })
-      );
-
-      const mappedItems = (response.Items ?? [])
-        .filter(isProduct)
-        .map((item) => ({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          shortDescription: item.shortDescription,
-          level: item.level,
-          topicsCount: item.topicsCount,
-          featuredProducts: item.featuredProducts,
-          accessDurationDays: item.accessDurationDays
-        }));
-
-      products.push(...mappedItems);
-      lastEvaluatedKey = response.LastEvaluatedKey as Record<string, unknown> | undefined;
-    } while (lastEvaluatedKey);
-
-    return products;
-  } catch (error) {
-    logProductServiceError("dynamodb.listProducts.failure", logContext, error);
-    throw error;
-  }
 };
 
 export const findProductDetailsById = async (id: string): Promise<ProductDetail | null> => {
-  const tableName = getTableName();
+  const tableName = getProductTableName();
   const productPartitionKey = `${PRODUCT_PARTITION_KEY_PREFIX}${id}`;
   const logContext = {
     id,
@@ -99,9 +48,9 @@ export const findProductDetailsById = async (id: string): Promise<ProductDetail 
   };
 
   try {
-    const response = await dynamoDbDocumentClient.send(
-      new QueryCommand({
-        TableName: tableName,
+    const items = await queryAll({
+      tableName,
+      input: {
         KeyConditionExpression: "#pk = :pk",
         ExpressionAttributeNames: {
           "#pk": "PK"
@@ -109,10 +58,10 @@ export const findProductDetailsById = async (id: string): Promise<ProductDetail 
         ExpressionAttributeValues: {
           ":pk": productPartitionKey
         }
-      })
-    );
+      }
+    });
 
-    const metadataRecord = (response.Items ?? []).find((item) =>
+    const metadataRecord = items.find((item) =>
       isProductMetadataRecord(item, PRODUCT_PARTITION_KEY_PREFIX, PRODUCT_METADATA_SORT_KEY)
     );
 
@@ -120,7 +69,7 @@ export const findProductDetailsById = async (id: string): Promise<ProductDetail 
       return null;
     }
 
-    const sessionRecords = (response.Items ?? [])
+    const sessionRecords = items
       .filter((item) => isSessionRecord(item, SESSION_SORT_KEY_PREFIX))
       .sort((a, b) => a.sessionOrder - b.sessionOrder);
 
@@ -138,7 +87,7 @@ export const findProductDetailsById = async (id: string): Promise<ProductDetail 
       sessionsByTopicId.set(sessionRecord.topicId, currentSessions);
     }
 
-    const topicRecords = (response.Items ?? [])
+    const topicRecords = items
       .filter((item) => isTopicRecord(item, TOPIC_SORT_KEY_PREFIX))
       .sort((a, b) => a.topicOrder - b.topicOrder);
 
@@ -164,6 +113,50 @@ export const findProductDetailsById = async (id: string): Promise<ProductDetail 
     return productDetail;
   } catch (error) {
     logProductServiceError("dynamodb.findProductById.failure", logContext, error);
+    throw error;
+  }
+};
+
+export const findOwnedProducts = async ( 
+  userId: string
+): Promise<OwnedProduct[]> => {
+  const tableName = getProductTableName();
+  const logContext = {
+    userId,
+    tableName,
+    purchasePartitionKey: `OWNED_PRODUCT#${userId}`,
+    purchaseSortKeyPrefix: "PURCHASE#"
+  };
+
+  try {
+    const items = await queryAll({
+      tableName,
+      input: {
+        KeyConditionExpression: "#pk = :pk AND begins_with(#sk, :skPrefix)",
+        ExpressionAttributeNames: {
+          "#pk": "PK",
+          "#sk": "SK"
+        },
+        ExpressionAttributeValues: {
+          ":pk": `OWNED_PRODUCT#${userId}`,
+          ":skPrefix": "PURCHASE#"
+        }
+      }
+    });
+
+    const activeOwnedRecords: PurchaseRecord[] = [];
+
+    for (const item of items) {
+      if (isPurchaseRecord(item) && isPurchaseActive(item)) {
+        activeOwnedRecords.push(item);
+      }
+    }
+
+    const ownedProducts = activeOwnedRecords.map(mapPurchaseRecordToOwnedProduct);
+
+    return ownedProducts;
+  } catch (error) {
+    logProductServiceError("dynamodb.listPurchases.failure", logContext, error);
     throw error;
   }
 };
