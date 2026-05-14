@@ -1,7 +1,7 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
 import { buildClearRefreshCookie, extractRefreshToken } from "@shared-utils/cookies";
 import { createSuccessResponse } from "@shared-utils/response";
-import { revokeRefreshToken } from "@shared-auth/cognito";
+import { revokeRefreshToken } from "../services/cognito";
 
 export const logout = async (
   event: APIGatewayProxyEventV2

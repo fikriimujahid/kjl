@@ -13,7 +13,6 @@
     "swagger:auth:only": "node scripts/generate-auth-swagger.cjs",
     "test:auth": "npm run test --workspace auth-service",
     "build:shared-utils": "npm run build --workspace @kjl/shared-utils",
-    "build:shared-auth": "npm run build --workspace @kjl/shared-auth",
     "build:shared-types": "npm run build --workspace @kjl/shared-types",
     "build:shared-dynamodb": "npm run build --workspace @kjl/shared-dynamodb",
     "build:shared-swagger": "npm run build --workspace @kjl/shared-swagger"

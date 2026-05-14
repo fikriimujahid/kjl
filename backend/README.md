@@ -6,7 +6,6 @@ This backend is organized as a workspace monorepo to keep service logic isolated
 
 - `packages/`
   - `shared-utils`: HTTP response helpers, request parsing, cookies, env validation.
-  - `shared-auth`: Cognito integration and JWT/token helpers.
   - `shared-types`: shared API envelope types.
   - `shared-dynamodb`: generic DynamoDB v3 client + CRUD/repository foundation.
   - `shared-swagger`: OpenAPI 3 reusable schemas and generation helpers.
@@ -56,7 +55,6 @@ Test folders in auth-service:
 - Service configs extend the root config.
 - Shared aliases:
   - `@shared-utils/*`
-  - `@shared-auth/*`
   - `@shared-types/*`
   - `@shared-dynamodb/*`
   - `@shared-swagger/*`
@@ -68,7 +66,7 @@ Auth handlers import reusable infra code from shared packages, for example:
 ```ts
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
 import { parseEventBody } from "@shared-utils/request";
-import { loginWithPassword } from "@shared-auth/cognito";
+import { loginWithPassword } from "./src/services/cognito";
 ```
 
 ## Swagger/OpenAPI Generation
@@ -115,6 +113,6 @@ const repository = new UserRepository("users-table", createDynamoDocumentClient(
 - Handlers: parse request, validate input, return response formatting.
 - Services: external integrations (Cognito/JWT/AWS).
 - Repositories: data access only.
-- Shared packages: reusable infrastructure only.
+- Shared packages: reusable infrastructure only (service-specific auth integration is now local to auth-service).
 
 Business logic should remain inside each service.

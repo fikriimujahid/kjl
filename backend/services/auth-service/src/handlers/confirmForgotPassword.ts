@@ -1,7 +1,7 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
 import { parseEventBody } from "@shared-utils/request";
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
-import { CognitoOperationError, confirmForgotPassword } from "@shared-auth/cognito";
+import { CognitoOperationError, confirmForgotPassword } from "../services/cognito";
 
 export const confirmPasswordReset = async (
   event: APIGatewayProxyEventV2

@@ -1,7 +1,7 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
 import { parseEventBody } from "@shared-utils/request";
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
-import { CognitoOperationError, registerWithPassword } from "@shared-auth/cognito";
+import { CognitoOperationError, registerWithPassword } from "../services/cognito";
 
 export const register = async (
   event: APIGatewayProxyEventV2
