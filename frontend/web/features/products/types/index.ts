@@ -1,4 +1,5 @@
 export type {
+  OwnedProduct,
 	PaymentModalState,
 	Product,
 	ProductDetail,

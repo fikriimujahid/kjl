@@ -1,0 +1,33 @@
+{
+  "name": "product-service",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Product API Lambda service for KeJepangDulu",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "clean": "node -e \"require('fs').rmSync('build',{recursive:true,force:true})\"",
+    "build": "npm run clean && tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
+    "build:local": "npm run build",
+    "start:local": "npm run build:local && node --env-file=.env local-server.js",
+    "seed:purchases": "node scripts/seedDummyPurchases.js",
+    "test": "jest --config jest.config.cjs",
+    "test:watch": "jest --config jest.config.cjs --watch"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "3.1040.0",
+    "@aws-sdk/client-s3": "3.1040.0",
+    "@aws-sdk/lib-dynamodb": "3.1040.0",
+    "@aws-sdk/s3-request-presigner": "3.1040.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.147",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.15.21",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "tsc-alias": "^1.8.16",
+    "typescript": "^5.8.3"
+  }
+}

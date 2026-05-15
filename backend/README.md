@@ -11,6 +11,7 @@ This backend is organized as a workspace monorepo to keep service logic isolated
   - `shared-swagger`: OpenAPI 3 reusable schemas and generation helpers.
 - `services/`
   - `auth-service`: auth Lambda handlers and service-owned endpoint docs.
+  - `product-service`: product Lambda handlers and service-owned endpoint docs.
 
 ## Local Setup
 
@@ -71,7 +72,10 @@ import { loginWithPassword } from "./src/services/cognito";
 
 ## Swagger/OpenAPI Generation
 
-Service endpoint docs stay inside each service (for auth: `services/auth-service/src/docs`).
+Service endpoint docs stay inside each service:
+
+- Auth: `services/auth-service/src/docs`
+- Product: `services/product-service/src/docs`
 
 Shared swagger package only provides reusable components and generation helpers.
 
@@ -83,6 +87,23 @@ import { buildAuthServiceOpenApi, generateAuthServiceOpenApiJson } from "./src/d
 const document = buildAuthServiceOpenApi();
 const openApiJson = generateAuthServiceOpenApiJson();
 ```
+
+Generate auth swagger JSON:
+
+```bash
+npm run swagger:auth
+```
+
+Generate product swagger JSON:
+
+```bash
+npm run swagger:product
+```
+
+Outputs:
+
+- `services/auth-service/openapi/swagger.json`
+- `services/product-service/openapi/swagger.json`
 
 ## DynamoDB Foundation Example
 

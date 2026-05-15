@@ -9,9 +9,13 @@
   "scripts": {
     "build": "npm run build --workspace auth-service",
     "build:auth": "npm run build --workspace auth-service",
+    "build:product": "npm run build --workspace product-service",
     "swagger:auth": "npm run build:auth && node scripts/generate-auth-swagger.cjs",
     "swagger:auth:only": "node scripts/generate-auth-swagger.cjs",
+    "swagger:product": "npm run build:product && node scripts/generate-product-swagger.cjs",
+    "swagger:product:only": "node scripts/generate-product-swagger.cjs",
     "test:auth": "npm run test --workspace auth-service",
+    "test:product": "npm run test --workspace product-service",
     "build:shared-utils": "npm run build --workspace @kjl/shared-utils",
     "build:shared-types": "npm run build --workspace @kjl/shared-types",
     "build:shared-dynamodb": "npm run build --workspace @kjl/shared-dynamodb",

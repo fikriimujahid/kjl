@@ -3,7 +3,7 @@ on:
   pull_request:
     branches: [dev, prod]
     paths:
-      - backend/product-service/**
+      - backend/services/product-service/**
       - .github/workflows/product-service-lambda-ci.yml
       - .github/workflows/product-service-lambda-deploy.yml
 jobs:
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: backend/product-service
+        working-directory: backend/services/product-service
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
