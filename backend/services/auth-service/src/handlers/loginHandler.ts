@@ -2,11 +2,10 @@ import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-l
 import { buildRefreshCookie } from "@shared-utils/cookies";
 import { parseEventBody } from "@shared-utils/request";
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
-import { CognitoOperationError } from "@shared-cognito/core";
-import { getAuthUserFromIdToken } from "../services/token";
-import { loginWithPassword } from "../services/cognito";
+import { mapAuthErrorToResponse } from "../errors/errorToResponse";
+import { login } from "../use-cases/login";
 
-export const login = async (
+export const loginHandler = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   let payload: Record<string, unknown>;
@@ -27,32 +26,27 @@ export const login = async (
   }
 
   try {
-    const authResult = await loginWithPassword(email, password); 
-    const user = getAuthUserFromIdToken(authResult.idToken) ?? {
-      id: email,
-      email,
-      name: email.split("@")[0] || "Pengguna"
-    };
+    const result = await login({ email, password });
 
     return createSuccessResponse(
       event,
       200,
       {
-        accessToken: authResult.accessToken,
-        idToken: authResult.idToken,
-        expiresIn: authResult.expiresIn,
-        tokenType: authResult.tokenType,
-        user
+        accessToken: result.accessToken,
+        idToken: result.idToken,
+        expiresIn: result.expiresIn,
+        tokenType: result.tokenType,
+        user: result.user
       },
       {
-        cookies: [buildRefreshCookie(authResult.refreshToken ?? "")]
+        cookies: [buildRefreshCookie(result.refreshToken)]
       }
     );
   } catch (error) {
-    if (error instanceof CognitoOperationError) {
-      return createErrorResponse(event, error.statusCode, error.message, { code: error.code });
-    }
-
-    return createErrorResponse(event, 500, "Login failed", { code: "LOGIN_FAILED" });
+    return mapAuthErrorToResponse(event, error, {
+      statusCode: 500,
+      message: "Login failed",
+      code: "LOGIN_FAILED"
+    });
   }
 };

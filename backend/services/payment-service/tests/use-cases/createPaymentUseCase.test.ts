@@ -10,7 +10,7 @@ import { buildSnapPayload } from "../../src/services/midtrans/buildSnapPayload";
 import { createSnapTransaction } from "../../src/services/midtransService";
 import { hasActiveProductAccess, savePaymentOrder } from "../../src/services/paymentRepository";
 import { fetchProductById } from "../../src/services/productService";
-import { logger } from "../../src/utils/logger";
+import { createLogger } from "@shared-utils/logger";
 
 jest.mock("../../src/services/paymentRepository", () => ({
   hasActiveProductAccess: jest.fn(),
@@ -33,10 +33,10 @@ jest.mock("../../src/domain/payment/generatePaymentOrderId", () => ({
   generatePaymentOrderId: jest.fn()
 }));
 
-jest.mock("../../src/utils/logger", () => ({
-  logger: {
+jest.mock("@shared-utils/logger", () => ({
+  createLogger: jest.fn(() => ({
     error: jest.fn()
-  }
+  }))
 }));
 
 describe("createPaymentUseCase", () => {
@@ -46,7 +46,8 @@ describe("createPaymentUseCase", () => {
   const savePaymentOrderMock = savePaymentOrder as jest.MockedFunction<typeof savePaymentOrder>;
   const generatePaymentOrderIdMock = generatePaymentOrderId as jest.MockedFunction<typeof generatePaymentOrderId>;
   const buildSnapPayloadMock = buildSnapPayload as jest.MockedFunction<typeof buildSnapPayload>;
-  const loggerErrorMock = logger.error as jest.MockedFunction<typeof logger.error>;
+  const loggerErrorMock = ((createLogger as jest.Mock).mock.results[0]?.value?.error ??
+    jest.fn()) as jest.Mock;
 
   const input = {
     env: {
@@ -155,7 +156,7 @@ describe("createPaymentUseCase", () => {
     });
 
     expect(loggerErrorMock).toHaveBeenCalledWith(
-      "[MIDTRANS_SNAP_CREATE_FAILED]",
+      "payment.midtrans.snap.create.failed",
       expect.objectContaining({
         orderId: "KJL~user-1~abc123",
         userId: "user-1",

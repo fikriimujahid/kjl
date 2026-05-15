@@ -1,10 +1,10 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
 import { parseEventBody } from "@shared-utils/request";
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
-import { CognitoOperationError } from "@shared-cognito/core";
-import { requestForgotPassword } from "../services/cognito";
+import { mapAuthErrorToResponse } from "../errors/errorToResponse";
+import { forgotPassword } from "../use-cases/forgotPassword";
 
-export const forgotPassword = async (
+export const forgotPasswordHandler = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   let payload: Record<string, unknown>;
@@ -22,16 +22,14 @@ export const forgotPassword = async (
   }
 
   try {
-    const result = await requestForgotPassword(email);
+    const result = await forgotPassword({ email });
     return createSuccessResponse(event, 200, {
       codeDeliveryDetails: result.codeDeliveryDetails
     });
   } catch (error) {
-    if (error instanceof CognitoOperationError) {
-      return createErrorResponse(event, error.statusCode, error.message, { code: error.code });
-    }
-
-    return createErrorResponse(event, 500, "Failed to request password reset", {
+    return mapAuthErrorToResponse(event, error, {
+      statusCode: 500,
+      message: "Failed to request password reset",
       code: "FORGOT_PASSWORD_FAILED"
     });
   }

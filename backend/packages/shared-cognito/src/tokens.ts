@@ -1,15 +1,6 @@
-export interface AuthUser {
-  id: string;
-  email: string;
-  name: string;
-}
+import type { AuthUser, JwtPayload } from "./types";
 
-type JwtPayload = {
-  sub?: string;
-  email?: string;
-  name?: string;
-  ["cognito:username"]?: string;
-};
+export type { AuthUser, JwtPayload } from "./types";
 
 const decodeBase64Url = (value: string): string => {
   const normalized = value.replace(/-/g, "+").replace(/_/g, "/");

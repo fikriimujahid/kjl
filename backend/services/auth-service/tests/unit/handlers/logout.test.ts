@@ -1,5 +1,5 @@
 import { APIGatewayProxyEventV2 } from "aws-lambda";
-import { logout } from "../../../src/handlers/logout";
+import { logoutHandler } from "../../../src/handlers/logoutHandler";
 import { buildClearRefreshCookie, extractRefreshToken } from "@shared-utils/cookies";
 import { createSuccessResponse } from "@shared-utils/response";
 import { revokeRefreshToken } from "../../../src/services/cognito";
@@ -43,7 +43,7 @@ describe("logout handler", () => {
     const event = createEvent();
     (extractRefreshToken as jest.Mock).mockReturnValue("");
 
-    const result = await logout(event);
+    const result = await logoutHandler(event);
 
     expect(revokeRefreshToken).not.toHaveBeenCalled();
     expect(createSuccessResponse).toHaveBeenCalledWith(
@@ -65,7 +65,7 @@ describe("logout handler", () => {
     (extractRefreshToken as jest.Mock).mockReturnValue("refresh-token");
     (revokeRefreshToken as jest.Mock).mockResolvedValue(undefined);
 
-    await logout(event);
+    await logoutHandler(event);
 
     expect(revokeRefreshToken).toHaveBeenCalledWith("refresh-token");
     expect(createSuccessResponse).toHaveBeenCalledWith(
@@ -81,7 +81,7 @@ describe("logout handler", () => {
     (extractRefreshToken as jest.Mock).mockReturnValue("refresh-token");
     (revokeRefreshToken as jest.Mock).mockRejectedValue(new Error("revoke failed"));
 
-    const result = await logout(event);
+    const result = await logoutHandler(event);
 
     expect(revokeRefreshToken).toHaveBeenCalledWith("refresh-token");
     expect(createSuccessResponse).toHaveBeenCalledWith(

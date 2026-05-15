@@ -1,4 +1,5 @@
 import { createHash, timingSafeEqual } from "crypto";
+import { createLogger } from "@shared-utils/logger";
 import { PaymentStatus } from "../models/payment";
 
 interface CreateSnapTransactionInput {
@@ -11,6 +12,8 @@ interface MidtransSnapResult {
   token: string;
   redirectUrl: string | null;
 }
+
+const logger = createLogger("payment-service");
 
 const MAX_LOG_TEXT_LENGTH = 2000;
 
@@ -86,16 +89,15 @@ const tryParseJson = (value: string): unknown => {
 export const createSnapTransaction = async (
   input: CreateSnapTransactionInput
 ): Promise<MidtransSnapResult> => {
-  // const transactionDetails =
-  //   typeof input.payload.transaction_details === "object" && input.payload.transaction_details != null
-  //     ? (input.payload.transaction_details as Record<string, unknown>)
-  //     : null;
+  const transactionDetails =
+    typeof input.payload.transaction_details === "object" && input.payload.transaction_details != null
+      ? (input.payload.transaction_details as Record<string, unknown>)
+      : null;
 
-  // console.log("[MIDTRANS_SNAP_REQUEST]", {
-  //   snapApiUrl: input.snapApiUrl,
-  //   transactionDetails,
-  //   payload: input.payload
-  // });
+  logger.info("payment.midtrans.snap.request", {
+    snapApiUrl: input.snapApiUrl,
+    orderId: readStringField(transactionDetails ?? {}, "order_id")
+  });
 
   const response = await fetch(input.snapApiUrl, {
     method: "POST",
@@ -110,13 +112,17 @@ export const createSnapTransaction = async (
   const rawResponseBody = await response.text();
   const responseBody = tryParseJson(rawResponseBody);
 
-  console.log("[MIDTRANS_SNAP_RESPONSE]", {
+  logger.info("payment.midtrans.snap.response", {
     status: response.status,
     statusText: response.statusText,
-    body: responseBody
+    responseType: Array.isArray(responseBody) ? "array" : typeof responseBody
   });
 
   if (!response.ok) {
+    logger.warn("payment.midtrans.snap.rejected", {
+      status: response.status,
+      statusText: response.statusText
+    });
     throw new Error(`Midtrans rejected payment creation with status ${response.status}`);
   }
 

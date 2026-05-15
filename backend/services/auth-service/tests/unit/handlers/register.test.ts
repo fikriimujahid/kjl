@@ -1,9 +1,17 @@
 import { APIGatewayProxyEventV2 } from "aws-lambda";
-import { register } from "../../../src/handlers/register";
+import { registerHandler } from "../../../src/handlers/registerHandler";
 import { parseEventBody } from "@shared-utils/request";
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
 import { CognitoOperationError } from "@shared-cognito/core";
 import { registerWithPassword } from "../../../src/services/cognito";
+
+jest.mock("@shared-utils/logger", () => ({
+  createLogger: jest.fn(() => ({
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn()
+  }))
+}));
 
 jest.mock("@shared-utils/request", () => ({
   parseEventBody: jest.fn()
@@ -47,7 +55,7 @@ describe("register handler", () => {
       throw new Error("invalid json");
     });
 
-    const result = await register(event);
+    const result = await registerHandler(event);
 
     expect(createErrorResponse).toHaveBeenCalledWith(event, 400, "Invalid JSON body", {
       code: "INVALID_JSON"
@@ -64,7 +72,7 @@ describe("register handler", () => {
     const event = createEvent();
     (parseEventBody as jest.Mock).mockReturnValue({ fullName: "", email: "", password: "" });
 
-    const result = await register(event);
+    const result = await registerHandler(event);
 
     expect(createErrorResponse).toHaveBeenCalledWith(
       event,
@@ -101,7 +109,7 @@ describe("register handler", () => {
     });
     (registerWithPassword as jest.Mock).mockResolvedValue(registerResult);
 
-    const result = await register(event);
+    const result = await registerHandler(event);
 
     expect(registerWithPassword).toHaveBeenCalledWith("user@example.com", "Password123!", "User Name");
     expect(createSuccessResponse).toHaveBeenCalledWith(event, 200, {
@@ -129,7 +137,7 @@ describe("register handler", () => {
     });
     (registerWithPassword as jest.Mock).mockRejectedValue(cognitoError);
 
-    const result = await register(event);
+    const result = await registerHandler(event);
 
     expect(createErrorResponse).toHaveBeenCalledWith(event, 409, "Already exists", {
       code: "UsernameExistsException"
@@ -152,7 +160,7 @@ describe("register handler", () => {
     });
     (registerWithPassword as jest.Mock).mockRejectedValue(new Error("timeout"));
 
-    const result = await register(event);
+    const result = await registerHandler(event);
 
     expect(createErrorResponse).toHaveBeenCalledWith(event, 500, "Registration failed", {
       code: "REGISTRATION_FAILED"

@@ -1,10 +1,10 @@
 import { PaymentOrderRecord } from "../models/payment";
+import { createLogger } from "@shared-utils/logger";
 import { createSnapTransaction } from "../services/midtransService";
 import { buildSnapPayload } from "../services/midtrans/buildSnapPayload";
 import { hasActiveProductAccess, savePaymentOrder } from "../services/paymentRepository";
 import { fetchProductById } from "../services/productService";
 import { AuthenticatedUser } from "../utils/auth";
-import { logger } from "../utils/logger";
 import {
   ConflictError,
   ExternalServiceError,
@@ -13,6 +13,8 @@ import {
 } from "../errors/applicationErrors";
 import { CreatePaymentEnv } from "../config/env";
 import { generatePaymentOrderId } from "../domain/payment/generatePaymentOrderId";
+
+const logger = createLogger("payment-service");
 
 interface CreatePaymentUseCaseInput {
   env: CreatePaymentEnv;
@@ -88,7 +90,7 @@ export const createPaymentUseCase = async (
       payload: snapPayload
     });
   } catch (error) {
-    logger.error("[MIDTRANS_SNAP_CREATE_FAILED]", {
+    logger.error("payment.midtrans.snap.create.failed", {
       orderId,
       userId: input.authenticatedUser.id,
       productId: input.productId,

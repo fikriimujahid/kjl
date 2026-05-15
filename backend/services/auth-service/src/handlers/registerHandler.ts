@@ -1,10 +1,10 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
 import { parseEventBody } from "@shared-utils/request";
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
-import { CognitoOperationError } from "@shared-cognito/core";
-import { registerWithPassword } from "../services/cognito";
+import { mapAuthErrorToResponse } from "../errors/errorToResponse";
+import { register } from "../use-cases/register";
 
-export const register = async (
+export const registerHandler = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   let payload: Record<string, unknown>;
@@ -26,17 +26,17 @@ export const register = async (
   }
 
   try {
-    const result = await registerWithPassword(email, password, fullName);
+    const result = await register({ email, password, fullName });
 
     return createSuccessResponse(event, 200, {
       userConfirmed: result.userConfirmed,
       codeDeliveryDetails: result.codeDeliveryDetails
     });
   } catch (error) {
-    if (error instanceof CognitoOperationError) {
-      return createErrorResponse(event, error.statusCode, error.message, { code: error.code });
-    }
-
-    return createErrorResponse(event, 500, "Registration failed", { code: "REGISTRATION_FAILED" });
+    return mapAuthErrorToResponse(event, error, {
+      statusCode: 500,
+      message: "Registration failed",
+      code: "REGISTRATION_FAILED"
+    });
   }
 };

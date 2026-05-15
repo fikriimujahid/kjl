@@ -26,7 +26,7 @@ describe("payment-service handler routing", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.spyOn(console, "log").mockImplementation(() => undefined);
+    jest.spyOn(console, "info").mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -120,11 +120,16 @@ describe("payment-service handler routing", () => {
 
     await handler(event);
 
-    expect(console.log).toHaveBeenCalledWith(
-      "[INCOMING_REQUEST]",
+    expect(console.info).toHaveBeenCalledWith(
+      expect.stringContaining('"event":"request.received"')
+    );
+
+    expect(JSON.parse((console.info as jest.Mock).mock.calls[0][0] as string)).toEqual(
       expect.objectContaining({
+        service: "payment-service",
         routeKey: ROUTES.CREATE_PAYMENT.routeKey,
-        requestId: "req-1"
+        requestId: "req-1",
+        method: "POST"
       })
     );
   });

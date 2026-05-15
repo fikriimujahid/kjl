@@ -1,10 +1,18 @@
 import { APIGatewayProxyEventV2 } from "aws-lambda";
-import { refresh } from "../../../src/handlers/refresh";
+import { refreshHandler } from "../../../src/handlers/refreshHandler";
 import { buildRefreshCookie, extractRefreshToken } from "@shared-utils/cookies";
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
-import { getAuthUserFromIdToken } from "../../../src/services/token";
+import { getAuthUserFromIdToken } from "@shared-cognito/tokens";
 import { CognitoOperationError } from "@shared-cognito/core";
 import { refreshWithToken } from "../../../src/services/cognito";
+
+jest.mock("@shared-utils/logger", () => ({
+  createLogger: jest.fn(() => ({
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn()
+  }))
+}));
 
 jest.mock("@shared-utils/cookies", () => ({
   buildRefreshCookie: jest.fn(),
@@ -28,7 +36,7 @@ jest.mock("@shared-utils/response", () => ({
   )
 }));
 
-jest.mock("../../../src/services/token", () => ({
+jest.mock("@shared-cognito/tokens", () => ({
   getAuthUserFromIdToken: jest.fn()
 }));
 
@@ -54,7 +62,7 @@ describe("refresh handler", () => {
     const event = createEvent();
     (extractRefreshToken as jest.Mock).mockReturnValue("");
 
-    const result = await refresh(event);
+    const result = await refreshHandler(event);
 
     expect(createErrorResponse).toHaveBeenCalledWith(event, 401, "Refresh token not found", {
       code: "REFRESH_TOKEN_NOT_FOUND"
@@ -87,7 +95,7 @@ describe("refresh handler", () => {
     (getAuthUserFromIdToken as jest.Mock).mockReturnValue(user);
     (buildRefreshCookie as jest.Mock).mockReturnValue("kjl_rt=new-rt");
 
-    const result = await refresh(event);
+    const result = await refreshHandler(event);
 
     expect(refreshWithToken).toHaveBeenCalledWith("old-rt");
     expect(getAuthUserFromIdToken).toHaveBeenCalledWith("new-id");
@@ -139,7 +147,7 @@ describe("refresh handler", () => {
     });
     (buildRefreshCookie as jest.Mock).mockReturnValue("kjl_rt=existing-rt");
 
-    await refresh(event);
+    await refreshHandler(event);
 
     expect(buildRefreshCookie).toHaveBeenCalledWith("existing-rt");
   });
@@ -156,7 +164,7 @@ describe("refresh handler", () => {
     });
     (getAuthUserFromIdToken as jest.Mock).mockReturnValue(null);
 
-    const result = await refresh(event);
+    const result = await refreshHandler(event);
 
     expect(createErrorResponse).toHaveBeenCalledWith(event, 502, "Invalid ID token in refresh response", {
       code: "INVALID_ID_TOKEN"
@@ -176,7 +184,7 @@ describe("refresh handler", () => {
     (extractRefreshToken as jest.Mock).mockReturnValue("rt");
     (refreshWithToken as jest.Mock).mockRejectedValue(cognitoError);
 
-    const result = await refresh(event);
+    const result = await refreshHandler(event);
 
     expect(createErrorResponse).toHaveBeenCalledWith(event, 401, "Token expired", {
       code: "NotAuthorizedException"
@@ -195,7 +203,7 @@ describe("refresh handler", () => {
     (extractRefreshToken as jest.Mock).mockReturnValue("rt");
     (refreshWithToken as jest.Mock).mockRejectedValue(new Error("network"));
 
-    const result = await refresh(event);
+    const result = await refreshHandler(event);
 
     expect(createErrorResponse).toHaveBeenCalledWith(event, 500, "Failed to refresh session", {
       code: "REFRESH_FAILED"

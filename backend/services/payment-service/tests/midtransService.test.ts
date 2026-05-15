@@ -21,7 +21,8 @@ describe("createSnapTransaction", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.spyOn(console, "log").mockImplementation(() => undefined);
+    jest.spyOn(console, "info").mockImplementation(() => undefined);
+    jest.spyOn(console, "warn").mockImplementation(() => undefined);
   });
 
   afterEach(() => {

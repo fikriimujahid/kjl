@@ -2,15 +2,18 @@ import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-l
 import { createPayment } from "./handlers/createPayment";
 import { handleWebhook } from "./handlers/handleWebhook";
 import { ROUTES } from "./routes";
+import { createLogger } from "@shared-utils/logger";
 import { createErrorResponse, optionsResponse } from "@shared-utils/response";
+
+const logger = createLogger("payment-service");
 
 export const handler = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
-  console.log("[INCOMING_REQUEST]", {
+  logger.info("request.received", {
     routeKey: event.routeKey,
     requestId: event.requestContext?.requestId,
-    payload: event.body
+    method: event.requestContext.http.method
   });
 
   if (event.requestContext.http.method === "OPTIONS") {
