@@ -97,7 +97,7 @@ Key points:
 ## 5. Lambda Service Design
 
 New backend service path:
-- backend/product-service
+- backend/services/product-service
 
 Structure:
 - src/handlers/getProducts.ts
@@ -115,7 +115,7 @@ Behavior:
 - Missing ID returns 400.
 - Unknown product returns 404.
 
-A runtime-compatible fallback handler exists at backend/product-service/lambda/handler.js for Terraform packaging by default.
+A runtime-compatible fallback handler exists at backend/services/product-service/lambda/handler.js for Terraform packaging by default.
 
 ## 6. CI/CD Deployment Flow
 
@@ -124,7 +124,7 @@ Workflow file:
 
 Trigger:
 - push to main
-- only when backend/product-service/** or the workflow file changes
+- only when backend/services/product-service/** or the workflow file changes
 
 Pipeline steps:
 1. Checkout code.

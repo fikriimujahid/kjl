@@ -4,7 +4,11 @@ on:
   push:
     branches: [dev, prod]
     paths:
-      - backend/product-service/**
+      - backend/services/product-service/**
+      - backend/packages/**
+      - backend/tsconfig.base.json
+      - backend/package.json
+      - backend/package-lock.json
       - .github/workflows/product-service-lambda-deploy.yml
 
 env:
@@ -21,7 +25,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: backend/product-service
+        working-directory: backend
 
     steps:
       - name: Checkout
@@ -36,24 +40,24 @@ jobs:
         run: npm ci
 
       - name: Build TypeScript
-        run: npm run build
+        run: npm run build --workspace product-service
 
       - name: Package Lambda
         run: |
-          if [ ! -d build/lambda ]; then
-            echo "Expected build/lambda directory is missing."
+          if [ ! -d services/product-service/build/lambda ]; then
+            echo "Expected services/product-service/build/lambda directory is missing."
             exit 1
           fi
 
           rm -f product-service-lambda.zip
-          cd build/lambda
-          zip -r ../../product-service-lambda.zip .
+          cd services/product-service/build/lambda
+          zip -r ../../../../product-service-lambda.zip .
 
       - name: Upload Lambda artifact
         uses: actions/upload-artifact@v4
         with:
           name: product-service-lambda
-          path: backend/product-service/product-service-lambda.zip
+          path: backend/product-service-lambda.zip
           if-no-files-found: error
 
       - uses: aws-actions/configure-aws-credentials@v4

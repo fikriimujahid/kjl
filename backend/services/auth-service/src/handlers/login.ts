@@ -2,8 +2,8 @@ import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-l
 import { buildRefreshCookie } from "@shared-utils/cookies";
 import { parseEventBody } from "@shared-utils/request";
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
-import { getAuthUserFromIdToken } from "@shared-auth/token";
-import { CognitoOperationError, loginWithPassword } from "@shared-auth/cognito";
+import { getAuthUserFromIdToken } from "../services/token";
+import { CognitoOperationError, loginWithPassword } from "../services/cognito";
 
 export const login = async (
   event: APIGatewayProxyEventV2

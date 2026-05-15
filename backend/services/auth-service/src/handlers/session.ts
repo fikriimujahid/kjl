@@ -1,8 +1,8 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
 import { buildClearRefreshCookie, buildRefreshCookie, extractRefreshToken } from "@shared-utils/cookies";
 import { createSuccessResponse } from "@shared-utils/response";
-import { getAuthUserFromIdToken } from "@shared-auth/token";
-import { refreshWithToken } from "@shared-auth/cognito";
+import { getAuthUserFromIdToken } from "../services/token";
+import { refreshWithToken } from "../services/cognito";
 
 export const session = async (
   event: APIGatewayProxyEventV2

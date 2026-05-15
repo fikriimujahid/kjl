@@ -1,13 +1,13 @@
 import Link from 'next/link';
 import { ArrowRight, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Product } from '@/features/products/types';
+import type { OwnedProduct } from '@/features/products/types';
 import type { DashboardProductProgress } from '../types/dashboard.types';
 import { getDashboardProductProgress } from '../utils/dashboard.utils';
 
 interface OwnedProductsProps {
   isLoadingOwnedProducts: boolean;
-  ownedProducts: Product[];
+  ownedProducts: OwnedProduct[];
   productProgress: DashboardProductProgress;
 }
 

@@ -5,4 +5,5 @@ export * from "./updateItem";
 export * from "./deleteItem";
 export * from "./getItem";
 export * from "./queryItems";
+export * from "./queryAllItems";
 export * from "./scanItems";

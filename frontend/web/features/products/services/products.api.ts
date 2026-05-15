@@ -1,4 +1,5 @@
 import type {
+  OwnedProduct,
   Product,
   ProductDetail,
   PurchasedProduct,
@@ -45,6 +46,19 @@ interface FetchPurchasedProductDetailsOptions {
   accessToken?: string;
 }
 
+function extractSuccessData<T>(payload: unknown): T | null {
+  if (!payload || typeof payload !== 'object') {
+    return null;
+  }
+
+  const candidate = payload as Record<string, unknown>;
+  if (candidate.success !== true || !('data' in candidate)) {
+    return null;
+  }
+
+  return candidate.data as T;
+}
+
 function isProduct(value: unknown): value is Product {
   if (!value || typeof value !== 'object') {
     return false;
@@ -77,8 +91,14 @@ export async function fetchProducts({
       return [];
     }
 
-    const data: Product[] = await response.json();
-    return data;
+    const payload: unknown = await response.json();
+    const data = extractSuccessData<unknown>(payload);
+
+    if (Array.isArray(data) && data.every(isProduct)) {
+      return data;
+    }
+
+    return [];
   } catch {
     return [];
   }
@@ -102,8 +122,14 @@ export async function fetchProductDetails({
       return null;
     }
 
-    const data: ProductDetail = await response.json();
-    return data;
+    const payload: unknown = await response.json();
+    const data = extractSuccessData<unknown>(payload);
+
+    if (data && typeof data === 'object' && isProduct(data)) {
+      return data as ProductDetail;
+    }
+
+    return null;
   } catch {
     return null;
   }
@@ -114,7 +140,7 @@ export async function getOwnedProducts({
   signal,
   cache = 'no-store',
   accessToken,
-}: GetOwnedProductsOptions): Promise<Product[]> {
+}: GetOwnedProductsOptions): Promise<OwnedProduct[]> {
   try {
     const headers: HeadersInit = accessToken
       ? { Authorization: `Bearer ${accessToken}` }
@@ -133,22 +159,27 @@ export async function getOwnedProducts({
       return [];
     }
 
-    const data: unknown = await response.json();
+    const payload: unknown = await response.json();
+    const data = extractSuccessData<unknown>(payload);
 
-    if (Array.isArray(data) && data.every(isProduct)) {
-      return data;
+    if (!Array.isArray(data)) {
+      return [];
     }
 
-    if (Array.isArray(data) && data.every(isPurchasedProduct)) {
-      const purchasedProductIds = new Set(data.map((purchase) => purchase.productId));
+    // if (data.every(isProduct)) {
+    //   return data;
+    // }
 
-      if (purchasedProductIds.size === 0) {
-        return [];
-      }
+    // if (data.every(isPurchasedProduct)) {
+    //   const purchasedProductIds = new Set(data.map((purchase) => purchase.productId));
 
-      const products = await fetchProducts({ signal, cache });
-      return products.filter((product) => purchasedProductIds.has(product.id));
-    }
+    //   if (purchasedProductIds.size === 0) {
+    //     return [];
+    //   }
+
+    //   const products = await fetchProducts({ signal, cache });
+    //   return products.filter((product) => purchasedProductIds.has(product.id));
+    // }
 
     return [];
   } catch {
