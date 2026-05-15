@@ -6,7 +6,7 @@ import { CognitoOperationError } from "@shared-cognito/core";
 import { getAuthUserFromIdToken } from "../services/token";
 import { loginWithPassword } from "../services/cognito";
 
-export const postLoginHandler = async (
+export const login = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   let payload: Record<string, unknown>;
