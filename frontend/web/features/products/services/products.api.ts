@@ -68,13 +68,13 @@ function isProduct(value: unknown): value is Product {
   return typeof candidate.id === 'string' && typeof candidate.name === 'string';
 }
 
-function isPurchasedProduct(value: unknown): value is PurchasedProduct {
+function isOwnedProduct(value: unknown): value is OwnedProduct {
   if (!value || typeof value !== 'object') {
     return false;
   }
 
   const candidate = value as Record<string, unknown>;
-  return typeof candidate.productId === 'string' && typeof candidate.userId === 'string';
+  return typeof candidate.id === 'string' && typeof candidate.name === 'string';
 }
 
 export async function fetchProducts({
@@ -166,20 +166,9 @@ export async function getOwnedProducts({
       return [];
     }
 
-    // if (data.every(isProduct)) {
-    //   return data;
-    // }
-
-    // if (data.every(isPurchasedProduct)) {
-    //   const purchasedProductIds = new Set(data.map((purchase) => purchase.productId));
-
-    //   if (purchasedProductIds.size === 0) {
-    //     return [];
-    //   }
-
-    //   const products = await fetchProducts({ signal, cache });
-    //   return products.filter((product) => purchasedProductIds.has(product.id));
-    // }
+    if (data.every(isOwnedProduct)) {
+      return data;
+    }
 
     return [];
   } catch {
