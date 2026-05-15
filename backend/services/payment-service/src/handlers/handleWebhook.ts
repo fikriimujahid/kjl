@@ -4,7 +4,7 @@ import { mapErrorToResponse } from "../errors/errorToResponse";
 import { ValidationError } from "../errors/applicationErrors";
 import { handleWebhookUseCase } from "../use-cases/handleWebhookUseCase";
 import { parseEventBody } from "../utils/request";
-import { jsonResponse } from "../utils/response";
+import { createSuccessResponse } from "@shared-utils/response";
 
 export const handleWebhook = async (
   event: APIGatewayProxyEventV2
@@ -25,13 +25,13 @@ export const handleWebhook = async (
       payload
     });
 
-    return jsonResponse(200, {
+    return createSuccessResponse(event, 200, {
       message: "Webhook processed",
       orderId: result.orderId,
       status: result.status
     });
   } catch (error) {
-    const mappedErrorResponse = mapErrorToResponse(error);
+    const mappedErrorResponse = mapErrorToResponse(event, error);
 
     if (mappedErrorResponse) {
       return mappedErrorResponse;

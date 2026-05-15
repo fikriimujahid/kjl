@@ -45,7 +45,21 @@ const buildEvent = (): APIGatewayProxyEventV2 => ({
 }) as APIGatewayProxyEventV2;
 
 const parseBody = (response: APIGatewayProxyStructuredResultV2): Record<string, unknown> => {
-  return JSON.parse(response.body ?? "{}") as Record<string, unknown>;
+  const body = JSON.parse(response.body ?? "{}") as Record<string, unknown>;
+
+  if (body.success === true && typeof body.data === "object" && body.data != null) {
+    return body.data as Record<string, unknown>;
+  }
+
+  if (body.success === false && typeof body.error === "object" && body.error != null) {
+    const error = body.error as Record<string, unknown>;
+    return {
+      message: typeof error.message === "string" ? error.message : "",
+      ...(typeof error.code === "string" ? { code: error.code } : {})
+    };
+  }
+
+  return body;
 };
 
 const loadCreatePaymentModule = async (
@@ -180,7 +194,7 @@ describe("createPayment", () => {
     const response = await createPayment(buildEvent());
 
     expect(response.statusCode).toBe(400);
-    expect(parseBody(response)).toEqual({ message: "Missing productId" });
+    expect(parseBody(response)).toEqual({ message: "productId is required" });
   });
 
   it("returns 409 when active access already exists", async () => {
@@ -362,7 +376,6 @@ describe("createPayment", () => {
         amount: 199999,
         grossAmount: "199999.00",
         accessDurationDays: 45,
-        snapToken: "snap-token",
         snapRedirectUrl: "https://pay.example/redirect",
         status: "CREATED"
       })

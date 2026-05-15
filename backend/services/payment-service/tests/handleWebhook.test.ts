@@ -44,7 +44,21 @@ const buildEvent = (): APIGatewayProxyEventV2 => ({
 }) as APIGatewayProxyEventV2;
 
 const parseBody = (response: APIGatewayProxyStructuredResultV2): Record<string, unknown> => {
-  return JSON.parse(response.body ?? "{}") as Record<string, unknown>;
+  const body = JSON.parse(response.body ?? "{}") as Record<string, unknown>;
+
+  if (body.success === true && typeof body.data === "object" && body.data != null) {
+    return body.data as Record<string, unknown>;
+  }
+
+  if (body.success === false && typeof body.error === "object" && body.error != null) {
+    const error = body.error as Record<string, unknown>;
+    return {
+      message: typeof error.message === "string" ? error.message : "",
+      ...(typeof error.code === "string" ? { code: error.code } : {})
+    };
+  }
+
+  return body;
 };
 
 const buildExistingOrder = (
@@ -60,7 +74,6 @@ const buildExistingOrder = (
   amount: 199999,
   grossAmount: "199999.00",
   accessDurationDays: 30,
-  snapToken: "snap-token",
   snapRedirectUrl: "https://pay.example/redirect",
   status: "CREATED",
   paymentProvider: "MIDTRANS",

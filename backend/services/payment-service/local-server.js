@@ -1,12 +1,7 @@
 const http = require("http");
 const { URL } = require("url");
-const path = require("path");
-const dotenv = require("dotenv");
-
-dotenv.config({ path: path.resolve(__dirname, ".env") });
-
-const { handler } = require("./build/lambda/handler.js");
-const { ROUTES } = require("./build/lambda/routes.js");
+const { handler } = require("./build/lambda/services/payment-service/src/handler.js");
+const { ROUTES } = require("./build/lambda/services/payment-service/src/routes.js");
 
 const PORT = Number(process.env.PORT || 3002);
 const routeDefinitions = Object.values(ROUTES);

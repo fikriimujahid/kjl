@@ -3,7 +3,7 @@ import { getCreatePaymentEnv } from "../config/env";
 import { mapErrorToResponse } from "../errors/errorToResponse";
 import { getAuthenticatedUser } from "../utils/auth";
 import { parseEventBody } from "../utils/request";
-import { jsonResponse } from "../utils/response";
+import { createSuccessResponse } from "@shared-utils/response";
 import { ValidationError, UnauthorizedError } from "../errors/applicationErrors";
 import { createPaymentSchema } from "../schemas/createPaymentSchema";
 import { createPaymentUseCase } from "../use-cases/createPaymentUseCase";
@@ -39,13 +39,13 @@ export const createPayment = async (
       productId: parsedPayload.data.productId
     });
 
-    return jsonResponse(200, {
+    return createSuccessResponse(event, 200, {
       orderId: result.orderId,
       snapToken: result.snapToken,
       redirectUrl: result.redirectUrl
     });
   } catch (error) {
-    const mappedErrorResponse = mapErrorToResponse(error);
+    const mappedErrorResponse = mapErrorToResponse(event, error);
 
     if (mappedErrorResponse) {
       return mappedErrorResponse;

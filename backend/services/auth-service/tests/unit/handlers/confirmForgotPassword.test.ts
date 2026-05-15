@@ -2,7 +2,8 @@ import { APIGatewayProxyEventV2 } from "aws-lambda";
 import { confirmPasswordReset } from "../../../src/handlers/confirmForgotPassword";
 import { parseEventBody } from "@shared-utils/request";
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
-import { CognitoOperationError, confirmForgotPassword } from "../../../src/services/cognito";
+import { CognitoOperationError } from "@shared-cognito/core";
+import { confirmForgotPassword } from "../../../src/services/cognito";
 
 jest.mock("@shared-utils/request", () => ({
   parseEventBody: jest.fn()
@@ -22,23 +23,9 @@ jest.mock("@shared-utils/response", () => ({
   }))
 }));
 
-jest.mock("../../../src/services/cognito", () => {
-  class MockCognitoOperationError extends Error {
-    readonly code: string;
-    readonly statusCode: number;
-
-    constructor(message: string, code = "InternalError", statusCode = 500) {
-      super(message);
-      this.code = code;
-      this.statusCode = statusCode;
-    }
-  }
-
-  return {
-    CognitoOperationError: MockCognitoOperationError,
-    confirmForgotPassword: jest.fn()
-  };
-});
+jest.mock("../../../src/services/cognito", () => ({
+  confirmForgotPassword: jest.fn()
+}));
 
 const createEvent = (): APIGatewayProxyEventV2 => ({
   requestContext: {

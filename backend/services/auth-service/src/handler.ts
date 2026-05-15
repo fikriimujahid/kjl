@@ -1,14 +1,14 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
-import { login } from "./handlers/login";
-import { logout } from "./handlers/logout";
 import { createErrorResponse, optionsResponse } from "@shared-utils/response";
+import { getAuthServiceEnv } from "./config/env";
+import { postLoginHandler } from "./handlers/postLoginHandler";
+import { logout } from "./handlers/logout";
 import { refresh } from "./handlers/refresh";
 import { session } from "./handlers/session";
 import { register } from "./handlers/register";
 import { forgotPassword } from "./handlers/forgotPassword";
 import { confirmPasswordReset } from "./handlers/confirmForgotPassword";
 import { ROUTES } from "./routes";
-import { getAuthServiceEnv } from "./config/env";
 
 getAuthServiceEnv();
 
@@ -20,7 +20,7 @@ export const handler = async (
   }
 
   if (event.routeKey === ROUTES.LOGIN.routeKey) {
-    return login(event);
+    return postLoginHandler(event);
   }
 
   if (event.routeKey === ROUTES.FORGOT_PASSWORD.routeKey) {

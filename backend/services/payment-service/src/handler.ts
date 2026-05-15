@@ -2,7 +2,7 @@ import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-l
 import { createPayment } from "./handlers/createPayment";
 import { handleWebhook } from "./handlers/handleWebhook";
 import { ROUTES } from "./routes";
-import { jsonResponse, optionsResponse } from "./utils/response";
+import { createErrorResponse, optionsResponse } from "@shared-utils/response";
 
 export const handler = async (
   event: APIGatewayProxyEventV2
@@ -10,11 +10,11 @@ export const handler = async (
   console.log("[INCOMING_REQUEST]", {
     routeKey: event.routeKey,
     requestId: event.requestContext?.requestId,
-    payload: event.body,
+    payload: event.body
   });
 
   if (event.requestContext.http.method === "OPTIONS") {
-    return optionsResponse();
+    return optionsResponse(event);
   }
 
   if (event.routeKey === ROUTES.CREATE_PAYMENT.routeKey) {
@@ -25,7 +25,7 @@ export const handler = async (
     return handleWebhook(event);
   }
 
-  return jsonResponse(404, { message: "Route not found" });
+  return createErrorResponse(event, 404, "Route not found", { code: "ROUTE_NOT_FOUND" });
 };
 
 export const main = handler;

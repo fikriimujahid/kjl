@@ -1,167 +1,41 @@
-const COGNITO_API_ENDPOINT = (process.env.COGNITO_API_ENDPOINT ?? "").trim();
-const COGNITO_USER_POOL_CLIENT_ID = (process.env.COGNITO_USER_POOL_CLIENT_ID ?? "").trim();
+import { getAuthServiceEnv } from "../config/env";
+import {
+  CognitoOperationError,
+  postToCognito,
+  validateAuthResult
+} from "@shared-cognito/core";
+import type {
+  CognitoAuthResult,
+  CognitoForgotPasswordSuccess,
+  CognitoInitiateAuthSuccess,
+  CognitoSignUpSuccess,
+  ForgotPasswordResult,
+  SignUpResult
+} from "@shared-cognito/core";
 
-export interface CognitoAuthResult {
-  accessToken: string;
-  idToken: string;
-  refreshToken?: string;
-  expiresIn?: number;
-  tokenType?: string;
-}
-
-interface CognitoErrorPayload {
-  __type?: string;
-  message?: string;
-}
-
-interface CognitoInitiateAuthSuccess {
-  AuthenticationResult?: {
-    AccessToken?: string;
-    IdToken?: string;
-    RefreshToken?: string;
-    ExpiresIn?: number;
-    TokenType?: string;
-  };
-  ChallengeName?: string;
-}
-
-interface CognitoSignUpSuccess {
-  UserConfirmed?: boolean;
-  CodeDeliveryDetails?: {
-    AttributeName?: string;
-    DeliveryMedium?: string;
-    Destination?: string;
-  };
-}
-
-interface CognitoForgotPasswordSuccess {
-  CodeDeliveryDetails?: {
-    AttributeName?: string;
-    DeliveryMedium?: string;
-    Destination?: string;
-  };
-}
-
-export interface SignUpResult {
-  userConfirmed: boolean;
-  codeDeliveryDetails: {
-    attributeName?: string;
-    deliveryMedium?: string;
-    destination?: string;
-  } | null;
-}
-
-export interface ForgotPasswordResult {
-  codeDeliveryDetails: {
-    attributeName?: string;
-    deliveryMedium?: string;
-    destination?: string;
-  } | null;
-}
-
-export class CognitoOperationError extends Error {
-  readonly code: string;
-  readonly statusCode: number;
-
-  constructor(message: string, code = "InternalError", statusCode = 500) {
-    super(message);
-    this.code = code;
-    this.statusCode = statusCode;
-  }
-}
-
-const ensureConfig = (): void => {
-  if (!COGNITO_API_ENDPOINT) {
-    throw new CognitoOperationError("Missing COGNITO_API_ENDPOINT environment variable", "ConfigError", 500);
-  }
-
-  if (!COGNITO_USER_POOL_CLIENT_ID) {
-    throw new CognitoOperationError("Missing COGNITO_USER_POOL_CLIENT_ID environment variable", "ConfigError", 500);
-  }
-};
-
-const normalizeEndpoint = (endpoint: string): string => {
-  if (endpoint.endsWith("/")) {
-    return endpoint;
-  }
-
-  return `${endpoint}/`;
-};
-
-const mapCognitoErrorToHttp = (payload: CognitoErrorPayload): CognitoOperationError => {
-  const errorCode = typeof payload.__type === "string" ? payload.__type.split("#").pop() ?? "CognitoError" : "CognitoError";
-  const message = payload.message || "Cognito request failed";
-
-  switch (errorCode) {
-    case "NotAuthorizedException":
-    case "UserNotFoundException":
-      return new CognitoOperationError(message, errorCode, 401);
-    case "UserNotConfirmedException":
-      return new CognitoOperationError(message, errorCode, 403);
-    case "UsernameExistsException":
-      return new CognitoOperationError(message, errorCode, 409);
-    case "InvalidParameterException":
-    case "InvalidPasswordException":
-      return new CognitoOperationError(message, errorCode, 400);
-    case "TooManyRequestsException":
-      return new CognitoOperationError(message, errorCode, 429);
-    default:
-      return new CognitoOperationError(message, errorCode, 502);
-  }
-};
-
-const postToCognito = async <TResponse>(target: string, payload: Record<string, unknown>): Promise<TResponse> => {
-  ensureConfig();
-
-  const response = await fetch(normalizeEndpoint(COGNITO_API_ENDPOINT), {
-    method: "POST",
-    headers: {
-      "content-type": "application/x-amz-json-1.1",
-      "x-amz-target": target
-    },
-    body: JSON.stringify(payload)
-  });
-
-  const data = (await response.json().catch(() => ({}))) as TResponse & CognitoErrorPayload;
-
-  if (!response.ok) {
-    throw mapCognitoErrorToHttp(data);
-  }
-
-  return data;
-};
-
-const validateAuthResult = (result: CognitoInitiateAuthSuccess): CognitoAuthResult => {
-  if (result.ChallengeName) {
-    throw new CognitoOperationError(
-      "Account requires additional challenge. This flow is not supported yet.",
-      "ChallengeRequired",
-      400
-    );
-  }
-
-  const accessToken = result.AuthenticationResult?.AccessToken;
-  const idToken = result.AuthenticationResult?.IdToken;
-
-  if (!accessToken || !idToken) {
-    throw new CognitoOperationError("Authentication response is missing token data", "InvalidAuthResponse", 502);
-  }
+const getCognitoConfig = () => {
+  const { COGNITO_API_ENDPOINT, COGNITO_USER_POOL_CLIENT_ID } = getAuthServiceEnv();
 
   return {
-    accessToken,
-    idToken,
-    refreshToken: result.AuthenticationResult?.RefreshToken,
-    expiresIn: result.AuthenticationResult?.ExpiresIn,
-    tokenType: result.AuthenticationResult?.TokenType
+    apiEndpoint: String(COGNITO_API_ENDPOINT).trim(),
+    userPoolClientId: String(COGNITO_USER_POOL_CLIENT_ID).trim()
   };
+};
+
+const postToConfiguredCognito = async <TResponse>(target: string, payload: Record<string, unknown>): Promise<TResponse> => {
+  const { apiEndpoint } = getCognitoConfig();
+
+  return postToCognito<TResponse>(apiEndpoint, target, payload);
 };
 
 export const loginWithPassword = async (email: string, password: string): Promise<CognitoAuthResult> => {
-  const result = await postToCognito<CognitoInitiateAuthSuccess>(
+  const { userPoolClientId } = getCognitoConfig();
+
+  const result = await postToConfiguredCognito<CognitoInitiateAuthSuccess>(
     "AWSCognitoIdentityProviderService.InitiateAuth",
     {
       AuthFlow: "USER_PASSWORD_AUTH",
-      ClientId: COGNITO_USER_POOL_CLIENT_ID,
+      ClientId: userPoolClientId,
       AuthParameters: {
         USERNAME: email,
         PASSWORD: password
@@ -179,11 +53,13 @@ export const loginWithPassword = async (email: string, password: string): Promis
 };
 
 export const refreshWithToken = async (refreshToken: string): Promise<CognitoAuthResult> => {
-  const result = await postToCognito<CognitoInitiateAuthSuccess>(
+  const { userPoolClientId } = getCognitoConfig();
+
+  const result = await postToConfiguredCognito<CognitoInitiateAuthSuccess>(
     "AWSCognitoIdentityProviderService.InitiateAuth",
     {
       AuthFlow: "REFRESH_TOKEN_AUTH",
-      ClientId: COGNITO_USER_POOL_CLIENT_ID,
+      ClientId: userPoolClientId,
       AuthParameters: {
         REFRESH_TOKEN: refreshToken
       }
@@ -194,10 +70,12 @@ export const refreshWithToken = async (refreshToken: string): Promise<CognitoAut
 };
 
 export const revokeRefreshToken = async (refreshToken: string): Promise<void> => {
-  await postToCognito<Record<string, unknown>>(
+  const { userPoolClientId } = getCognitoConfig();
+
+  await postToConfiguredCognito<Record<string, unknown>>(
     "AWSCognitoIdentityProviderService.RevokeToken",
     {
-      ClientId: COGNITO_USER_POOL_CLIENT_ID,
+      ClientId: userPoolClientId,
       Token: refreshToken
     }
   );
@@ -208,10 +86,12 @@ export const registerWithPassword = async (
   password: string,
   fullName: string
 ): Promise<SignUpResult> => {
-  const result = await postToCognito<CognitoSignUpSuccess>(
+  const { userPoolClientId } = getCognitoConfig();
+
+  const result = await postToConfiguredCognito<CognitoSignUpSuccess>(
     "AWSCognitoIdentityProviderService.SignUp",
     {
-      ClientId: COGNITO_USER_POOL_CLIENT_ID,
+      ClientId: userPoolClientId,
       Username: email,
       Password: password,
       UserAttributes: [
@@ -240,10 +120,12 @@ export const registerWithPassword = async (
 };
 
 export const requestForgotPassword = async (email: string): Promise<ForgotPasswordResult> => {
-  const result = await postToCognito<CognitoForgotPasswordSuccess>(
+  const { userPoolClientId } = getCognitoConfig();
+
+  const result = await postToConfiguredCognito<CognitoForgotPasswordSuccess>(
     "AWSCognitoIdentityProviderService.ForgotPassword",
     {
-      ClientId: COGNITO_USER_POOL_CLIENT_ID,
+      ClientId: userPoolClientId,
       Username: email
     }
   );
@@ -264,10 +146,12 @@ export const confirmForgotPassword = async (
   confirmationCode: string,
   newPassword: string
 ): Promise<void> => {
-  await postToCognito<Record<string, unknown>>(
+  const { userPoolClientId } = getCognitoConfig();
+
+  await postToConfiguredCognito<Record<string, unknown>>(
     "AWSCognitoIdentityProviderService.ConfirmForgotPassword",
     {
-      ClientId: COGNITO_USER_POOL_CLIENT_ID,
+      ClientId: userPoolClientId,
       Username: email,
       ConfirmationCode: confirmationCode,
       Password: newPassword

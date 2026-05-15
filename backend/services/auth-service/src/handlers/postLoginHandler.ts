@@ -2,10 +2,11 @@ import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-l
 import { buildRefreshCookie } from "@shared-utils/cookies";
 import { parseEventBody } from "@shared-utils/request";
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
+import { CognitoOperationError } from "@shared-cognito/core";
 import { getAuthUserFromIdToken } from "../services/token";
-import { CognitoOperationError, loginWithPassword } from "../services/cognito";
+import { loginWithPassword } from "../services/cognito";
 
-export const login = async (
+export const postLoginHandler = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
   let payload: Record<string, unknown>;
@@ -26,7 +27,7 @@ export const login = async (
   }
 
   try {
-    const authResult = await loginWithPassword(email, password);
+    const authResult = await loginWithPassword(email, password); 
     const user = getAuthUserFromIdToken(authResult.idToken) ?? {
       id: email,
       email,

@@ -3,7 +3,8 @@ import { login } from "../../../src/handlers/login";
 import { parseEventBody } from "@shared-utils/request";
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
 import { getAuthUserFromIdToken } from "../../../src/services/token";
-import { CognitoOperationError, loginWithPassword } from "../../../src/services/cognito";
+import { CognitoOperationError } from "@shared-cognito/core";
+import { loginWithPassword } from "../../../src/services/cognito";
 import { buildRefreshCookie } from "@shared-utils/cookies";
 
 jest.mock("@shared-utils/request", () => ({
@@ -31,23 +32,9 @@ jest.mock("../../../src/services/token", () => ({
   getAuthUserFromIdToken: jest.fn()
 }));
 
-jest.mock("../../../src/services/cognito", () => {
-  class MockCognitoOperationError extends Error {
-    readonly code: string;
-    readonly statusCode: number;
-
-    constructor(message: string, code = "InternalError", statusCode = 500) {
-      super(message);
-      this.code = code;
-      this.statusCode = statusCode;
-    }
-  }
-
-  return {
-    CognitoOperationError: MockCognitoOperationError,
-    loginWithPassword: jest.fn()
-  };
-});
+jest.mock("../../../src/services/cognito", () => ({
+  loginWithPassword: jest.fn()
+}));
 
 jest.mock("@shared-utils/cookies", () => ({
   buildRefreshCookie: jest.fn()

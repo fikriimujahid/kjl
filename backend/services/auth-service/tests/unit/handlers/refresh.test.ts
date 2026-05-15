@@ -3,7 +3,8 @@ import { refresh } from "../../../src/handlers/refresh";
 import { buildRefreshCookie, extractRefreshToken } from "@shared-utils/cookies";
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
 import { getAuthUserFromIdToken } from "../../../src/services/token";
-import { CognitoOperationError, refreshWithToken } from "../../../src/services/cognito";
+import { CognitoOperationError } from "@shared-cognito/core";
+import { refreshWithToken } from "../../../src/services/cognito";
 
 jest.mock("@shared-utils/cookies", () => ({
   buildRefreshCookie: jest.fn(),
@@ -31,23 +32,9 @@ jest.mock("../../../src/services/token", () => ({
   getAuthUserFromIdToken: jest.fn()
 }));
 
-jest.mock("../../../src/services/cognito", () => {
-  class MockCognitoOperationError extends Error {
-    readonly code: string;
-    readonly statusCode: number;
-
-    constructor(message: string, code = "InternalError", statusCode = 500) {
-      super(message);
-      this.code = code;
-      this.statusCode = statusCode;
-    }
-  }
-
-  return {
-    CognitoOperationError: MockCognitoOperationError,
-    refreshWithToken: jest.fn()
-  };
-});
+jest.mock("../../../src/services/cognito", () => ({
+  refreshWithToken: jest.fn()
+}));
 
 const createEvent = (): APIGatewayProxyEventV2 => ({
   requestContext: {
