@@ -27,6 +27,7 @@ describe("payment-service handler routing", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(console, "info").mockImplementation(() => undefined);
+    jest.spyOn(console, "error").mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -69,6 +70,9 @@ describe("payment-service handler routing", () => {
 
     const result = await handler(event);
 
+    expect(console.info).toHaveBeenCalledWith(
+      expect.stringContaining('"event":"request.succeeded"')
+    );
     expect(optionsResponseMock).toHaveBeenCalledWith(event);
     expect(result).toBe(optionsResult);
   });
@@ -81,6 +85,9 @@ describe("payment-service handler routing", () => {
 
     const result = await handler(event);
 
+    expect(console.info).toHaveBeenCalledWith(
+      expect.stringContaining('"event":"request.succeeded"')
+    );
     expect(createPaymentMock).toHaveBeenCalledWith(event);
     expect(handleWebhookMock).not.toHaveBeenCalled();
     expect(result).toBe(response);
@@ -101,12 +108,27 @@ describe("payment-service handler routing", () => {
 
   it("returns not found response for unsupported route", async () => {
     const event = createEvent("GET /api/payments/unknown", "GET");
-    const notFound: ReturnType<typeof createErrorResponse> = { statusCode: 404, body: "{}" };
+    const notFound: ReturnType<typeof createErrorResponse> = {
+      statusCode: 404,
+      body: JSON.stringify({
+        success: false,
+        error: {
+          message: "Route not found",
+          code: "ROUTE_NOT_FOUND"
+        }
+      })
+    };
 
     createErrorResponseMock.mockReturnValue(notFound);
 
     const result = await handler(event);
 
+    expect(console.error).toHaveBeenCalledWith(
+      expect.stringContaining('"event":"request.failed"')
+    );
+    expect(console.error).toHaveBeenCalledWith(
+      expect.stringContaining('"errorCode":"ROUTE_NOT_FOUND"')
+    );
     expect(createErrorResponseMock).toHaveBeenCalledWith(event, 404, "Route not found", {
       code: "ROUTE_NOT_FOUND"
     });

@@ -45,6 +45,7 @@ describe("handler entrypoint", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(console, "info").mockImplementation(() => undefined);
+    jest.spyOn(console, "error").mockImplementation(() => undefined);
     jest.spyOn(console, "warn").mockImplementation(() => undefined);
   });
 
@@ -71,6 +72,7 @@ describe("handler entrypoint", () => {
     const result = await handler(event);
 
     expect(console.info).toHaveBeenCalledWith(expect.stringContaining('"event":"request.received"'));
+    expect(console.info).toHaveBeenCalledWith(expect.stringContaining('"event":"request.succeeded"'));
     expect(optionsResponse).toHaveBeenCalledWith(event);
     expect(result).toBe(optionsResult);
   });
@@ -92,19 +94,52 @@ describe("handler entrypoint", () => {
     const result = await handler(event);
 
     expect(console.info).toHaveBeenCalledWith(expect.stringContaining('"event":"request.received"'));
+    expect(console.info).toHaveBeenCalledWith(expect.stringContaining('"event":"request.succeeded"'));
     expect(routeHandler).toHaveBeenCalledWith(event);
     expect(result).toBe(expected);
   });
 
+  it("logs request.failed when a routed handler returns an error response", async () => {
+    const event = createEvent(ROUTES.LOGIN.routeKey);
+    const failed = {
+      statusCode: 401,
+      body: JSON.stringify({
+        success: false,
+        error: {
+          message: "Unauthorized",
+          code: "NOT_AUTHORIZED"
+        }
+      })
+    } as APIGatewayProxyStructuredResultV2;
+
+    (loginHandler as jest.Mock).mockResolvedValue(failed);
+
+    const result = await handler(event);
+
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('"event":"request.failed"'));
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('"errorCode":"NOT_AUTHORIZED"'));
+    expect(result).toBe(failed);
+  });
+
   it("returns 404 when route is not defined", async () => {
     const event = createEvent("GET /api/auth/unknown", "GET");
-    const notFound = { statusCode: 404 } as APIGatewayProxyStructuredResultV2;
+    const notFound = {
+      statusCode: 404,
+      body: JSON.stringify({
+        success: false,
+        error: {
+          message: "Route not found",
+          code: "ROUTE_NOT_FOUND"
+        }
+      })
+    } as APIGatewayProxyStructuredResultV2;
 
     (createErrorResponse as jest.Mock).mockReturnValue(notFound);
 
     const result = await handler(event);
 
-    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('"event":"request.route_not_found"'));
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('"event":"request.failed"'));
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('"errorCode":"ROUTE_NOT_FOUND"'));
     expect(createErrorResponse).toHaveBeenCalledWith(event, 404, "Route not found", {
       code: "ROUTE_NOT_FOUND"
     });

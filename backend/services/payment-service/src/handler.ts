@@ -3,6 +3,7 @@ import { createPayment } from "./handlers/createPayment";
 import { handleWebhook } from "./handlers/handleWebhook";
 import { ROUTES } from "./routes";
 import { createLogger } from "@shared-utils/logger";
+import { logRequestReceived, logRequestResult } from "@shared-utils/requestLifecycle";
 import { createErrorResponse, optionsResponse } from "@shared-utils/response";
 
 const logger = createLogger("payment-service");
@@ -10,25 +11,31 @@ const logger = createLogger("payment-service");
 export const handler = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
-  logger.info("request.received", {
+  const requestContext = {
     routeKey: event.routeKey,
     requestId: event.requestContext?.requestId,
     method: event.requestContext.http.method
-  });
+  };
+
+  logRequestReceived(logger, requestContext);
 
   if (event.requestContext.http.method === "OPTIONS") {
-    return optionsResponse(event);
+    return logRequestResult(logger, requestContext, optionsResponse(event));
   }
 
   if (event.routeKey === ROUTES.CREATE_PAYMENT.routeKey) {
-    return createPayment(event);
+    return logRequestResult(logger, requestContext, await createPayment(event));
   }
 
   if (event.routeKey === ROUTES.HANDLE_WEBHOOK.routeKey) {
-    return handleWebhook(event);
+    return logRequestResult(logger, requestContext, await handleWebhook(event));
   }
 
-  return createErrorResponse(event, 404, "Route not found", { code: "ROUTE_NOT_FOUND" });
+  return logRequestResult(
+    logger,
+    requestContext,
+    createErrorResponse(event, 404, "Route not found", { code: "ROUTE_NOT_FOUND" })
+  );
 };
 
 export const main = handler;

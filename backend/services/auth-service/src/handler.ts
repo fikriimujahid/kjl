@@ -1,5 +1,6 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
 import { createLogger } from "@shared-utils/logger";
+import { logRequestReceived, logRequestResult } from "@shared-utils/requestLifecycle";
 import { createErrorResponse, optionsResponse } from "@shared-utils/response";
 import { getAuthServiceEnv } from "./config/env";
 import { confirmForgotPasswordHandler } from "./handlers/confirmForgotPasswordHandler";
@@ -31,28 +32,28 @@ const routeHandlers: Record<
 export const handler = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
-  logger.info("request.received", {
+  const requestContext = {
     requestId: event.requestContext?.requestId,
     routeKey: event.routeKey,
     method: event.requestContext.http.method
-  });
+  };
+
+  logRequestReceived(logger, requestContext);
 
   if (event.requestContext.http.method === "OPTIONS") {
-    return optionsResponse(event);
+    return logRequestResult(logger, requestContext, optionsResponse(event));
   }
 
   const routeHandler = routeHandlers[event.routeKey ?? ""];
   if (routeHandler) {
-    return routeHandler(event);
+    return logRequestResult(logger, requestContext, await routeHandler(event));
   }
 
-  logger.warn("request.route_not_found", {
-    requestId: event.requestContext?.requestId,
-    routeKey: event.routeKey,
-    method: event.requestContext.http.method
-  });
-
-  return createErrorResponse(event, 404, "Route not found", { code: "ROUTE_NOT_FOUND" });
+  return logRequestResult(
+    logger,
+    requestContext,
+    createErrorResponse(event, 404, "Route not found", { code: "ROUTE_NOT_FOUND" })
+  );
 };
 
 export const main = handler;
