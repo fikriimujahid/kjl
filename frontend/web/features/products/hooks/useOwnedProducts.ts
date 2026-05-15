@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { AuthStatus } from '@/providers/auth.types';
-import type { Product } from '../types';
+import type { OwnedProduct } from '../types';
 import { getOwnedProducts } from '../services';
 
 interface UseOwnedProductsOptions {
@@ -12,7 +12,7 @@ interface UseOwnedProductsOptions {
 }
 
 interface UseOwnedProductsResult {
-  ownedProducts: Product[];
+  ownedProducts: OwnedProduct[];
   isLoadingOwnedProducts: boolean;
 }
 
@@ -21,7 +21,7 @@ export function useOwnedProducts({
   userId,
   accessToken,
 }: UseOwnedProductsOptions): UseOwnedProductsResult {
-  const [ownedProducts, setOwnedProducts] = useState<Product[]>([]);
+  const [ownedProducts, setOwnedProducts] = useState<OwnedProduct[]>([]);
   const [isLoadingOwnedProducts, setIsLoadingOwnedProducts] = useState(true);
 
   useEffect(() => {

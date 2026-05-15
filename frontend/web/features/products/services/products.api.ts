@@ -1,4 +1,5 @@
 import type {
+  OwnedProduct,
   Product,
   ProductDetail,
   PurchasedProduct,
@@ -139,7 +140,7 @@ export async function getOwnedProducts({
   signal,
   cache = 'no-store',
   accessToken,
-}: GetOwnedProductsOptions): Promise<Product[]> {
+}: GetOwnedProductsOptions): Promise<OwnedProduct[]> {
   try {
     const headers: HeadersInit = accessToken
       ? { Authorization: `Bearer ${accessToken}` }
@@ -165,20 +166,20 @@ export async function getOwnedProducts({
       return [];
     }
 
-    if (data.every(isProduct)) {
-      return data;
-    }
+    // if (data.every(isProduct)) {
+    //   return data;
+    // }
 
-    if (data.every(isPurchasedProduct)) {
-      const purchasedProductIds = new Set(data.map((purchase) => purchase.productId));
+    // if (data.every(isPurchasedProduct)) {
+    //   const purchasedProductIds = new Set(data.map((purchase) => purchase.productId));
 
-      if (purchasedProductIds.size === 0) {
-        return [];
-      }
+    //   if (purchasedProductIds.size === 0) {
+    //     return [];
+    //   }
 
-      const products = await fetchProducts({ signal, cache });
-      return products.filter((product) => purchasedProductIds.has(product.id));
-    }
+    //   const products = await fetchProducts({ signal, cache });
+    //   return products.filter((product) => purchasedProductIds.has(product.id));
+    // }
 
     return [];
   } catch {
