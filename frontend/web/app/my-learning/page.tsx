@@ -50,14 +50,14 @@ export default function MyLearningPage() {
         return;
       }
 
-      setOwnedProducts(nextOwnedProducts);
-      setSelectedProduct((current) => {
-        if (current && nextOwnedProducts.some((product) => product.id === current.id)) {
-          return current;
-        }
+      // setOwnedProducts(nextOwnedProducts);
+      // setSelectedProduct((current) => {
+      //   if (current && nextOwnedProducts.some((product) => product.id === current.id)) {
+      //     return current;
+      //   }
 
-        return nextOwnedProducts[0] ?? null;
-      });
+      //   return nextOwnedProducts[0] ?? null;
+      // });
       setIsLoadingOwnedProducts(false);
     }
 

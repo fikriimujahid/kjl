@@ -1,4 +1,4 @@
-import type { Product } from '@/features/products/types';
+import type { OwnedProduct } from '@/features/products/types';
 import { getOwnedProducts } from '@/features/products/services';
 
 interface FetchDashboardOwnedProductsOptions {
@@ -11,7 +11,7 @@ export async function fetchDashboardOwnedProducts({
   signal,
   userId,
   accessToken,
-}: FetchDashboardOwnedProductsOptions): Promise<Product[]> {
+}: FetchDashboardOwnedProductsOptions): Promise<OwnedProduct[]> {
   return getOwnedProducts({
     signal,
     userId,
