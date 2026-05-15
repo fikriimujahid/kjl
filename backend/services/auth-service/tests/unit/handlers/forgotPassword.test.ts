@@ -1,8 +1,17 @@
 import { APIGatewayProxyEventV2 } from "aws-lambda";
-import { forgotPassword } from "../../../src/handlers/forgotPassword";
+import { forgotPasswordHandler } from "../../../src/handlers/forgotPasswordHandler";
 import { parseEventBody } from "@shared-utils/request";
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
-import { CognitoOperationError, requestForgotPassword } from "../../../src/services/cognito";
+import { CognitoOperationError } from "@shared-cognito/core";
+import { requestForgotPassword } from "../../../src/services/cognito";
+
+jest.mock("@shared-utils/logger", () => ({
+  createLogger: jest.fn(() => ({
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn()
+  }))
+}));
 
 jest.mock("@shared-utils/request", () => ({
   parseEventBody: jest.fn()
@@ -22,23 +31,9 @@ jest.mock("@shared-utils/response", () => ({
   }))
 }));
 
-jest.mock("../../../src/services/cognito", () => {
-  class MockCognitoOperationError extends Error {
-    readonly code: string;
-    readonly statusCode: number;
-
-    constructor(message: string, code = "InternalError", statusCode = 500) {
-      super(message);
-      this.code = code;
-      this.statusCode = statusCode;
-    }
-  }
-
-  return {
-    CognitoOperationError: MockCognitoOperationError,
-    requestForgotPassword: jest.fn()
-  };
-});
+jest.mock("../../../src/services/cognito", () => ({
+  requestForgotPassword: jest.fn()
+}));
 
 const createEvent = (): APIGatewayProxyEventV2 => ({
   requestContext: {
@@ -60,7 +55,7 @@ describe("forgotPassword handler", () => {
       throw new Error("invalid json");
     });
 
-    const result = await forgotPassword(event);
+    const result = await forgotPasswordHandler(event);
 
     expect(createErrorResponse).toHaveBeenCalledWith(event, 400, "Invalid JSON body", {
       code: "INVALID_JSON"
@@ -77,7 +72,7 @@ describe("forgotPassword handler", () => {
     const event = createEvent();
     (parseEventBody as jest.Mock).mockReturnValue({ email: "  " });
 
-    const result = await forgotPassword(event);
+    const result = await forgotPasswordHandler(event);
 
     expect(createErrorResponse).toHaveBeenCalledWith(event, 400, "email is required", {
       code: "VALIDATION_ERROR"
@@ -104,7 +99,7 @@ describe("forgotPassword handler", () => {
     (parseEventBody as jest.Mock).mockReturnValue({ email: " user@example.com " });
     (requestForgotPassword as jest.Mock).mockResolvedValue(forgotPasswordResult);
 
-    const result = await forgotPassword(event);
+    const result = await forgotPasswordHandler(event);
 
     expect(requestForgotPassword).toHaveBeenCalledWith("user@example.com");
     expect(createSuccessResponse).toHaveBeenCalledWith(event, 200, {
@@ -126,7 +121,7 @@ describe("forgotPassword handler", () => {
     (parseEventBody as jest.Mock).mockReturnValue({ email: "user@example.com" });
     (requestForgotPassword as jest.Mock).mockRejectedValue(cognitoError);
 
-    const result = await forgotPassword(event);
+    const result = await forgotPasswordHandler(event);
 
     expect(createErrorResponse).toHaveBeenCalledWith(event, 429, "Too many requests", {
       code: "TooManyRequestsException"
@@ -145,7 +140,7 @@ describe("forgotPassword handler", () => {
     (parseEventBody as jest.Mock).mockReturnValue({ email: "user@example.com" });
     (requestForgotPassword as jest.Mock).mockRejectedValue(new Error("network issue"));
 
-    const result = await forgotPassword(event);
+    const result = await forgotPasswordHandler(event);
 
     expect(createErrorResponse).toHaveBeenCalledWith(event, 500, "Failed to request password reset", {
       code: "FORGOT_PASSWORD_FAILED"

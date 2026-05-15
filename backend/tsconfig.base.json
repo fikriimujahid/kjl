@@ -13,7 +13,9 @@
       "@shared-utils/*": ["./packages/shared-utils/src/*"],
       "@shared-types/*": ["./packages/shared-types/src/*"],
       "@shared-dynamodb/*": ["./packages/shared-dynamodb/src/*"],
-      "@shared-swagger/*": ["./packages/shared-swagger/src/*"]
+      "@shared-swagger/*": ["./packages/shared-swagger/src/*"],
+      "@shared-cognito/core": ["./packages/shared-cognito/src/core.ts"],
+      "@shared-cognito/*": ["./packages/shared-cognito/src/*"]
     }
   }
 }

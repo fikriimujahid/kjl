@@ -1,8 +1,8 @@
 import { APIGatewayProxyEventV2 } from "aws-lambda";
-import { session } from "../../../src/handlers/session";
+import { sessionHandler } from "../../../src/handlers/sessionHandler";
 import { buildClearRefreshCookie, buildRefreshCookie, extractRefreshToken } from "@shared-utils/cookies";
 import { createSuccessResponse } from "@shared-utils/response";
-import { getAuthUserFromIdToken } from "../../../src/services/token";
+import { getAuthUserFromIdToken } from "@shared-cognito/tokens";
 import { refreshWithToken } from "../../../src/services/cognito";
 
 jest.mock("@shared-utils/cookies", () => ({
@@ -22,7 +22,7 @@ jest.mock("@shared-utils/response", () => ({
   )
 }));
 
-jest.mock("../../../src/services/token", () => ({
+jest.mock("@shared-cognito/tokens", () => ({
   getAuthUserFromIdToken: jest.fn()
 }));
 
@@ -49,7 +49,7 @@ describe("session handler", () => {
     const event = createEvent();
     (extractRefreshToken as jest.Mock).mockReturnValue("");
 
-    const result = await session(event);
+    const result = await sessionHandler(event);
 
     expect(createSuccessResponse).toHaveBeenCalledWith(event, 200, { authenticated: false });
     expect(result).toEqual({
@@ -73,7 +73,7 @@ describe("session handler", () => {
     });
     (getAuthUserFromIdToken as jest.Mock).mockReturnValue(null);
 
-    const result = await session(event);
+    const result = await sessionHandler(event);
 
     expect(createSuccessResponse).toHaveBeenCalledWith(
       event,
@@ -108,7 +108,7 @@ describe("session handler", () => {
     (getAuthUserFromIdToken as jest.Mock).mockReturnValue(user);
     (buildRefreshCookie as jest.Mock).mockReturnValue("kjl_rt=next-token");
 
-    const result = await session(event);
+    const result = await sessionHandler(event);
 
     expect(refreshWithToken).toHaveBeenCalledWith("old-token");
     expect(buildRefreshCookie).toHaveBeenCalledWith("next-token");
@@ -165,7 +165,7 @@ describe("session handler", () => {
     });
     (buildRefreshCookie as jest.Mock).mockReturnValue("kjl_rt=current-token");
 
-    await session(event);
+    await sessionHandler(event);
 
     expect(buildRefreshCookie).toHaveBeenCalledWith("current-token");
   });
@@ -176,7 +176,7 @@ describe("session handler", () => {
     (extractRefreshToken as jest.Mock).mockReturnValue("refresh-token");
     (refreshWithToken as jest.Mock).mockRejectedValue(new Error("cognito unavailable"));
 
-    const result = await session(event);
+    const result = await sessionHandler(event);
 
     expect(createSuccessResponse).toHaveBeenCalledWith(
       event,

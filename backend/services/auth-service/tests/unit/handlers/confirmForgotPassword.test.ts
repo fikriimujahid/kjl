@@ -1,8 +1,17 @@
 import { APIGatewayProxyEventV2 } from "aws-lambda";
-import { confirmPasswordReset } from "../../../src/handlers/confirmForgotPassword";
+import { confirmForgotPasswordHandler } from "../../../src/handlers/confirmForgotPasswordHandler";
 import { parseEventBody } from "@shared-utils/request";
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
-import { CognitoOperationError, confirmForgotPassword } from "../../../src/services/cognito";
+import { CognitoOperationError } from "@shared-cognito/core";
+import { confirmForgotPassword } from "../../../src/services/cognito";
+
+jest.mock("@shared-utils/logger", () => ({
+  createLogger: jest.fn(() => ({
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn()
+  }))
+}));
 
 jest.mock("@shared-utils/request", () => ({
   parseEventBody: jest.fn()
@@ -22,23 +31,9 @@ jest.mock("@shared-utils/response", () => ({
   }))
 }));
 
-jest.mock("../../../src/services/cognito", () => {
-  class MockCognitoOperationError extends Error {
-    readonly code: string;
-    readonly statusCode: number;
-
-    constructor(message: string, code = "InternalError", statusCode = 500) {
-      super(message);
-      this.code = code;
-      this.statusCode = statusCode;
-    }
-  }
-
-  return {
-    CognitoOperationError: MockCognitoOperationError,
-    confirmForgotPassword: jest.fn()
-  };
-});
+jest.mock("../../../src/services/cognito", () => ({
+  confirmForgotPassword: jest.fn()
+}));
 
 const createEvent = (): APIGatewayProxyEventV2 => ({
   requestContext: {
@@ -60,7 +55,7 @@ describe("confirmPasswordReset handler", () => {
       throw new Error("invalid json");
     });
 
-    const result = await confirmPasswordReset(event);
+    const result = await confirmForgotPasswordHandler(event);
 
     expect(createErrorResponse).toHaveBeenCalledWith(event, 400, "Invalid JSON body", {
       code: "INVALID_JSON"
@@ -77,7 +72,7 @@ describe("confirmPasswordReset handler", () => {
     const event = createEvent();
     (parseEventBody as jest.Mock).mockReturnValue({ email: "", code: "", newPassword: "" });
 
-    const result = await confirmPasswordReset(event);
+    const result = await confirmForgotPasswordHandler(event);
 
     expect(createErrorResponse).toHaveBeenCalledWith(
       event,
@@ -106,7 +101,7 @@ describe("confirmPasswordReset handler", () => {
     });
     (confirmForgotPassword as jest.Mock).mockResolvedValue(undefined);
 
-    const result = await confirmPasswordReset(event);
+    const result = await confirmForgotPasswordHandler(event);
 
     expect(confirmForgotPassword).toHaveBeenCalledWith(
       "user@example.com",
@@ -134,7 +129,7 @@ describe("confirmPasswordReset handler", () => {
     });
     (confirmForgotPassword as jest.Mock).mockRejectedValue(cognitoError);
 
-    const result = await confirmPasswordReset(event);
+    const result = await confirmForgotPasswordHandler(event);
 
     expect(createErrorResponse).toHaveBeenCalledWith(event, 400, "Code mismatch", {
       code: "CodeMismatchException"
@@ -157,7 +152,7 @@ describe("confirmPasswordReset handler", () => {
     });
     (confirmForgotPassword as jest.Mock).mockRejectedValue(new Error("upstream down"));
 
-    const result = await confirmPasswordReset(event);
+    const result = await confirmForgotPasswordHandler(event);
 
     expect(createErrorResponse).toHaveBeenCalledWith(event, 500, "Failed to confirm password reset", {
       code: "CONFIRM_PASSWORD_RESET_FAILED"

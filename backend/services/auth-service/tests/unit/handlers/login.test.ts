@@ -1,10 +1,19 @@
 import { APIGatewayProxyEventV2 } from "aws-lambda";
-import { login } from "../../../src/handlers/login";
+import { loginHandler } from "../../../src/handlers/loginHandler";
 import { parseEventBody } from "@shared-utils/request";
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
-import { getAuthUserFromIdToken } from "../../../src/services/token";
-import { CognitoOperationError, loginWithPassword } from "../../../src/services/cognito";
+import { getAuthUserFromIdToken } from "@shared-cognito/tokens";
+import { CognitoOperationError } from "@shared-cognito/core";
+import { loginWithPassword } from "../../../src/services/cognito";
 import { buildRefreshCookie } from "@shared-utils/cookies";
+
+jest.mock("@shared-utils/logger", () => ({
+  createLogger: jest.fn(() => ({
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn()
+  }))
+}));
 
 jest.mock("@shared-utils/request", () => ({
   parseEventBody: jest.fn()
@@ -27,27 +36,13 @@ jest.mock("@shared-utils/response", () => ({
   )
 }));
 
-jest.mock("../../../src/services/token", () => ({
+jest.mock("@shared-cognito/tokens", () => ({
   getAuthUserFromIdToken: jest.fn()
 }));
 
-jest.mock("../../../src/services/cognito", () => {
-  class MockCognitoOperationError extends Error {
-    readonly code: string;
-    readonly statusCode: number;
-
-    constructor(message: string, code = "InternalError", statusCode = 500) {
-      super(message);
-      this.code = code;
-      this.statusCode = statusCode;
-    }
-  }
-
-  return {
-    CognitoOperationError: MockCognitoOperationError,
-    loginWithPassword: jest.fn()
-  };
-});
+jest.mock("../../../src/services/cognito", () => ({
+  loginWithPassword: jest.fn()
+}));
 
 jest.mock("@shared-utils/cookies", () => ({
   buildRefreshCookie: jest.fn()
@@ -73,7 +68,7 @@ describe("login handler", () => {
       throw new Error("bad json");
     });
 
-    const result = await login(event);
+    const result = await loginHandler(event);
 
     expect(createErrorResponse).toHaveBeenCalledWith(event, 400, "Invalid JSON body", {
       code: "INVALID_JSON"
@@ -90,7 +85,7 @@ describe("login handler", () => {
     const event = createEvent();
     (parseEventBody as jest.Mock).mockReturnValue({ email: " ", password: "" });
 
-    const result = await login(event);
+    const result = await loginHandler(event);
 
     expect(createErrorResponse).toHaveBeenCalledWith(event, 400, "email and password are required", {
       code: "VALIDATION_ERROR"
@@ -124,7 +119,7 @@ describe("login handler", () => {
     (getAuthUserFromIdToken as jest.Mock).mockReturnValue(user);
     (buildRefreshCookie as jest.Mock).mockReturnValue("kjl_rt=refresh-token");
 
-    const result = await login(event);
+    const result = await loginHandler(event);
 
     expect(loginWithPassword).toHaveBeenCalledWith("user@example.com", "pass123");
     expect(getAuthUserFromIdToken).toHaveBeenCalledWith("id-token");
@@ -172,7 +167,7 @@ describe("login handler", () => {
     (getAuthUserFromIdToken as jest.Mock).mockReturnValue(null);
     (buildRefreshCookie as jest.Mock).mockReturnValue("kjl_rt=");
 
-    await login(event);
+    await loginHandler(event);
 
     expect(buildRefreshCookie).toHaveBeenCalledWith("");
     expect(createSuccessResponse).toHaveBeenCalledWith(
@@ -198,7 +193,7 @@ describe("login handler", () => {
     (parseEventBody as jest.Mock).mockReturnValue({ email: "user@example.com", password: "wrong" });
     (loginWithPassword as jest.Mock).mockRejectedValue(cognitoError);
 
-    const result = await login(event);
+    const result = await loginHandler(event);
 
     expect(createErrorResponse).toHaveBeenCalledWith(event, 401, "Unauthorized", {
       code: "NotAuthorizedException"
@@ -217,7 +212,7 @@ describe("login handler", () => {
     (parseEventBody as jest.Mock).mockReturnValue({ email: "user@example.com", password: "pass" });
     (loginWithPassword as jest.Mock).mockRejectedValue(new Error("network down"));
 
-    const result = await login(event);
+    const result = await loginHandler(event);
 
     expect(createErrorResponse).toHaveBeenCalledWith(event, 500, "Login failed", {
       code: "LOGIN_FAILED"

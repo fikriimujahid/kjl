@@ -13,6 +13,8 @@ This backend is organized as a workspace monorepo to keep service logic isolated
   - `auth-service`: auth Lambda handlers and service-owned endpoint docs.
   - `product-service`: product Lambda handlers and service-owned endpoint docs.
 
+See `SERVICE_TEMPLATE.md` for the standard folder layout, naming rules, security baseline, and shared-package extraction guidance for all backend services.
+
 ## Local Setup
 
 1. Open terminal at `backend/`.

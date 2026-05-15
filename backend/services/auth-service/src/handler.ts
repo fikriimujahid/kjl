@@ -1,53 +1,59 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
-import { login } from "./handlers/login";
-import { logout } from "./handlers/logout";
+import { createLogger } from "@shared-utils/logger";
+import { logRequestReceived, logRequestResult } from "@shared-utils/requestLifecycle";
 import { createErrorResponse, optionsResponse } from "@shared-utils/response";
-import { refresh } from "./handlers/refresh";
-import { session } from "./handlers/session";
-import { register } from "./handlers/register";
-import { forgotPassword } from "./handlers/forgotPassword";
-import { confirmPasswordReset } from "./handlers/confirmForgotPassword";
-import { ROUTES } from "./routes";
 import { getAuthServiceEnv } from "./config/env";
+import { confirmForgotPasswordHandler } from "./handlers/confirmForgotPasswordHandler";
+import { forgotPasswordHandler } from "./handlers/forgotPasswordHandler";
+import { loginHandler } from "./handlers/loginHandler";
+import { logoutHandler } from "./handlers/logoutHandler";
+import { refreshHandler } from "./handlers/refreshHandler";
+import { registerHandler } from "./handlers/registerHandler";
+import { sessionHandler } from "./handlers/sessionHandler";
+import { ROUTES } from "./routes";
 
 getAuthServiceEnv();
+
+const logger = createLogger("auth-service");
+
+const routeHandlers: Record<
+  string,
+  (event: APIGatewayProxyEventV2) => Promise<APIGatewayProxyStructuredResultV2>
+> = {
+  [ROUTES.LOGIN.routeKey]: loginHandler,
+  [ROUTES.FORGOT_PASSWORD.routeKey]: forgotPasswordHandler,
+  [ROUTES.CONFIRM_FORGOT_PASSWORD.routeKey]: confirmForgotPasswordHandler,
+  [ROUTES.REGISTER.routeKey]: registerHandler,
+  [ROUTES.REFRESH.routeKey]: refreshHandler,
+  [ROUTES.LOGOUT.routeKey]: logoutHandler,
+  [ROUTES.SESSION.routeKey]: sessionHandler
+};
 
 export const handler = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
+  const requestContext = {
+    requestId: event.requestContext?.requestId,
+    routeKey: event.routeKey,
+    method: event.requestContext.http.method
+  };
+
+  logRequestReceived(logger, requestContext);
+
   if (event.requestContext.http.method === "OPTIONS") {
-    return optionsResponse(event);
+    return logRequestResult(logger, requestContext, optionsResponse(event));
   }
 
-  if (event.routeKey === ROUTES.LOGIN.routeKey) {
-    return login(event);
+  const routeHandler = routeHandlers[event.routeKey ?? ""];
+  if (routeHandler) {
+    return logRequestResult(logger, requestContext, await routeHandler(event));
   }
 
-  if (event.routeKey === ROUTES.FORGOT_PASSWORD.routeKey) {
-    return forgotPassword(event);
-  }
-
-  if (event.routeKey === ROUTES.CONFIRM_FORGOT_PASSWORD.routeKey) {
-    return confirmPasswordReset(event);
-  }
-
-  if (event.routeKey === ROUTES.REGISTER.routeKey) {
-    return register(event);
-  }
-
-  if (event.routeKey === ROUTES.REFRESH.routeKey) {
-    return refresh(event);
-  }
-
-  if (event.routeKey === ROUTES.LOGOUT.routeKey) {
-    return logout(event);
-  }
-
-  if (event.routeKey === ROUTES.SESSION.routeKey) {
-    return session(event);
-  }
-
-  return createErrorResponse(event, 404, "Route not found", { code: "ROUTE_NOT_FOUND" });
+  return logRequestResult(
+    logger,
+    requestContext,
+    createErrorResponse(event, 404, "Route not found", { code: "ROUTE_NOT_FOUND" })
+  );
 };
 
 export const main = handler;

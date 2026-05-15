@@ -205,8 +205,8 @@ service_api = {
     payment = {
       name                  = "kejepangdulu-dev-payment-api"
       description           = "Midtrans Payment API Lambda."
-      source_dir            = "../../../../backend/payment-service/build/lambda"
-      handler               = "handler.handler"
+      source_dir            = "../../../../backend/services/payment-service/build/lambda"
+      handler               = "services/payment-service/src/handler.handler"
       runtime               = "nodejs22.x"
       memory_size           = 256
       timeout               = 15
@@ -288,19 +288,6 @@ service_api = {
         route_key          = "GET /api/products/owned/{userId}"
         authorization_type = "JWT"
         operation_name     = "GetOwnedProductsByUserUnderApi"
-        integration_key    = "product"
-      }
-
-      get_purchased_product_details_by_user_under_api = {
-        route_key          = "GET /api/purchased-product/{userId}/product/{productId}"
-        authorization_type = "JWT"
-        operation_name     = "GetPurchasedProductDetailsByUserUnderApi"
-        integration_key    = "product"
-      }
-      get_product_session_details_under_api = {
-        route_key          = "GET /api/products/{productId}/topics/{topicId}/sessions/{sessionId}"
-        authorization_type = "JWT"
-        operation_name     = "GetProductSessionDetailsUnderApi"
         integration_key    = "product"
       }
       create_payment_under_api = {
