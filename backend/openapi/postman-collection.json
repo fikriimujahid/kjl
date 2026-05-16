@@ -1,0 +1,196 @@
+{
+  "info": {
+    "_postman_id": "c54e4740-a6cb-4ecf-b431-58eb65a6773d",
+    "name": "KeJepangDulu API (Generated)",
+    "description": "Generated from backend/openapi/swagger.json with per-service collection variables.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth service",
+      "item": [
+        {
+          "name": "Authenticate with email and password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{authServiceBaseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register a new account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{authServiceBaseUrl}}/api/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"\",\n  \"email\": \"user@example.com\",\n  \"password\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request password reset code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{authServiceBaseUrl}}/api/auth/forgot-password",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm password reset with verification code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{authServiceBaseUrl}}/api/auth/forgot-password/confirm",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"code\": \"\",\n  \"newPassword\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh auth session from refresh token cookie",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{authServiceBaseUrl}}/api/auth/refresh"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout current session and clear refresh cookie",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{authServiceBaseUrl}}/api/auth/logout"
+          },
+          "response": []
+        },
+        {
+          "name": "Get current authentication session status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{authServiceBaseUrl}}/api/auth/session"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Product service",
+      "item": [
+        {
+          "name": "List available products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{productServiceBaseUrl}}/api/products"
+          },
+          "response": []
+        },
+        {
+          "name": "Get product details by product id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{productServiceBaseUrl}}/api/products/{id}"
+          },
+          "response": []
+        },
+        {
+          "name": "List owned products for authenticated user",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{productServiceBaseUrl}}/api/products/owned/{userId}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "authServiceBaseUrl",
+      "value": "http://localhost:3004",
+      "type": "string",
+      "description": "Auth service base URL"
+    },
+    {
+      "key": "productServiceBaseUrl",
+      "value": "http://localhost:3001",
+      "type": "string",
+      "description": "Product service base URL"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string",
+      "description": "Bearer token used by secured requests"
+    }
+  ]
+}

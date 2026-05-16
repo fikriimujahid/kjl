@@ -33,54 +33,8 @@ export interface OwnedProduct {
   level: string;
   name: string;
   purchaseDate: string;
-  accessExpiryDate: string;
-}
-
-export interface SessionDetail {
-  id: string;
-  text?: string;
-  contentUrl?: string;
-  optionIds?: string[];
-  options?: string[];
-  image?: string;
-  audio?: string;
-}
-
-
-
-export interface PurchaseRecord {
-  PK: string;
-  SK: string;
-  entityType: "PURCHASE";
-  userId: string;
-  productId: string;
-  purchaseId?: string;
-  purchaseDate: string;
   expiryDate: string;
 }
-
-export interface PurchasedProduct {
-  id: string;
-  productId: string;
-  userId: string;
-  purchaseDate: string;
-  accessExpiryDate: string;
-}
-
-export interface QuizOptionRecord {
-  id?: string;
-  text: string;
-}
-
-export interface QuizQuestionRecord {
-  id: string;
-  text: string;
-  options: QuizOptionRecord[];
-  image?: string;
-  audio?: string;
-}
-
-export type DynamoRecord = Record<string, unknown>;
 
 export interface ProductMetadataRecord extends Product {
   PK: string;

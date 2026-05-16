@@ -1,6 +1,7 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
-import { getProductDetailsById } from "../services/productService";
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
+import { mapProductErrorToResponse } from "../errors/errorToResponse";
+import { getProductDetails } from "../use-cases/getProductDetails";
 
 export const getProductDetailsHandler = async (
   event: APIGatewayProxyEventV2
@@ -12,15 +13,12 @@ export const getProductDetailsHandler = async (
   }
 
   try {
-    const productDetails = await getProductDetailsById(productId);
-
-    if (!productDetails) {
-      return createErrorResponse(event, 404, "Product not found", { code: "PRODUCT_NOT_FOUND" });
-    }
-
+    const productDetails = await getProductDetails(productId);
     return createSuccessResponse(event, 200, productDetails);
-  } catch {
-    return createErrorResponse(event, 502, "Failed to load product data", {
+  } catch (error) {
+    return mapProductErrorToResponse(event, error, {
+      statusCode: 502,
+      message: "Failed to load product data",
       code: "PRODUCT_DETAIL_FETCH_FAILED"
     });
   }

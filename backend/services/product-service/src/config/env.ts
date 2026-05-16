@@ -18,3 +18,7 @@ export const getProductServiceEnv = () => {
 
   return cachedEnv;
 };
+
+export const getProductTableName = (): string => {
+  return getProductServiceEnv().DYNAMO_DB_TABLE_NAME;
+};

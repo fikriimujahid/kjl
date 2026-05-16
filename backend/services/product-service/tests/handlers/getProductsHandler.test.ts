@@ -1,9 +1,9 @@
 import { APIGatewayProxyEventV2 } from "aws-lambda";
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
 import { getProductsHandler } from "../../src/handlers/getProductsHandler";
-import { getProducts } from "../../src/services/productService";
+import { getProducts } from "../../src/use-cases/getProducts";
 
-jest.mock("../../src/services/productService", () => ({
+jest.mock("../../src/use-cases/getProducts", () => ({
   getProducts: jest.fn()
 }));
 

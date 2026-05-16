@@ -1,10 +1,12 @@
 import { APIGatewayProxyEventV2 } from "aws-lambda";
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
+import { ProductNotFoundError } from "../../src/errors/applicationErrors";
 import { getProductDetailsHandler } from "../../src/handlers/getProductDetailsHandler";
-import { getProductDetailsById } from "../../src/services/productService";
+import { ProductDetail } from "../../src/types/productTypes";
+import { getProductDetails } from "../../src/use-cases/getProductDetails";
 
-jest.mock("../../src/services/productService", () => ({
-  getProductDetailsById: jest.fn()
+jest.mock("../../src/use-cases/getProductDetails", () => ({
+  getProductDetails: jest.fn()
 }));
 
 jest.mock("@shared-utils/response", () => ({
@@ -33,6 +35,8 @@ const createEvent = (id?: string): APIGatewayProxyEventV2 =>
   }) as APIGatewayProxyEventV2;
 
 describe("getProductDetailsHandler", () => {
+  const getProductDetailsMock = getProductDetails as jest.MockedFunction<typeof getProductDetails>;
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -42,7 +46,7 @@ describe("getProductDetailsHandler", () => {
 
     const result = await getProductDetailsHandler(event);
 
-    expect(getProductDetailsById).not.toHaveBeenCalled();
+    expect(getProductDetailsMock).not.toHaveBeenCalled();
     expect(createErrorResponse).toHaveBeenCalledWith(event, 400, "Missing product id", {
       code: "VALIDATION_ERROR"
     });
@@ -59,11 +63,11 @@ describe("getProductDetailsHandler", () => {
   it("returns 404 when service returns null", async () => {
     const event = createEvent("prod-1");
 
-    (getProductDetailsById as jest.Mock).mockResolvedValue(null);
+    getProductDetailsMock.mockRejectedValue(new ProductNotFoundError());
 
     const result = await getProductDetailsHandler(event);
 
-    expect(getProductDetailsById).toHaveBeenCalledWith("prod-1");
+    expect(getProductDetailsMock).toHaveBeenCalledWith("prod-1");
     expect(createErrorResponse).toHaveBeenCalledWith(event, 404, "Product not found", {
       code: "PRODUCT_NOT_FOUND"
     });
@@ -79,7 +83,7 @@ describe("getProductDetailsHandler", () => {
 
   it("returns 200 with product detail when service succeeds", async () => {
     const event = createEvent("prod-1");
-    const productDetail = {
+    const productDetail: ProductDetail = {
       id: "prod-1",
       name: "JLPT N5",
       price: 100000,
@@ -91,10 +95,11 @@ describe("getProductDetailsHandler", () => {
       topics: []
     };
 
-    (getProductDetailsById as jest.Mock).mockResolvedValue(productDetail);
+    getProductDetailsMock.mockResolvedValue(productDetail);
 
     const result = await getProductDetailsHandler(event);
 
+    expect(getProductDetailsMock).toHaveBeenCalledWith("prod-1");
     expect(createSuccessResponse).toHaveBeenCalledWith(event, 200, productDetail);
     expect(result).toEqual({
       statusCode: 200,
@@ -106,7 +111,7 @@ describe("getProductDetailsHandler", () => {
   it("returns 502 when service throws", async () => {
     const event = createEvent("prod-1");
 
-    (getProductDetailsById as jest.Mock).mockRejectedValue(new Error("upstream unavailable"));
+    getProductDetailsMock.mockRejectedValue(new Error("upstream unavailable"));
 
     const result = await getProductDetailsHandler(event);
 
