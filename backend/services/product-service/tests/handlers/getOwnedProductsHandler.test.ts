@@ -1,11 +1,20 @@
 import { APIGatewayProxyEventV2 } from "aws-lambda";
+import { getAuthenticatedUser } from "@shared-utils/auth";
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
+import {
+  AuthenticationRequiredError,
+  ForbiddenProductAccessError
+} from "../../src/errors/applicationErrors";
 import { getOwnedProductsHandler } from "../../src/handlers/getOwnedProductsHandler";
-import { getOwnedProducts } from "../../src/services/productService";
+import { getOwnedProducts } from "../../src/use-cases/getOwnedProducts";
 import { OwnedProduct } from "../../src/types/productTypes";
 
-jest.mock("../../src/services/productService", () => ({
+jest.mock("../../src/use-cases/getOwnedProducts", () => ({
   getOwnedProducts: jest.fn()
+}));
+
+jest.mock("@shared-utils/auth", () => ({
+  getAuthenticatedUser: jest.fn()
 }));
 
 jest.mock("@shared-utils/response", () => ({
@@ -44,6 +53,9 @@ const createEvent = (
   }) as unknown as APIGatewayProxyEventV2;
 
 describe("getOwnedProductsHandler", () => {
+  const getAuthenticatedUserMock = getAuthenticatedUser as jest.MockedFunction<typeof getAuthenticatedUser>;
+  const getOwnedProductsMock = getOwnedProducts as jest.MockedFunction<typeof getOwnedProducts>;
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -53,7 +65,7 @@ describe("getOwnedProductsHandler", () => {
 
     const result = await getOwnedProductsHandler(event);
 
-    expect(getOwnedProducts).not.toHaveBeenCalled();
+    expect(getOwnedProductsMock).not.toHaveBeenCalled();
     expect(createErrorResponse).toHaveBeenCalledWith(event, 400, "Missing user id", {
       code: "VALIDATION_ERROR"
     });
@@ -69,10 +81,15 @@ describe("getOwnedProductsHandler", () => {
 
   it("returns 401 when authenticated user cannot be resolved", async () => {
     const event = createEvent("user-1");
+    getAuthenticatedUserMock.mockReturnValue(null);
+    getOwnedProductsMock.mockRejectedValue(new AuthenticationRequiredError());
 
     const result = await getOwnedProductsHandler(event);
 
-    expect(getOwnedProducts).not.toHaveBeenCalled();
+    expect(getOwnedProductsMock).toHaveBeenCalledWith({
+      requestedUserId: "user-1",
+      authenticatedUserId: undefined
+    });
     expect(createErrorResponse).toHaveBeenCalledWith(event, 401, "Unauthorized", {
       code: "UNAUTHORIZED"
     });
@@ -88,10 +105,19 @@ describe("getOwnedProductsHandler", () => {
 
   it("returns 403 when authenticated user does not match requested user", async () => {
     const event = createEvent("user-1", { sub: "user-2" });
+    getAuthenticatedUserMock.mockReturnValue({
+      id: "user-2",
+      email: "",
+      name: ""
+    });
+    getOwnedProductsMock.mockRejectedValue(new ForbiddenProductAccessError());
 
     const result = await getOwnedProductsHandler(event);
 
-    expect(getOwnedProducts).not.toHaveBeenCalled();
+    expect(getOwnedProductsMock).toHaveBeenCalledWith({
+      requestedUserId: "user-1",
+      authenticatedUserId: "user-2"
+    });
     expect(createErrorResponse).toHaveBeenCalledWith(event, 403, "Forbidden", {
       code: "FORBIDDEN"
     });
@@ -119,11 +145,19 @@ describe("getOwnedProductsHandler", () => {
       }
     ];
 
-    (getOwnedProducts as jest.Mock).mockResolvedValue(ownedProducts);
+    getAuthenticatedUserMock.mockReturnValue({
+      id: "user-1",
+      email: "",
+      name: ""
+    });
+    getOwnedProductsMock.mockResolvedValue(ownedProducts);
 
     const result = await getOwnedProductsHandler(event);
 
-    expect(getOwnedProducts).toHaveBeenCalledWith("user-1");
+    expect(getOwnedProductsMock).toHaveBeenCalledWith({
+      requestedUserId: "user-1",
+      authenticatedUserId: "user-1"
+    });
     expect(createSuccessResponse).toHaveBeenCalledWith(event, 200, ownedProducts);
     expect(result).toEqual({
       statusCode: 200,
@@ -136,11 +170,19 @@ describe("getOwnedProductsHandler", () => {
     const event = createEvent("user-1", { sub: "user-1" });
     const ownedProducts: OwnedProduct[] = [];
 
-    (getOwnedProducts as jest.Mock).mockResolvedValue(ownedProducts);
+    getAuthenticatedUserMock.mockReturnValue({
+      id: "user-1",
+      email: "",
+      name: ""
+    });
+    getOwnedProductsMock.mockResolvedValue(ownedProducts);
 
     const result = await getOwnedProductsHandler(event);
 
-    expect(getOwnedProducts).toHaveBeenCalledWith("user-1");
+    expect(getOwnedProductsMock).toHaveBeenCalledWith({
+      requestedUserId: "user-1",
+      authenticatedUserId: "user-1"
+    });
     expect(createSuccessResponse).toHaveBeenCalledWith(event, 200, ownedProducts);
     expect(result).toEqual({
       statusCode: 200,
@@ -151,8 +193,13 @@ describe("getOwnedProductsHandler", () => {
 
   it("returns 502 when owned product lookup fails", async () => {
     const event = createEvent("user-1", { sub: "user-1" });
+    getAuthenticatedUserMock.mockReturnValue({
+      id: "user-1",
+      email: "",
+      name: ""
+    });
 
-    (getOwnedProducts as jest.Mock).mockRejectedValue(new Error("query failed"));
+    getOwnedProductsMock.mockRejectedValue(new Error("query failed"));
 
     const result = await getOwnedProductsHandler(event);
 

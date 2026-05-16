@@ -1,10 +1,31 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
+import { logRequestReceived, logRequestResult } from "@shared-utils/requestLifecycle";
 import { createErrorResponse } from "@shared-utils/response";
 import { handler } from "../src/handler";
 import { getProductDetailsHandler } from "../src/handlers/getProductDetailsHandler";
 import { getOwnedProductsHandler } from "../src/handlers/getOwnedProductsHandler";
 import { getProductsHandler } from "../src/handlers/getProductsHandler";
 import { ROUTES } from "../src/routes";
+
+jest.mock("../src/config/env", () => ({
+  getProductServiceEnv: jest.fn(() => ({
+    DYNAMO_DB_TABLE_NAME: "test-table",
+    MEDIA_PRIVATE_BUCKET_NAME: "test-bucket"
+  }))
+}));
+
+jest.mock("@shared-utils/logger", () => ({
+  createLogger: jest.fn(() => ({
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn()
+  }))
+}));
+
+jest.mock("@shared-utils/requestLifecycle", () => ({
+  logRequestReceived: jest.fn(),
+  logRequestResult: jest.fn((_: unknown, __: unknown, response: unknown) => response)
+}));
 
 jest.mock("../src/handlers/getProductsHandler", () => ({
   getProductsHandler: jest.fn(),
@@ -27,14 +48,11 @@ describe("product-service handler routing", () => {
   const getProductDetailsMock = getProductDetailsHandler as jest.MockedFunction<typeof getProductDetailsHandler>;
   const getOwnedProductsMock = getOwnedProductsHandler as jest.MockedFunction<typeof getOwnedProductsHandler>;
   const createErrorResponseMock = createErrorResponse as jest.MockedFunction<typeof createErrorResponse>;
+  const logRequestReceivedMock = logRequestReceived as jest.MockedFunction<typeof logRequestReceived>;
+  const logRequestResultMock = logRequestResult as jest.MockedFunction<typeof logRequestResult>;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.spyOn(console, "log").mockImplementation(() => undefined);
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
   });
 
   function createEvent(routeKey: string, id?: string): APIGatewayProxyEventV2 {
@@ -82,9 +100,18 @@ describe("product-service handler routing", () => {
     expect(getProductDetailsMock).not.toHaveBeenCalled();
     expect(getOwnedProductsMock).not.toHaveBeenCalled();
     expect(result).toBe(response);
-    expect(console.log).toHaveBeenCalledWith(
-      "[INCOMING_REQUEST]",
-      expect.objectContaining({ routeKey: ROUTES.GET_PRODUCTS.routeKey, requestId: "req-123" })
+    expect(logRequestReceivedMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        routeKey: ROUTES.GET_PRODUCTS.routeKey,
+        requestId: "req-123",
+        method: "GET"
+      })
+    );
+    expect(logRequestResultMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ routeKey: ROUTES.GET_PRODUCTS.routeKey, requestId: "req-123" }),
+      response
     );
   });
 
@@ -103,9 +130,18 @@ describe("product-service handler routing", () => {
     expect(getProductsMock).not.toHaveBeenCalled();
     expect(getOwnedProductsMock).not.toHaveBeenCalled();
     expect(result).toBe(response);
-    expect(console.log).toHaveBeenCalledWith(
-      "[INCOMING_REQUEST]",
-      expect.objectContaining({ routeKey: ROUTES.GET_PRODUCT_DETAIL.routeKey, requestId: "req-123" })
+    expect(logRequestReceivedMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        routeKey: ROUTES.GET_PRODUCT_DETAIL.routeKey,
+        requestId: "req-123",
+        method: "GET"
+      })
+    );
+    expect(logRequestResultMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ routeKey: ROUTES.GET_PRODUCT_DETAIL.routeKey, requestId: "req-123" }),
+      response
     );
   });
 
@@ -124,9 +160,18 @@ describe("product-service handler routing", () => {
     expect(getProductsMock).not.toHaveBeenCalled();
     expect(getProductDetailsMock).not.toHaveBeenCalled();
     expect(result).toBe(response);
-    expect(console.log).toHaveBeenCalledWith(
-      "[INCOMING_REQUEST]",
-      expect.objectContaining({ routeKey: ROUTES.GET_OWNED_PRODUCTS.routeKey, requestId: "req-123" })
+    expect(logRequestReceivedMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        routeKey: ROUTES.GET_OWNED_PRODUCTS.routeKey,
+        requestId: "req-123",
+        method: "GET"
+      })
+    );
+    expect(logRequestResultMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ routeKey: ROUTES.GET_OWNED_PRODUCTS.routeKey, requestId: "req-123" }),
+      response
     );
   });
 
@@ -153,13 +198,18 @@ describe("product-service handler routing", () => {
       code: "ROUTE_NOT_FOUND"
     });
     expect(result).toBe(notFound);
+    expect(logRequestResultMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ routeKey: "GET /api/unknown", requestId: "req-123" }),
+      notFound
+    );
   });
 
   it.each([
     [ROUTES.GET_PRODUCTS.routeKey],
     [ROUTES.GET_PRODUCT_DETAIL.routeKey],
-    [ROUTES.GET_OWNED_PRODUCTS.routeKey],
-  ])("logs incoming request metadata for route %s", async (routeKey) => {
+    [ROUTES.GET_OWNED_PRODUCTS.routeKey]
+  ])("logs request lifecycle metadata for route %s", async (routeKey) => {
     const defaultResponse: APIGatewayProxyStructuredResultV2 = {
       statusCode: 200,
       body: JSON.stringify({ ok: true })
@@ -179,9 +229,15 @@ describe("product-service handler routing", () => {
 
     await handler(event);
 
-    expect(console.log).toHaveBeenCalledWith(
-      "[INCOMING_REQUEST]",
-      expect.objectContaining({ routeKey, requestId: "req-123" })
+    expect(logRequestReceivedMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ routeKey, requestId: "req-123", method: "GET" })
+    );
+    expect(logRequestResultMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ routeKey, requestId: "req-123", method: "GET" }),
+      defaultResponse
     );
   });
+
 });

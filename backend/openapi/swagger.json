@@ -1,12 +1,12 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Auth Service API",
+    "title": "KeJepangDulu API",
     "version": "1.0.0",
-    "description": "Auth endpoints for KeJepangDulu"
+    "description": "Combined OpenAPI document for all backend services with published endpoint docs."
   },
   "paths": {
-    "/login": {
+    "/api/auth/login": {
       "post": {
         "summary": "Authenticate with email and password",
         "tags": [
@@ -481,9 +481,21 @@
             }
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "{authServiceBaseUrl}",
+          "description": "Auth service base URL",
+          "variables": {
+            "authServiceBaseUrl": {
+              "default": "http://localhost:3004",
+              "description": "Auth service local base URL"
+            }
+          }
+        }
+      ]
     },
-    "/register": {
+    "/api/auth/register": {
       "post": {
         "summary": "Register a new account",
         "tags": [
@@ -952,9 +964,21 @@
             }
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "{authServiceBaseUrl}",
+          "description": "Auth service base URL",
+          "variables": {
+            "authServiceBaseUrl": {
+              "default": "http://localhost:3004",
+              "description": "Auth service local base URL"
+            }
+          }
+        }
+      ]
     },
-    "/forgot-password": {
+    "/api/auth/forgot-password": {
       "post": {
         "summary": "Request password reset code",
         "tags": [
@@ -1412,9 +1436,21 @@
             }
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "{authServiceBaseUrl}",
+          "description": "Auth service base URL",
+          "variables": {
+            "authServiceBaseUrl": {
+              "default": "http://localhost:3004",
+              "description": "Auth service local base URL"
+            }
+          }
+        }
+      ]
     },
-    "/forgot-password/confirm": {
+    "/api/auth/forgot-password/confirm": {
       "post": {
         "summary": "Confirm password reset with verification code",
         "tags": [
@@ -1865,9 +1901,21 @@
             }
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "{authServiceBaseUrl}",
+          "description": "Auth service base URL",
+          "variables": {
+            "authServiceBaseUrl": {
+              "default": "http://localhost:3004",
+              "description": "Auth service local base URL"
+            }
+          }
+        }
+      ]
     },
-    "/refresh": {
+    "/api/auth/refresh": {
       "post": {
         "summary": "Refresh auth session from refresh token cookie",
         "tags": [
@@ -2319,9 +2367,21 @@
             }
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "{authServiceBaseUrl}",
+          "description": "Auth service base URL",
+          "variables": {
+            "authServiceBaseUrl": {
+              "default": "http://localhost:3004",
+              "description": "Auth service local base URL"
+            }
+          }
+        }
+      ]
     },
-    "/logout": {
+    "/api/auth/logout": {
       "post": {
         "summary": "Logout current session and clear refresh cookie",
         "tags": [
@@ -2381,9 +2441,21 @@
             }
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "{authServiceBaseUrl}",
+          "description": "Auth service base URL",
+          "variables": {
+            "authServiceBaseUrl": {
+              "default": "http://localhost:3004",
+              "description": "Auth service local base URL"
+            }
+          }
+        }
+      ]
     },
-    "/session": {
+    "/api/auth/session": {
       "get": {
         "summary": "Get current authentication session status",
         "tags": [
@@ -2504,7 +2576,810 @@
             }
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "{authServiceBaseUrl}",
+          "description": "Auth service base URL",
+          "variables": {
+            "authServiceBaseUrl": {
+              "default": "http://localhost:3004",
+              "description": "Auth service local base URL"
+            }
+          }
+        }
+      ]
+    },
+    "/api/products": {
+      "get": {
+        "summary": "List available products",
+        "tags": [
+          "Product"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "name",
+                          "price",
+                          "shortDescription",
+                          "level",
+                          "topicsCount",
+                          "accessDurationDays"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "price": {
+                            "type": "number"
+                          },
+                          "shortDescription": {
+                            "type": "string"
+                          },
+                          "level": {
+                            "type": "string",
+                            "enum": [
+                              "N5",
+                              "N4",
+                              "N3",
+                              "N2",
+                              "N1",
+                              "JFT",
+                              "Beginner"
+                            ]
+                          },
+                          "topicsCount": {
+                            "type": "number"
+                          },
+                          "featuredProducts": {
+                            "type": "boolean"
+                          },
+                          "accessDurationDays": {
+                            "type": "number"
+                          }
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "required": [
+                        "timestamp"
+                      ],
+                      "properties": {
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "meta"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "message"
+                      ],
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "required": [
+                        "timestamp"
+                      ],
+                      "properties": {
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "servers": [
+        {
+          "url": "{productServiceBaseUrl}",
+          "description": "Product service base URL",
+          "variables": {
+            "productServiceBaseUrl": {
+              "default": "http://localhost:3001",
+              "description": "Product service local base URL"
+            }
+          }
+        }
+      ]
+    },
+    "/api/products/{id}": {
+      "get": {
+        "summary": "Get product details by product id",
+        "tags": [
+          "Product"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "name",
+                        "price",
+                        "shortDescription",
+                        "level",
+                        "topicsCount",
+                        "accessDurationDays",
+                        "description",
+                        "topics"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "price": {
+                          "type": "number"
+                        },
+                        "shortDescription": {
+                          "type": "string"
+                        },
+                        "level": {
+                          "type": "string",
+                          "enum": [
+                            "N5",
+                            "N4",
+                            "N3",
+                            "N2",
+                            "N1",
+                            "JFT",
+                            "Beginner"
+                          ]
+                        },
+                        "topicsCount": {
+                          "type": "number"
+                        },
+                        "featuredProducts": {
+                          "type": "boolean"
+                        },
+                        "accessDurationDays": {
+                          "type": "number"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "topics": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "id",
+                              "title",
+                              "sessions"
+                            ],
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "sessions": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "id",
+                                    "title",
+                                    "type"
+                                  ],
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "title": {
+                                      "type": "string"
+                                    },
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "quiz",
+                                        "pdf",
+                                        "audio",
+                                        "images",
+                                        "video"
+                                      ]
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "required": [
+                        "timestamp"
+                      ],
+                      "properties": {
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "meta"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "message"
+                      ],
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "required": [
+                        "timestamp"
+                      ],
+                      "properties": {
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "meta"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "message"
+                      ],
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "required": [
+                        "timestamp"
+                      ],
+                      "properties": {
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "meta"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "message"
+                      ],
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "required": [
+                        "timestamp"
+                      ],
+                      "properties": {
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "servers": [
+        {
+          "url": "{productServiceBaseUrl}",
+          "description": "Product service base URL",
+          "variables": {
+            "productServiceBaseUrl": {
+              "default": "http://localhost:3001",
+              "description": "Product service local base URL"
+            }
+          }
+        }
+      ]
+    },
+    "/api/products/owned/{userId}": {
+      "get": {
+        "summary": "List owned products for authenticated user",
+        "tags": [
+          "Product"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "productId",
+                          "userId",
+                          "level",
+                          "name",
+                          "purchaseDate",
+                          "accessExpiryDate"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "productId": {
+                            "type": "string"
+                          },
+                          "userId": {
+                            "type": "string"
+                          },
+                          "level": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "purchaseDate": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "accessExpiryDate": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "required": [
+                        "timestamp"
+                      ],
+                      "properties": {
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "meta"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "message"
+                      ],
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "required": [
+                        "timestamp"
+                      ],
+                      "properties": {
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "meta"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "message"
+                      ],
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "required": [
+                        "timestamp"
+                      ],
+                      "properties": {
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "meta"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "message"
+                      ],
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "required": [
+                        "timestamp"
+                      ],
+                      "properties": {
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "error",
+                    "meta"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "message"
+                      ],
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "required": [
+                        "timestamp"
+                      ],
+                      "properties": {
+                        "requestId": {
+                          "type": "string"
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "servers": [
+        {
+          "url": "{productServiceBaseUrl}",
+          "description": "Product service base URL",
+          "variables": {
+            "productServiceBaseUrl": {
+              "default": "http://localhost:3001",
+              "description": "Product service local base URL"
+            }
+          }
+        }
+      ]
     }
   },
   "components": {
@@ -2516,16 +3391,36 @@
       }
     }
   },
+  "servers": [
+    {
+      "url": "{authServiceBaseUrl}",
+      "description": "Auth service base URL",
+      "variables": {
+        "authServiceBaseUrl": {
+          "default": "http://localhost:3004",
+          "description": "Auth service local base URL"
+        }
+      }
+    },
+    {
+      "url": "{productServiceBaseUrl}",
+      "description": "Product service base URL",
+      "variables": {
+        "productServiceBaseUrl": {
+          "default": "http://localhost:3001",
+          "description": "Product service local base URL"
+        }
+      }
+    }
+  ],
   "tags": [
     {
       "name": "Auth",
       "description": "Authentication operations"
-    }
-  ],
-  "servers": [
+    },
     {
-      "url": "/api/auth",
-      "description": "Auth service base URL"
+      "name": "Product",
+      "description": "Product browsing and ownership operations"
     }
   ]
 }

@@ -6,7 +6,7 @@
     "description": "Product endpoints for KeJepangDulu"
   },
   "paths": {
-    "/api/products": {
+    "/": {
       "get": {
         "summary": "List available products",
         "tags": [
@@ -156,7 +156,7 @@
         }
       }
     },
-    "/api/products/{id}": {
+    "/{id}": {
       "get": {
         "summary": "Get product details by product id",
         "tags": [
@@ -460,7 +460,7 @@
         }
       }
     },
-    "/api/products/owned/{userId}": {
+    "/owned/{userId}": {
       "get": {
         "summary": "List owned products for authenticated user",
         "tags": [
@@ -775,6 +775,12 @@
     {
       "name": "Product",
       "description": "Product browsing and ownership operations"
+    }
+  ],
+  "servers": [
+    {
+      "url": "/api/products",
+      "description": "Product service base URL"
     }
   ]
 }

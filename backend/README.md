@@ -96,6 +96,12 @@ Generate auth swagger JSON:
 npm run swagger:auth
 ```
 
+Generate one combined swagger JSON for every service that currently publishes docs:
+
+```bash
+npm run swagger:all
+```
+
 Generate product swagger JSON:
 
 ```bash
@@ -104,6 +110,7 @@ npm run swagger:product
 
 Outputs:
 
+- `openapi/swagger.json`
 - `services/auth-service/openapi/swagger.json`
 - `services/product-service/openapi/swagger.json`
 

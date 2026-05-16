@@ -13,6 +13,18 @@ export interface OpenApiInfo {
   description?: string;
 }
 
+export interface OpenApiServerObject {
+  url: string;
+  description?: string;
+  variables?: Record<string, OpenApiServerVariableObject>;
+}
+
+export interface OpenApiServerVariableObject {
+  default: string;
+  description?: string;
+  enum?: string[];
+}
+
 export interface OpenApiSchemaObject {
   type?: string;
   format?: string;
@@ -52,12 +64,15 @@ export interface OpenApiOperation {
   responses: Record<string, OpenApiResponseObject>;
 }
 
-export type OpenApiPathItem = Partial<Record<HttpMethod, OpenApiOperation>>;
+export type OpenApiPathItem = Partial<Record<HttpMethod, OpenApiOperation>> & {
+  servers?: OpenApiServerObject[];
+};
 
 export interface OpenApiDocument {
   openapi: "3.0.3";
   info: OpenApiInfo;
   paths: Record<string, OpenApiPathItem>;
+  servers?: OpenApiServerObject[];
   components?: {
     schemas?: Record<string, OpenApiSchemaObject>;
     securitySchemes?: Record<string, unknown>;

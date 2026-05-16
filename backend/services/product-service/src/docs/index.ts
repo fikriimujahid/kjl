@@ -10,11 +10,25 @@ export const productServicePaths: Record<string, OpenApiPathItem> = {
   [getOwnedProductsDocPath]: getOwnedProductsDocPathItem
 };
 
+const productServiceLocalBaseUrl = "http://localhost:3001";
+
 export const buildProductServiceOpenApi = () => {
   return buildOpenApiDocument({
     title: "Product Service API",
     version: "1.0.0",
     description: "Product endpoints for KeJepangDulu",
+    servers: [
+      {
+        url: "{productServiceBaseUrl}",
+        description: "Product service base URL",
+        variables: {
+          productServiceBaseUrl: {
+            default: productServiceLocalBaseUrl,
+            description: "Product service local base URL"
+          }
+        }
+      }
+    ],
     includeBearerAuth: true,
     tags: [{ name: "Product", description: "Product browsing and ownership operations" }],
     paths: productServicePaths

@@ -1,17 +1,8 @@
-import {
-  APIGatewayProxyEventV2,
-  APIGatewayProxyEventV2WithJWTAuthorizer,
-  APIGatewayProxyStructuredResultV2
-} from "aws-lambda";
+import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
+import { getAuthenticatedUser } from "@shared-utils/auth";
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
-import { getOwnedProducts } from "../services/productService";
-
-const getAuthenticatedUserId = (event: APIGatewayProxyEventV2): string | undefined => {
-  const claims = (event as APIGatewayProxyEventV2WithJWTAuthorizer).requestContext.authorizer?.jwt
-    ?.claims as Record<string, string> | undefined;
-
-  return claims?.sub ?? claims?.["cognito:username"];
-};
+import { mapProductErrorToResponse } from "../errors/errorToResponse";
+import { getOwnedProducts } from "../use-cases/getOwnedProducts";
 
 export const getOwnedProductsHandler = async (
   event: APIGatewayProxyEventV2
@@ -22,21 +13,19 @@ export const getOwnedProductsHandler = async (
     return createErrorResponse(event, 400, "Missing user id", { code: "VALIDATION_ERROR" });
   }
 
-  const authenticatedUserId = getAuthenticatedUserId(event);
-
-  if (!authenticatedUserId) {
-    return createErrorResponse(event, 401, "Unauthorized", { code: "UNAUTHORIZED" });
-  }
-
-  if (authenticatedUserId !== userId) {
-    return createErrorResponse(event, 403, "Forbidden", { code: "FORBIDDEN" });
-  }
+  const authenticatedUser = getAuthenticatedUser(event);
 
   try {
-    const purchases = await getOwnedProducts(userId);
-    return createSuccessResponse(event, 200, purchases);
-  } catch {
-    return createErrorResponse(event, 502, "Failed to load purchased product data", {
+    const ownedProducts = await getOwnedProducts({
+      requestedUserId: userId,
+      authenticatedUserId: authenticatedUser?.id
+    });
+
+    return createSuccessResponse(event, 200, ownedProducts);
+  } catch (error) {
+    return mapProductErrorToResponse(event, error, {
+      statusCode: 502,
+      message: "Failed to load owned product data",
       code: "OWNED_PRODUCTS_FETCH_FAILED"
     });
   }

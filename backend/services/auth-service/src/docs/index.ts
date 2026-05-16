@@ -18,11 +18,25 @@ export const authServicePaths: Record<string, OpenApiPathItem> = {
   [sessionDocPath]: sessionDocPathItem
 };
 
+const authServiceLocalBaseUrl = "http://localhost:3004";
+
 export const buildAuthServiceOpenApi = () => {
   return buildOpenApiDocument({
     title: "Auth Service API",
     version: "1.0.0",
     description: "Auth endpoints for KeJepangDulu",
+    servers: [
+      {
+        url: "{authServiceBaseUrl}",
+        description: "Auth service base URL",
+        variables: {
+          authServiceBaseUrl: {
+            default: authServiceLocalBaseUrl,
+            description: "Auth service local base URL"
+          }
+        }
+      }
+    ],
     includeBearerAuth: true,
     tags: [{ name: "Auth", description: "Authentication operations" }],
     paths: authServicePaths
