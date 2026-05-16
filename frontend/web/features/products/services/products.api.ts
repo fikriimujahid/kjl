@@ -69,12 +69,7 @@ function isProduct(value: unknown): value is Product {
 }
 
 function isOwnedProduct(value: unknown): value is OwnedProduct {
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-
-  const candidate = value as Record<string, unknown>;
-  return typeof candidate.id === 'string' && typeof candidate.name === 'string';
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
 export async function fetchProducts({

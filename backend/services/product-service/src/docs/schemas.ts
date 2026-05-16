@@ -71,7 +71,7 @@ export const productDetailSchema: OpenApiSchemaObject = {
 
 export const ownedProductSchema: OpenApiSchemaObject = {
   type: "object",
-  required: ["id", "productId", "userId", "level", "name", "purchaseDate", "accessExpiryDate"],
+  required: ["id", "productId", "userId", "level", "name", "purchaseDate", "expiryDate"],
   properties: {
     id: { type: "string" },
     productId: { type: "string" },
@@ -79,6 +79,6 @@ export const ownedProductSchema: OpenApiSchemaObject = {
     level: { type: "string" },
     name: { type: "string" },
     purchaseDate: { type: "string", format: "date-time" },
-    accessExpiryDate: { type: "string", format: "date-time" }
+    expiryDate: { type: "string", format: "date-time" }
   }
 };
