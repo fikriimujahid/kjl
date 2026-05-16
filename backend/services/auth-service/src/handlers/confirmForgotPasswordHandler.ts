@@ -1,32 +1,26 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
-import { parseEventBody } from "@shared-utils/request";
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
 import { mapAuthErrorToResponse } from "../errors/errorToResponse";
+import { confirmForgotPasswordSchema } from "../schemas/confirmForgotPasswordSchema";
 import { confirmForgotPassword } from "../use-cases/confirmForgotPassword";
 
 export const confirmForgotPasswordHandler = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
-  let payload: Record<string, unknown>;
+  const parsedPayload = confirmForgotPasswordSchema.safeParseEvent(event);
 
-  try {
-    payload = parseEventBody(event);
-  } catch {
-    return createErrorResponse(event, 400, "Invalid JSON body", { code: "INVALID_JSON" });
-  }
-
-  const email = typeof payload.email === "string" ? payload.email.trim() : "";
-  const code = typeof payload.code === "string" ? payload.code.trim() : "";
-  const newPassword = typeof payload.newPassword === "string" ? payload.newPassword : "";
-
-  if (!email || !code || !newPassword) {
-    return createErrorResponse(event, 400, "email, code, and newPassword are required", {
-      code: "VALIDATION_ERROR"
+  if (!parsedPayload.success) {
+    return createErrorResponse(event, 400, parsedPayload.error, {
+      code: parsedPayload.error === "Invalid JSON body" ? "INVALID_JSON" : "VALIDATION_ERROR"
     });
   }
 
   try {
-    const result = await confirmForgotPassword({ email, code, newPassword });
+    const result = await confirmForgotPassword({
+      email: parsedPayload.data.email,
+      code: parsedPayload.data.code,
+      newPassword: parsedPayload.data.newPassword
+    });
     return createSuccessResponse(event, 200, result);
   } catch (error) {
     return mapAuthErrorToResponse(event, error, {

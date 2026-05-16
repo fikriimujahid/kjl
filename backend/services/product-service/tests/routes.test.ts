@@ -16,6 +16,13 @@ describe("product routes", () => {
       "GET",
       "/api/products/owned/{userId}",
       "GET /api/products/owned/{userId}"
+    ],
+    [
+      "GET_INTERNAL_OWNED_PRODUCTS",
+      ROUTES.GET_INTERNAL_OWNED_PRODUCTS,
+      "GET",
+      "/api/internal/products/owned/{userId}",
+      "GET /api/internal/products/owned/{userId}"
     ]
   ])("keeps %s route contract", (_, route, method, path, routeKey) => {
     expect(route.method).toBe(method);

@@ -1,5 +1,5 @@
 import { Product } from "../../models/product";
-import { AuthenticatedUser } from "../../utils/auth";
+import { AuthenticatedUser } from "@shared-utils/auth";
 
 interface BuildSnapPayloadInput {
   orderId: string;

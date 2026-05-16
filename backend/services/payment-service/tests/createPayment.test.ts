@@ -72,7 +72,9 @@ const loadCreatePaymentModule = async (
     DYNAMO_DB_TABLE_NAME: "kjl-table",
     MIDTRANS_SERVER_KEY: "midtrans-server-key",
     MIDTRANS_SNAP_API_URL: "https://snap.example.com/transactions",
-    APP_BASE_URL: ""
+    APP_BASE_URL: "",
+    PRODUCT_SERVICE_INTERNAL_API_BASE_URL: "https://service-api.example.com",
+    INTERNAL_SERVICE_API_KEY: "internal-secret"
   };
 
   for (const [key, value] of Object.entries(envOverrides)) {
@@ -98,31 +100,31 @@ const loadCreatePaymentModule = async (
     randomUUID: mocks.randomUUID
   }));
 
-  jest.doMock("../src/utils/auth", () => ({
+  jest.doMock("@shared-utils/auth", () => ({
     getAuthenticatedUser: mocks.getAuthenticatedUser
   }));
 
-  jest.doMock("../src/utils/request", () => ({
+  jest.doMock("@shared-utils/request", () => ({
     parseEventBody: mocks.parseEventBody
   }));
 
-  jest.doMock("../src/services/paymentRepository", () => ({
+  jest.doMock("../src/repositories/paymentOrderRepository", () => ({
     hasActiveProductAccess: mocks.hasActiveProductAccess,
     savePaymentOrder: mocks.savePaymentOrder
   }));
 
-  jest.doMock("../src/services/productService", () => ({
-    fetchProductById: mocks.fetchProductById
+  jest.doMock("../src/repositories/productRepository", () => ({
+    findProductById: mocks.fetchProductById
   }));
 
   jest.doMock("../src/services/midtransService", () => ({
     createSnapTransaction: mocks.createSnapTransaction
   }));
 
-  const module = require("../src/handlers/createPayment") as {
-    createPayment: CreatePaymentFn;
+  const module = require("../src/handlers/createPaymentHandler") as {
+    createPaymentHandler: CreatePaymentFn;
   };
-  return { createPayment: module.createPayment as CreatePaymentFn, mocks };
+  return { createPayment: module.createPaymentHandler as CreatePaymentFn, mocks };
 };
 
 describe("createPayment", () => {
@@ -160,6 +162,30 @@ describe("createPayment", () => {
     expect(response.statusCode).toBe(500);
     expect(parseBody(response)).toEqual({
       message: "Missing MIDTRANS_SNAP_API_URL environment variable"
+    });
+  });
+
+  it("returns 500 when PRODUCT_SERVICE_INTERNAL_API_BASE_URL is missing", async () => {
+    const { createPayment } = await loadCreatePaymentModule({
+      PRODUCT_SERVICE_INTERNAL_API_BASE_URL: undefined
+    });
+
+    const response = await createPayment(buildEvent());
+
+    expect(response.statusCode).toBe(500);
+    expect(parseBody(response)).toEqual({
+      message: "Missing PRODUCT_SERVICE_INTERNAL_API_BASE_URL environment variable"
+    });
+  });
+
+  it("returns 500 when INTERNAL_SERVICE_API_KEY is missing", async () => {
+    const { createPayment } = await loadCreatePaymentModule({ INTERNAL_SERVICE_API_KEY: undefined });
+
+    const response = await createPayment(buildEvent());
+
+    expect(response.statusCode).toBe(500);
+    expect(parseBody(response)).toEqual({
+      message: "Missing INTERNAL_SERVICE_API_KEY environment variable"
     });
   });
 
@@ -333,8 +359,8 @@ describe("createPayment", () => {
     });
     expect(expectedOrderId.length).toBeLessThanOrEqual(50);
 
-    expect(mocks.hasActiveProductAccess).toHaveBeenCalledWith("kjl-table", "user-1", "product-1");
-    expect(mocks.fetchProductById).toHaveBeenCalledWith("product-1", "kjl-table");
+    expect(mocks.hasActiveProductAccess).toHaveBeenCalledWith("user-1", "product-1");
+    expect(mocks.fetchProductById).toHaveBeenCalledWith("product-1");
     expect(mocks.createSnapTransaction).toHaveBeenCalledWith(
       expect.objectContaining({
         serverKey: "midtrans-server-key",

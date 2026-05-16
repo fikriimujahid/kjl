@@ -15,6 +15,7 @@ export interface PaymentOrderRecord {
   userId: string;
   productId: string;
   productName: string;
+  productLevel?: string;
   amount: number;
   grossAmount: string;
   accessDurationDays: number;

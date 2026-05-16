@@ -1,12 +1,23 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
-import { createPayment } from "./handlers/createPayment";
-import { handleWebhook } from "./handlers/handleWebhook";
-import { ROUTES } from "./routes";
 import { createLogger } from "@shared-utils/logger";
 import { logRequestReceived, logRequestResult } from "@shared-utils/requestLifecycle";
 import { createErrorResponse, optionsResponse } from "@shared-utils/response";
+import { getPaymentServiceEnv } from "./config/env";
+import { createPaymentHandler } from "./handlers/createPaymentHandler";
+import { handleWebhookHandler } from "./handlers/handleWebhookHandler";
+import { ROUTES } from "./routes";
+
+getPaymentServiceEnv();
 
 const logger = createLogger("payment-service");
+
+const routeHandlers: Record<
+  string,
+  (event: APIGatewayProxyEventV2) => Promise<APIGatewayProxyStructuredResultV2>
+> = {
+  [ROUTES.CREATE_PAYMENT.routeKey]: createPaymentHandler,
+  [ROUTES.HANDLE_WEBHOOK.routeKey]: handleWebhookHandler
+};
 
 export const handler = async (
   event: APIGatewayProxyEventV2
@@ -23,12 +34,9 @@ export const handler = async (
     return logRequestResult(logger, requestContext, optionsResponse(event));
   }
 
-  if (event.routeKey === ROUTES.CREATE_PAYMENT.routeKey) {
-    return logRequestResult(logger, requestContext, await createPayment(event));
-  }
-
-  if (event.routeKey === ROUTES.HANDLE_WEBHOOK.routeKey) {
-    return logRequestResult(logger, requestContext, await handleWebhook(event));
+  const routeHandler = routeHandlers[event.routeKey ?? ""];
+  if (routeHandler) {
+    return logRequestResult(logger, requestContext, await routeHandler(event));
   }
 
   return logRequestResult(

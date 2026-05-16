@@ -90,7 +90,10 @@ const loadHandleWebhookModule = async (
   process.env = {
     ...ORIGINAL_ENV,
     DYNAMO_DB_TABLE_NAME: "kjl-table",
-    MIDTRANS_SERVER_KEY: "midtrans-server-key"
+    MIDTRANS_SERVER_KEY: "midtrans-server-key",
+    MIDTRANS_SNAP_API_URL: "https://snap.example.com/transactions",
+    PRODUCT_SERVICE_INTERNAL_API_BASE_URL: "https://service-api.example.com",
+    INTERNAL_SERVICE_API_KEY: "internal-secret"
   };
 
   for (const [key, value] of Object.entries(envOverrides)) {
@@ -119,16 +122,16 @@ const loadHandleWebhookModule = async (
     normalizePaymentStatus: mocks.normalizePaymentStatus
   }));
 
-  jest.doMock("../src/services/paymentRepository", () => ({
-    readPaymentOrder: mocks.readPaymentOrder,
+  jest.doMock("../src/repositories/paymentOrderRepository", () => ({
+    findPaymentOrderById: mocks.readPaymentOrder,
     grantProductAccess: mocks.grantProductAccess,
     savePaymentOrder: mocks.savePaymentOrder
   }));
 
-  const module = require("../src/handlers/handleWebhook") as {
-    handleWebhook: HandleWebhookFn;
+  const module = require("../src/handlers/handleWebhookHandler") as {
+    handleWebhookHandler: HandleWebhookFn;
   };
-  return { handleWebhook: module.handleWebhook as HandleWebhookFn, mocks };
+  return { handleWebhook: module.handleWebhookHandler as HandleWebhookFn, mocks };
 };
 
 describe("handleWebhook", () => {

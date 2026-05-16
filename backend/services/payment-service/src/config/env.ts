@@ -1,56 +1,52 @@
+import { defineEnvSchema, InferEnv, validateEnv } from "@shared-utils/env";
 import { ValidationError } from "../errors/applicationErrors";
 
-export interface CreatePaymentEnv {
-  dynamoDbTableName: string;
-  midtransServerKey: string;
-  midtransSnapApiUrl: string;
-  appBaseUrl: string;
-}
+const parseStringEnv = (rawValue: string): string => rawValue;
+const parseAppBaseUrl = (rawValue: string): string => rawValue.trim().replace(/\/$/, "");
+const parseUrlEnv = (rawValue: string): string => rawValue.trim().replace(/\/$/, "");
 
-export interface WebhookEnv {
-  dynamoDbTableName: string;
-  midtransServerKey: string;
-}
+const paymentServiceEnvSchema = defineEnvSchema({
+  DYNAMO_DB_TABLE_NAME: { required: true, parse: parseStringEnv },
+  MIDTRANS_SERVER_KEY: { required: true, parse: parseStringEnv },
+  MIDTRANS_SNAP_API_URL: { required: true, parse: parseStringEnv },
+  APP_BASE_URL: { defaultValue: "", parse: parseAppBaseUrl },
+  PRODUCT_SERVICE_INTERNAL_API_BASE_URL: { required: true, parse: parseUrlEnv },
+  INTERNAL_SERVICE_API_KEY: { required: true, parse: parseStringEnv }
+});
 
-const readSharedRequiredEnv = (): { dynamoDbTableName: string; midtransServerKey: string } => {
-  const dynamoDbTableName = process.env.DYNAMO_DB_TABLE_NAME;
-  const midtransServerKey = process.env.MIDTRANS_SERVER_KEY;
+export type PaymentServiceEnv = InferEnv<typeof paymentServiceEnvSchema>;
 
-  if (!dynamoDbTableName) {
-    throw new ValidationError("Missing DYNAMO_DB_TABLE_NAME environment variable", 500);
-  }
+let cachedEnv: PaymentServiceEnv | null = null;
 
-  if (!midtransServerKey) {
-    throw new ValidationError("Missing MIDTRANS_SERVER_KEY environment variable", 500);
-  }
-
-  return {
-    dynamoDbTableName,
-    midtransServerKey
-  };
+export const clearEnvCache = (): void => {
+  cachedEnv = null;
 };
 
-export const getCreatePaymentEnv = (): CreatePaymentEnv => {
-  const { dynamoDbTableName, midtransServerKey } = readSharedRequiredEnv();
-  const midtransSnapApiUrl = process.env.MIDTRANS_SNAP_API_URL;
+const mapEnvValidationError = (error: unknown): never => {
+  if (error instanceof Error) {
+    const missingVariableMatch = error.message.match(/^Missing required environment variable: (.+)$/);
 
-  if (!midtransSnapApiUrl) {
-    throw new ValidationError("Missing MIDTRANS_SNAP_API_URL environment variable", 500);
+    if (missingVariableMatch) {
+      throw new ValidationError(
+        `Missing ${missingVariableMatch[1]} environment variable`,
+        500
+      );
+    }
+
+    throw new ValidationError(error.message, 500);
   }
 
-  return {
-    dynamoDbTableName,
-    midtransServerKey,
-    midtransSnapApiUrl,
-    appBaseUrl: (process.env.APP_BASE_URL ?? "").trim().replace(/\/$/, "")
-  };
+  throw new ValidationError("Invalid payment-service environment", 500);
 };
 
-export const getWebhookEnv = (): WebhookEnv => {
-  const { dynamoDbTableName, midtransServerKey } = readSharedRequiredEnv();
+export const getPaymentServiceEnv = (): PaymentServiceEnv => {
+  if (!cachedEnv) {
+    try {
+      cachedEnv = validateEnv(process.env, paymentServiceEnvSchema);
+    } catch (error) {
+      mapEnvValidationError(error);
+    }
+  }
 
-  return {
-    dynamoDbTableName,
-    midtransServerKey
-  };
+  return cachedEnv as PaymentServiceEnv;
 };

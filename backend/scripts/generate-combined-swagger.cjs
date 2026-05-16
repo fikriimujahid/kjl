@@ -36,6 +36,22 @@ const serviceSpecs = [
       "index.js"
     ),
     buildOpenApiExport: "buildProductServiceOpenApi"
+  },
+  {
+    serviceName: "payment-service",
+    docsModulePath: path.resolve(
+      rootDir,
+      "services",
+      "payment-service",
+      "build",
+      "lambda",
+      "services",
+      "payment-service",
+      "src",
+      "docs",
+      "index.js"
+    ),
+    buildOpenApiExport: "buildPaymentServiceOpenApi"
   }
 ];
 
