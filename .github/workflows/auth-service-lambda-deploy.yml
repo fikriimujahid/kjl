@@ -18,6 +18,8 @@ jobs:
   deploy-auth-service-lambda:
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name == 'prod' && 'prod' || 'dev' }}
+    env:
+      ZIP_FILE: auth-service-lambda.zip
 
     permissions:
       id-token: write
@@ -49,15 +51,15 @@ jobs:
             exit 1
           fi
 
-          rm -f auth-service-lambda.zip
+          rm -f "${ZIP_FILE}"
           cd services/auth-service/build/lambda
-          zip -r ../../../../auth-service-lambda.zip .
+          zip -r "../../../../${ZIP_FILE}" .
 
       - name: Upload Lambda artifact
         uses: actions/upload-artifact@v4
         with:
           name: auth-service-lambda
-          path: backend/auth-service-lambda.zip
+          path: backend/${{ env.ZIP_FILE }}
           if-no-files-found: error
 
       - uses: aws-actions/configure-aws-credentials@v4
@@ -162,4 +164,4 @@ jobs:
 
           aws lambda update-function-code \
             --function-name "${LAMBDA_FUNCTION_NAME}" \
-            --zip-file fileb://auth-service-lambda.zip
+            --zip-file "fileb://${ZIP_FILE}"
