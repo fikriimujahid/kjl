@@ -18,6 +18,8 @@ jobs:
   deploy-product-service-lambda:
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name == 'prod' && 'prod' || 'dev' }}
+    env:
+      ZIP_FILE: product-service-lambda.zip
 
     permissions:
       id-token: write
@@ -49,15 +51,15 @@ jobs:
             exit 1
           fi
 
-          rm -f product-service-lambda.zip
+          rm -f "${ZIP_FILE}"
           cd services/product-service/build/lambda
-          zip -r ../../../../product-service-lambda.zip .
+          zip -r "../../../../${ZIP_FILE}" .
 
       - name: Upload Lambda artifact
         uses: actions/upload-artifact@v4
         with:
           name: product-service-lambda
-          path: backend/product-service-lambda.zip
+          path: backend/${{ env.ZIP_FILE }}
           if-no-files-found: error
 
       - uses: aws-actions/configure-aws-credentials@v4
@@ -68,11 +70,11 @@ jobs:
           role-to-assume: ${{ github.ref_name == 'prod' && secrets.AWS_PROD_ROLE_ARN || secrets.AWS_DEV_ROLE_ARN }}
 
       - name: Create Lambda env file
+        env:
+          DYNAMO_DB_TABLE_NAME: ${{ secrets.PRODUCT_SERVICE_DYNAMO_DB_TABLE_NAME }}
+          MEDIA_PRIVATE_BUCKET_NAME: ${{ secrets.MEDIA_PRIVATE_BUCKET_NAME }}
+          PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY: ${{ secrets.PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY }}
         run: |
-          DYNAMO_DB_TABLE_NAME="${{ secrets.PRODUCT_SERVICE_DYNAMO_DB_TABLE_NAME }}"
-          MEDIA_PRIVATE_BUCKET_NAME="${{ secrets.MEDIA_PRIVATE_BUCKET_NAME }}"
-          PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY="${{ secrets.PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY }}"
-
           if [ -z "${MEDIA_PRIVATE_BUCKET_NAME}" ]; then
             echo "MEDIA_PRIVATE_BUCKET_NAME is missing. Set vars.MEDIA_PRIVATE_BUCKET_NAME or secrets.MEDIA_PRIVATE_BUCKET_NAME."
             exit 1
@@ -139,4 +141,4 @@ jobs:
 
           aws lambda update-function-code \
             --function-name "${LAMBDA_FUNCTION_NAME}" \
-            --zip-file fileb://product-service-lambda.zip
+            --zip-file "fileb://${ZIP_FILE}"

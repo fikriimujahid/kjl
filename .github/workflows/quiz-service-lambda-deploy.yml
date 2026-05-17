@@ -14,6 +14,8 @@ jobs:
   deploy-quiz-service-lambda:
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name == 'prod' && 'prod' || 'dev' }}
+    env:
+      ZIP_FILE: quiz-service-lambda.zip
 
     permissions:
       id-token: write
@@ -45,15 +47,15 @@ jobs:
             exit 1
           fi
 
-          rm -f quiz-service-lambda.zip
+          rm -f "${ZIP_FILE}"
           cd build/lambda
-          zip -r ../../quiz-service-lambda.zip .
+          zip -r "../../${ZIP_FILE}" .
 
       - name: Upload Lambda artifact
         uses: actions/upload-artifact@v4
         with:
           name: quiz-service-lambda
-          path: backend/quiz-service/quiz-service-lambda.zip
+          path: backend/quiz-service/${{ env.ZIP_FILE }}
           if-no-files-found: error
 
       - uses: aws-actions/configure-aws-credentials@v4
@@ -133,4 +135,4 @@ jobs:
 
           aws lambda update-function-code \
             --function-name "${LAMBDA_FUNCTION_NAME}" \
-            --zip-file fileb://quiz-service-lambda.zip
+            --zip-file "fileb://${ZIP_FILE}"
