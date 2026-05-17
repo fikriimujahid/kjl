@@ -108,15 +108,17 @@ jobs:
       - name: Update Lambda environment variables
         env:
           LAMBDA_FUNCTION_NAME: ${{ secrets.PAYMENT_SERVICE_LAMBDA_FUNCTION_NAME }}
+          DYNAMO_DB_TABLE_NAME: ${{ secrets.PAYMENT_SERVICE_DYNAMO_DB_TABLE_NAME }}
+          MIDTRANS_SERVER_KEY: ${{ secrets.PAYMENT_SERVICE_MIDTRANS_SERVER_KEY }}
+          MIDTRANS_SNAP_API_URL: ${{ secrets.PAYMENT_SERVICE_MIDTRANS_SNAP_API_URL }}
+          APP_BASE_URL: ${{ secrets.PAYMENT_SERVICE_APP_BASE_URL }}
+          PRODUCT_SERVICE_INTERNAL_API_BASE_URL: ${{ secrets.PAYMENT_SERVICE_PRODUCT_SERVICE_INTERNAL_API_BASE_URL }}
+          PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY: ${{ secrets.PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY }}
         run: |
           if [ -z "${LAMBDA_FUNCTION_NAME}" ]; then
             echo "PAYMENT_SERVICE_LAMBDA_FUNCTION_NAME secret is missing."
             exit 1
           fi
-
-          set -a
-          source ./.env.lambda
-          set +a
 
           CURRENT_ENV_VARS=$(aws lambda get-function-configuration \
             --function-name "${LAMBDA_FUNCTION_NAME}" \
