@@ -71,22 +71,22 @@ jobs:
         run: |
           DYNAMO_DB_TABLE_NAME="${{ secrets.PRODUCT_SERVICE_DYNAMO_DB_TABLE_NAME }}"
           MEDIA_PRIVATE_BUCKET_NAME="${{ secrets.MEDIA_PRIVATE_BUCKET_NAME }}"
-          INTERNAL_SERVICE_API_KEY="${{ secrets.INTERNAL_SERVICE_API_KEY }}"
+          PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY="${{ secrets.PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY }}"
 
           if [ -z "${MEDIA_PRIVATE_BUCKET_NAME}" ]; then
             echo "MEDIA_PRIVATE_BUCKET_NAME is missing. Set vars.MEDIA_PRIVATE_BUCKET_NAME or secrets.MEDIA_PRIVATE_BUCKET_NAME."
             exit 1
           fi
 
-          if [ -z "${INTERNAL_SERVICE_API_KEY}" ]; then
-            echo "INTERNAL_SERVICE_API_KEY is missing. Set vars.INTERNAL_SERVICE_API_KEY or secrets.INTERNAL_SERVICE_API_KEY."
+          if [ -z "${PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY}" ]; then
+            echo "PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY is missing. Set vars.PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY or secrets.PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY."
             exit 1
           fi
 
           cat > .env.lambda <<EOF
           DYNAMO_DB_TABLE_NAME=${DYNAMO_DB_TABLE_NAME}
           MEDIA_PRIVATE_BUCKET_NAME=${MEDIA_PRIVATE_BUCKET_NAME}
-          INTERNAL_SERVICE_API_KEY=${INTERNAL_SERVICE_API_KEY}
+          PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY=${PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY}
           EOF
 
       - name: Update Lambda environment variables
@@ -110,11 +110,11 @@ jobs:
           UPDATED_ENV_VARS=$(echo "${CURRENT_ENV_VARS}" | jq -c \
             --arg dynamoDbTableName "${DYNAMO_DB_TABLE_NAME}" \
             --arg mediaPrivateBucketName "${MEDIA_PRIVATE_BUCKET_NAME}" \
-            --arg internalServiceApiKey "${INTERNAL_SERVICE_API_KEY}" \
+            --arg productServiceInternalServiceApiKey "${PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY}" \
             '. + {
               DYNAMO_DB_TABLE_NAME: $dynamoDbTableName,
               MEDIA_PRIVATE_BUCKET_NAME: $mediaPrivateBucketName,
-              INTERNAL_SERVICE_API_KEY: $internalServiceApiKey
+              PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY: $productServiceInternalServiceApiKey
             }')
 
           UPDATE_PAYLOAD=$(jq -cn \

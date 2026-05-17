@@ -285,6 +285,12 @@ service_api = {
         operation_name     = "GetInternalOwnedProductsByUserUnderApi"
         integration_key    = "product"
       }
+      get_internal_product_exists_under_api = {
+        route_key          = "GET /api/internal/products/{id}/exists"
+        authorization_type = "NONE"
+        operation_name     = "GetInternalProductExistsUnderApi"
+        integration_key    = "product"
+      }
       create_payment_under_api = {
         route_key          = "POST /api/payments/create"
         authorization_type = "JWT"

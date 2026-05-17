@@ -1,31 +1,19 @@
 import { selectItems } from "@shared-dynamodb/selectItems";
 import { createLogger } from "@shared-utils/logger";
-import { dynamoDbDocumentClient } from "../clients/awsClients";
 import { Product } from "../types/productTypes";
 import {
-  getProductTableName,
+  productListColumns,
   PRODUCT_ENTITY_TYPE,
   PRODUCT_METADATA_SORT_KEY
 } from "./product.constants";
+import { createDynamoDocumentClient } from "@shared-dynamodb/client";
+import { getProductServiceEnv } from "../config/env";
 
 const logger = createLogger("product-service");
 
-const productListColumns = [
-  "PK",
-  "SK",
-  "entityType",
-  "id",
-  "name",
-  "price",
-  "shortDescription",
-  "level",
-  "topicsCount",
-  "featuredProducts",
-  "accessDurationDays"
-];
-
 export const findProducts = async (): Promise<Product[]> => {
-  const tableName = getProductTableName();
+  const dynamoDbDocumentClient = createDynamoDocumentClient();
+  const tableName = getProductServiceEnv().DYNAMO_DB_TABLE_NAME;
   const logContext = {
     tableName,
     entityType: PRODUCT_ENTITY_TYPE,

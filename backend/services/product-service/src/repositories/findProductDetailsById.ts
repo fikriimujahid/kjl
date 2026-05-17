@@ -1,6 +1,5 @@
 import { selectItems } from "@shared-dynamodb/selectItems";
 import { createLogger } from "@shared-utils/logger";
-import { dynamoDbDocumentClient } from "../clients/awsClients";
 import {
   ProductDetail,
   ProductMetadataRecord,
@@ -10,12 +9,13 @@ import {
   TopicRecord
 } from "../types/productTypes";
 import {
-  getProductTableName,
   PRODUCT_METADATA_SORT_KEY,
   PRODUCT_PARTITION_KEY_PREFIX,
   SESSION_SORT_KEY_PREFIX,
   TOPIC_SORT_KEY_PREFIX
 } from "./product.constants";
+import { getProductServiceEnv } from "../config/env";
+import { createDynamoDocumentClient } from "@shared-dynamodb/client";
 
 const logger = createLogger("product-service");
 
@@ -28,7 +28,8 @@ type ProductDetailRow = ProductMetadataRow | SessionRow | TopicRow;
 export const findProductDetailsById = async (
   id: string
 ): Promise<ProductDetail | null> => {
-  const tableName = getProductTableName();
+  const dynamoDbDocumentClient = createDynamoDocumentClient();
+  const tableName = getProductServiceEnv().DYNAMO_DB_TABLE_NAME;
   const productPartitionKey = `${PRODUCT_PARTITION_KEY_PREFIX}${id}`;
   const logContext = {
     id,

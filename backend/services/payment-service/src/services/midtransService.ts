@@ -1,10 +1,9 @@
 import { createHash, timingSafeEqual } from "crypto";
 import { createLogger } from "@shared-utils/logger";
 import { PaymentStatus } from "../models/payment";
+import { getPaymentServiceEnv } from "../config/env";
 
 interface CreateSnapTransactionInput {
-  serverKey: string;
-  snapApiUrl: string;
   payload: Record<string, unknown>;
 }
 
@@ -89,20 +88,21 @@ const tryParseJson = (value: string): unknown => {
 export const createSnapTransaction = async (
   input: CreateSnapTransactionInput
 ): Promise<MidtransSnapResult> => {
+  const env = getPaymentServiceEnv();
   const transactionDetails =
     typeof input.payload.transaction_details === "object" && input.payload.transaction_details != null
       ? (input.payload.transaction_details as Record<string, unknown>)
       : null;
 
   logger.info("payment.midtrans.snap.request", {
-    snapApiUrl: input.snapApiUrl,
+    snapApiUrl: env.MIDTRANS_SNAP_API_URL,
     orderId: readStringField(transactionDetails ?? {}, "order_id")
   });
 
-  const response = await fetch(input.snapApiUrl, {
+  const response = await fetch(env.MIDTRANS_SNAP_API_URL, {
     method: "POST",
     headers: {
-      authorization: toMidtransAuthHeader(input.serverKey),
+      authorization: toMidtransAuthHeader(env.MIDTRANS_SERVER_KEY),
       "content-type": "application/json",
       accept: "application/json"
     },

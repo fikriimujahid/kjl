@@ -5,7 +5,7 @@ const parseStringEnv = (rawValue: string): string => rawValue;
 const productServiceEnvSchema = defineEnvSchema({
   DYNAMO_DB_TABLE_NAME: { required: true, parse: parseStringEnv },
   MEDIA_PRIVATE_BUCKET_NAME: { required: true, parse: parseStringEnv },
-  INTERNAL_SERVICE_API_KEY: { required: true, parse: parseStringEnv }
+  PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY: { required: true, parse: parseStringEnv }
 });
 
 export type ProductServiceEnv = InferEnv<typeof productServiceEnvSchema>;
@@ -18,8 +18,4 @@ export const getProductServiceEnv = () => {
   }
 
   return cachedEnv;
-};
-
-export const getProductTableName = (): string => {
-  return getProductServiceEnv().DYNAMO_DB_TABLE_NAME;
 };

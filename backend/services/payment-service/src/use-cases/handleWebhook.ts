@@ -45,7 +45,7 @@ export const handleWebhook = async (
 	let existingOrder: PaymentOrderRecord | null;
 
 	try {
-		existingOrder = await findPaymentOrderById(input.env.DYNAMO_DB_TABLE_NAME, orderId);
+		existingOrder = await findPaymentOrderById(orderId);
 	} catch {
 		throw new ExternalServiceError("Failed to read payment order");
 	}
@@ -75,7 +75,7 @@ export const handleWebhook = async (
 
 	if (normalizedStatus === "SUCCESS" && !existingOrder.accessGrantedAt) {
 		try {
-			const expiryDate = await grantProductAccess(input.env.DYNAMO_DB_TABLE_NAME, existingOrder, now);
+			const expiryDate = await grantProductAccess(existingOrder, now);
 			updatedOrder.accessGrantedAt = now;
 			updatedOrder.expiryDate = expiryDate;
 		} catch {
@@ -84,7 +84,7 @@ export const handleWebhook = async (
 	}
 
 	try {
-		await savePaymentOrder(input.env.DYNAMO_DB_TABLE_NAME, updatedOrder);
+		await savePaymentOrder(updatedOrder);
 	} catch {
 		throw new ExternalServiceError("Failed to update payment order");
 	}

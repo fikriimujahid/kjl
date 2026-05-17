@@ -1,8 +1,8 @@
 import { selectItems } from "@shared-dynamodb/selectItems";
 import { createLogger } from "@shared-utils/logger";
-import { dynamoDbDocumentClient } from "../clients/awsClients";
 import { OwnedProduct } from "../types/productTypes";
-import { getProductTableName } from "./product.constants";
+import { createDynamoDocumentClient } from "@shared-dynamodb/client";
+import { getProductServiceEnv } from "../config/env";
 
 const logger = createLogger("product-service");
 const PURCHASE_PARTITION_KEY_PREFIX = "OWNED_PRODUCT#";
@@ -11,7 +11,8 @@ const PURCHASE_SORT_KEY_PREFIX = "PURCHASE#";
 export const findOwnedProducts = async (
   userId: string
 ): Promise<OwnedProduct[]> => {
-  const tableName = getProductTableName();
+  const dynamoDbDocumentClient = createDynamoDocumentClient();
+  const tableName = getProductServiceEnv().DYNAMO_DB_TABLE_NAME;
   const purchasePartitionKey = `${PURCHASE_PARTITION_KEY_PREFIX}${userId}`;
   const currentDate = new Date().toISOString();
   const logContext = {

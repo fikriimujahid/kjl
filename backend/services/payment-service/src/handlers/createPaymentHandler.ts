@@ -25,7 +25,6 @@ export const createPaymentHandler = async (
     }
     
     const result = await createPayment({
-      env,
       authenticatedUser,
       productId: parsedPayload.data.productId
     });

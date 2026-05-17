@@ -1,6 +1,5 @@
 import { AuthenticatedUser } from "@shared-utils/auth";
 import { createLogger } from "@shared-utils/logger";
-import { PaymentServiceEnv } from "../config/env";
 import { generatePaymentOrderId } from "../domain/payment/generatePaymentOrderId";
 import {
 	ConflictError,
@@ -9,15 +8,15 @@ import {
 	ValidationError
 } from "../errors/applicationErrors";
 import { PaymentOrderRecord } from "../models/payment";
-import { hasActiveProductAccess, savePaymentOrder } from "../repositories/paymentOrderRepository";
-import { findProductById } from "../repositories/productRepository";
+import { getProductSummaryByIdInternal } from "../services/productServiceInternalClient";
+import { savePaymentOrder } from "../repositories/paymentOrderRepository";
 import { buildSnapPayload } from "../services/midtrans/buildSnapPayload";
 import { createSnapTransaction } from "../services/midtransService";
+import { getOwnedProductsByUserIdInternal } from "../services/productServiceInternalClient";
 
 const logger = createLogger("payment-service");
 
 export interface CreatePaymentInput {
-	env: PaymentServiceEnv;
 	authenticatedUser: AuthenticatedUser;
 	productId: string;
 }
@@ -32,10 +31,8 @@ export const createPayment = async (
 	input: CreatePaymentInput
 ): Promise<CreatePaymentResult> => {
 	try {
-		const hasActiveAccess = await hasActiveProductAccess(
-			input.authenticatedUser.id,
-			input.productId
-		);
+		const ownedProducts = await getOwnedProductsByUserIdInternal(input.authenticatedUser.id);
+    const hasActiveAccess = ownedProducts.some((ownedProduct) => ownedProduct.productId === input.productId);
 
 		if (hasActiveAccess) {
 			throw new ConflictError("User already has the product");
@@ -51,7 +48,7 @@ export const createPayment = async (
 	let product;
 
 	try {
-		product = await findProductById(input.productId);
+		product = await getProductSummaryByIdInternal(input.productId);
 	} catch {
 		throw new ExternalServiceError("Failed to load product data");
 	}
@@ -76,16 +73,13 @@ export const createPayment = async (
 		orderId,
 		amount,
 		product,
-		authenticatedUser: input.authenticatedUser,
-		appBaseUrl: input.env.APP_BASE_URL
+		authenticatedUser: input.authenticatedUser
 	});
 
 	let snapData;
 
 	try {
 		snapData = await createSnapTransaction({
-			serverKey: input.env.MIDTRANS_SERVER_KEY,
-			snapApiUrl: input.env.MIDTRANS_SNAP_API_URL,
 			payload: snapPayload
 		});
 	} catch (error) {
@@ -93,7 +87,6 @@ export const createPayment = async (
 			orderId,
 			userId: input.authenticatedUser.id,
 			productId: input.productId,
-			snapApiUrl: input.env.MIDTRANS_SNAP_API_URL,
 			error: error instanceof Error ? error.message : String(error)
 		});
 
@@ -109,8 +102,8 @@ export const createPayment = async (
 		orderId,
 		userId: input.authenticatedUser.id,
 		productId: product.id,
-		productName: product.name,
-		productLevel: product.level,
+		name: product.name,
+		level: product.level,
 		amount,
 		grossAmount: amount.toFixed(2),
 		accessDurationDays: product.accessDurationDays,
@@ -122,7 +115,7 @@ export const createPayment = async (
 	};
 
 	try {
-		await savePaymentOrder(input.env.DYNAMO_DB_TABLE_NAME, paymentOrder);
+		await savePaymentOrder(paymentOrder);
 	} catch {
 		throw new ExternalServiceError("Failed to persist payment order");
 	}

@@ -9,7 +9,8 @@ interface CreatePaymentMocks {
   getAuthenticatedUser: jest.Mock;
   parseEventBody: jest.Mock;
   hasActiveProductAccess: jest.Mock;
-  fetchProductById: jest.Mock;
+  getProductDetailById: jest.Mock;
+  getProductExistsById: jest.Mock;
   createSnapTransaction: jest.Mock;
   savePaymentOrder: jest.Mock;
   randomUUID: jest.Mock;
@@ -89,7 +90,8 @@ const loadCreatePaymentModule = async (
     getAuthenticatedUser: jest.fn(),
     parseEventBody: jest.fn(),
     hasActiveProductAccess: jest.fn(),
-    fetchProductById: jest.fn(),
+    getProductDetailById: jest.fn(),
+    getProductExistsById: jest.fn(),
     createSnapTransaction: jest.fn(),
     savePaymentOrder: jest.fn(),
     randomUUID: jest.fn().mockReturnValue("a1234567-89ab-cdef-0123-456789abcdef")
@@ -113,8 +115,9 @@ const loadCreatePaymentModule = async (
     savePaymentOrder: mocks.savePaymentOrder
   }));
 
-  jest.doMock("../src/repositories/productRepository", () => ({
-    findProductById: mocks.fetchProductById
+  jest.doMock("../src/services/productServiceInternalClient", () => ({
+    getProductDetailById: mocks.getProductDetailById,
+    getProductExistsById: mocks.getProductExistsById
   }));
 
   jest.doMock("../src/services/midtransService", () => ({
@@ -233,7 +236,7 @@ describe("createPayment", () => {
 
     expect(response.statusCode).toBe(409);
     expect(parseBody(response)).toEqual({ message: "User already has the product" });
-    expect(mocks.fetchProductById).not.toHaveBeenCalled();
+    expect(mocks.getProductExistsById).not.toHaveBeenCalled();
   });
 
   it("returns 502 when active access validation fails", async () => {
@@ -248,17 +251,17 @@ describe("createPayment", () => {
     expect(parseBody(response)).toEqual({ message: "Failed to validate existing product access" });
   });
 
-  it("returns 502 when product lookup fails", async () => {
+  it("returns 502 when product existence check fails", async () => {
     const { createPayment, mocks } = await loadCreatePaymentModule();
     mocks.getAuthenticatedUser.mockReturnValue({ id: "user-1", email: "user@example.com", name: "User" });
     mocks.parseEventBody.mockReturnValue({ productId: "product-1" });
     mocks.hasActiveProductAccess.mockResolvedValue(false);
-    mocks.fetchProductById.mockRejectedValue(new Error("network"));
+    mocks.getProductExistsById.mockRejectedValue(new Error("network"));
 
     const response = await createPayment(buildEvent());
 
     expect(response.statusCode).toBe(502);
-    expect(parseBody(response)).toEqual({ message: "Failed to load product data" });
+    expect(parseBody(response)).toEqual({ message: "Failed to validate product existence" });
   });
 
   it("returns 404 when product does not exist", async () => {
@@ -266,7 +269,35 @@ describe("createPayment", () => {
     mocks.getAuthenticatedUser.mockReturnValue({ id: "user-1", email: "user@example.com", name: "User" });
     mocks.parseEventBody.mockReturnValue({ productId: "product-1" });
     mocks.hasActiveProductAccess.mockResolvedValue(false);
-    mocks.fetchProductById.mockResolvedValue(null);
+    mocks.getProductExistsById.mockResolvedValue(false);
+
+    const response = await createPayment(buildEvent());
+
+    expect(response.statusCode).toBe(404);
+    expect(parseBody(response)).toEqual({ message: "Product not found" });
+  });
+
+  it("returns 502 when product lookup fails", async () => {
+    const { createPayment, mocks } = await loadCreatePaymentModule();
+    mocks.getAuthenticatedUser.mockReturnValue({ id: "user-1", email: "user@example.com", name: "User" });
+    mocks.parseEventBody.mockReturnValue({ productId: "product-1" });
+    mocks.hasActiveProductAccess.mockResolvedValue(false);
+    mocks.getProductExistsById.mockResolvedValue(true);
+    mocks.getProductDetailById.mockRejectedValue(new Error("network"));
+
+    const response = await createPayment(buildEvent());
+
+    expect(response.statusCode).toBe(502);
+    expect(parseBody(response)).toEqual({ message: "Failed to load product data" });
+  });
+
+  it("returns 404 when product metadata is missing", async () => {
+    const { createPayment, mocks } = await loadCreatePaymentModule();
+    mocks.getAuthenticatedUser.mockReturnValue({ id: "user-1", email: "user@example.com", name: "User" });
+    mocks.parseEventBody.mockReturnValue({ productId: "product-1" });
+    mocks.hasActiveProductAccess.mockResolvedValue(false);
+    mocks.getProductExistsById.mockResolvedValue(true);
+    mocks.getProductDetailById.mockResolvedValue(null);
 
     const response = await createPayment(buildEvent());
 
@@ -279,7 +310,8 @@ describe("createPayment", () => {
     mocks.getAuthenticatedUser.mockReturnValue({ id: "user-1", email: "user@example.com", name: "User" });
     mocks.parseEventBody.mockReturnValue({ productId: "product-1" });
     mocks.hasActiveProductAccess.mockResolvedValue(false);
-    mocks.fetchProductById.mockResolvedValue({
+    mocks.getProductExistsById.mockResolvedValue(true);
+    mocks.getProductDetailById.mockResolvedValue({
       id: "product-1",
       name: "Starter",
       price: 0,
@@ -297,7 +329,8 @@ describe("createPayment", () => {
     mocks.getAuthenticatedUser.mockReturnValue({ id: "user-1", email: "user@example.com", name: "User" });
     mocks.parseEventBody.mockReturnValue({ productId: "product-1" });
     mocks.hasActiveProductAccess.mockResolvedValue(false);
-    mocks.fetchProductById.mockResolvedValue({
+    mocks.getProductExistsById.mockResolvedValue(true);
+    mocks.getProductDetailById.mockResolvedValue({
       id: "product-1",
       name: "Starter",
       price: 199999.7,
@@ -316,7 +349,8 @@ describe("createPayment", () => {
     mocks.getAuthenticatedUser.mockReturnValue({ id: "user-1", email: "user@example.com", name: "User" });
     mocks.parseEventBody.mockReturnValue({ productId: "product-1" });
     mocks.hasActiveProductAccess.mockResolvedValue(false);
-    mocks.fetchProductById.mockResolvedValue({
+    mocks.getProductExistsById.mockResolvedValue(true);
+    mocks.getProductDetailById.mockResolvedValue({
       id: "product-1",
       name: "Starter",
       price: 100000,
@@ -338,7 +372,8 @@ describe("createPayment", () => {
     mocks.getAuthenticatedUser.mockReturnValue({ id: "user-1", email: "user@example.com", name: "" });
     mocks.parseEventBody.mockReturnValue({ productId: " product-1 " });
     mocks.hasActiveProductAccess.mockResolvedValue(false);
-    mocks.fetchProductById.mockResolvedValue({
+    mocks.getProductExistsById.mockResolvedValue(true);
+    mocks.getProductDetailById.mockResolvedValue({
       id: "product-1",
       name: "Starter",
       price: 199999.49,
@@ -360,11 +395,10 @@ describe("createPayment", () => {
     expect(expectedOrderId.length).toBeLessThanOrEqual(50);
 
     expect(mocks.hasActiveProductAccess).toHaveBeenCalledWith("user-1", "product-1");
-    expect(mocks.fetchProductById).toHaveBeenCalledWith("product-1");
+    expect(mocks.getProductExistsById).toHaveBeenCalledWith("product-1");
+    expect(mocks.getProductDetailById).toHaveBeenCalledWith("product-1");
     expect(mocks.createSnapTransaction).toHaveBeenCalledWith(
       expect.objectContaining({
-        serverKey: "midtrans-server-key",
-        snapApiUrl: "https://snap.example.com/transactions",
         payload: expect.objectContaining({
           transaction_details: {
             order_id: expectedOrderId,
@@ -392,7 +426,6 @@ describe("createPayment", () => {
     );
 
     expect(mocks.savePaymentOrder).toHaveBeenCalledWith(
-      "kjl-table",
       expect.objectContaining<Partial<PaymentOrderRecord>>({
         PK: "PAYMENT#user-1",
         SK: `PAYMENT#${expectedOrderId}`,

@@ -1,9 +1,9 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
 import { mapProductErrorToResponse } from "../errors/errorToResponse";
-import { getOwnedProductsSchema } from "../schemas/getOwnedProductsSchema";
+import { getProductSummaryInternalSchema } from "../schemas/getProductSummaryInternalSchema";
 import { getProductServiceEnv } from "../config/env";
-import { getOwnedProductsInternal } from "../use-cases/getOwnedProductsInternal";
+import { getProductSummaryInternal } from "../use-cases/getProductSummaryInternal";
 
 const INTERNAL_API_KEY_HEADER = "x-internal-api-key";
 
@@ -15,10 +15,10 @@ const getInternalApiKey = (event: APIGatewayProxyEventV2): string | undefined =>
     ?? headers["X-Internal-Api-Key"];
 };
 
-export const getOwnedProductsInternalHandler = async (
+export const getProductSummaryInternalHandler = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
-  const parsedRequest = getOwnedProductsSchema.safeParseEvent(event);
+  const parsedRequest = getProductSummaryInternalSchema.safeParseEvent(event);
 
   if (!parsedRequest.success) {
     return createErrorResponse(event, 400, parsedRequest.error, {
@@ -36,16 +36,16 @@ export const getOwnedProductsInternalHandler = async (
   }
 
   try {
-    const ownedProducts = await getOwnedProductsInternal({
-      requestedUserId: parsedRequest.data.userId
+    const productSummary = await getProductSummaryInternal({
+      productId: parsedRequest.data.productId
     });
 
-    return createSuccessResponse(event, 200, ownedProducts);
+    return createSuccessResponse(event, 200, productSummary);
   } catch (error) {
     return mapProductErrorToResponse(event, error, {
       statusCode: 502,
-      message: "Failed to load owned product data",
-      code: "OWNED_PRODUCTS_FETCH_FAILED"
+      message: "Failed to get product summary",
+      code: "PRODUCT_SUMMARY_FETCH_FAILED"
     });
   }
 };

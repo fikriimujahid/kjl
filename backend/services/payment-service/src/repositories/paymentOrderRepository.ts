@@ -2,19 +2,42 @@ import { createItem } from "@shared-dynamodb/createItem";
 import { selectItems } from "@shared-dynamodb/selectItems";
 import { createLogger } from "@shared-utils/logger";
 import { InternalApiClientError } from "@shared-utils/internalApiClient";
-import { getOwnedProductsByUserId } from "../clients/productServiceInternalClient";
-import { dynamoDbDocumentClient } from "../clients/awsClients";
+import { getPaymentServiceEnv } from "../config/env";
 import { PaymentOrderRecord } from "../models/payment";
+import { createDynamoDocumentClient } from "@shared-dynamodb/client";
+import {
+  PAYMENT_PARTITION_KEY_PREFIX,
+  PAYMENT_SORT_KEY_PREFIX,
+  OWNED_PRODUCT_PARTITION_KEY_PREFIX,
+  PURCHASE_SORT_KEY_PREFIX,
+  DAY_IN_MILLISECONDS
+} from "./paymentOrder.constants";
 
 const logger = createLogger("payment-service");
 
-const DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
-const PAYMENT_PARTITION_KEY_PREFIX = "PAYMENT#";
-const OWNED_PRODUCT_PARTITION_KEY_PREFIX = "OWNED_PRODUCT#";
-const PAYMENT_SORT_KEY_PREFIX = "PAYMENT#";
-const PURCHASE_SORT_KEY_PREFIX = "PURCHASE#";
+export const savePaymentOrder = async (
+  order: PaymentOrderRecord
+): Promise<void> => {
+  const dynamoDbDocumentClient = createDynamoDocumentClient();
+  const tableName = getPaymentServiceEnv().DYNAMO_DB_TABLE_NAME;
 
-type PaymentOrderRow = PaymentOrderRecord & Record<string, unknown>;
+  try {
+    await createItem(dynamoDbDocumentClient, {
+      TableName: tableName,
+      Item: order as PaymentOrderRecord & Record<string, unknown>
+    });
+  } catch (error) {
+    logger.error("dynamodb.paymentOrder.save.failed", {
+      tableName,
+      orderId: order.orderId,
+      userId: order.userId,
+      productId: order.productId,
+      error
+    });
+    throw error;
+  }
+};
+
 const extractUserIdFromOrderId = (orderId: string): string | null => {
   const parts = orderId.split("~");
 
@@ -28,7 +51,6 @@ const extractUserIdFromOrderId = (orderId: string): string | null => {
 };
 
 export const findPaymentOrderById = async (
-  tableName: string,
   orderId: string
 ): Promise<PaymentOrderRecord | null> => {
   const userId = extractUserIdFromOrderId(orderId);
@@ -39,9 +61,11 @@ export const findPaymentOrderById = async (
 
   const paymentPartitionKey = `${PAYMENT_PARTITION_KEY_PREFIX}${userId}`;
   const paymentSortKey = `${PAYMENT_SORT_KEY_PREFIX}${orderId}`;
+  const dynamoDbDocumentClient = createDynamoDocumentClient();
+  const tableName = getPaymentServiceEnv().DYNAMO_DB_TABLE_NAME;
 
   try {
-    const response = await selectItems<PaymentOrderRow>(dynamoDbDocumentClient, {
+    const response = await selectItems<PaymentOrderRecord & Record<string, unknown>>(dynamoDbDocumentClient, {
       from: tableName,
       keyWhere: {
         PK: paymentPartitionKey,
@@ -62,52 +86,7 @@ export const findPaymentOrderById = async (
   }
 };
 
-export const savePaymentOrder = async (
-  tableName: string,
-  order: PaymentOrderRecord
-): Promise<void> => {
-  try {
-    await createItem(dynamoDbDocumentClient, {
-      TableName: tableName,
-      Item: order as PaymentOrderRecord & Record<string, unknown>
-    });
-  } catch (error) {
-    logger.error("dynamodb.paymentOrder.save.failed", {
-      tableName,
-      orderId: order.orderId,
-      userId: order.userId,
-      productId: order.productId,
-      error
-    });
-    throw error;
-  }
-};
-
-export const hasActiveProductAccess = async (
-  userId: string,
-  productId: string
-): Promise<boolean> => {
-  try {
-    const ownedProducts = await getOwnedProductsByUserId(userId);
-    return ownedProducts.some((ownedProduct) => ownedProduct.productId === productId);
-  } catch (error) {
-    logger.error("product-service.productAccess.lookup.failed", {
-      userId,
-      productId,
-      error: error instanceof InternalApiClientError
-        ? {
-            message: error.message,
-            statusCode: error.statusCode,
-            code: error.code
-          }
-        : error
-    });
-    throw error;
-  }
-};
-
 export const grantProductAccess = async (
-  tableName: string,
   order: PaymentOrderRecord,
   nowIsoString: string
 ): Promise<string> => {
@@ -123,6 +102,9 @@ export const grantProductAccess = async (
     nowDate.getTime() + accessDurationDays * DAY_IN_MILLISECONDS
   ).toISOString();
 
+  const dynamoDbDocumentClient = createDynamoDocumentClient();
+  const tableName = getPaymentServiceEnv().DYNAMO_DB_TABLE_NAME;
+
   try {
     await createItem(dynamoDbDocumentClient, {
       TableName: tableName,
@@ -133,8 +115,8 @@ export const grantProductAccess = async (
         userId: order.userId,
         productId: order.productId,
         purchaseId: order.orderId,
-        name: order.productName,
-        level: order.productLevel ?? "",
+        name: order.name,
+        level: order.level,
         purchaseDate: nowIsoString,
         expiryDate: nextExpiryDate,
         updatedAt: nowIsoString

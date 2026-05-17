@@ -11,7 +11,7 @@ const paymentServiceEnvSchema = defineEnvSchema({
   MIDTRANS_SNAP_API_URL: { required: true, parse: parseStringEnv },
   APP_BASE_URL: { defaultValue: "", parse: parseAppBaseUrl },
   PRODUCT_SERVICE_INTERNAL_API_BASE_URL: { required: true, parse: parseUrlEnv },
-  INTERNAL_SERVICE_API_KEY: { required: true, parse: parseStringEnv }
+  PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY: { required: true, parse: parseStringEnv }
 });
 
 export type PaymentServiceEnv = InferEnv<typeof paymentServiceEnvSchema>;
