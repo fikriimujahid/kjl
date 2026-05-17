@@ -68,17 +68,17 @@ jobs:
           role-to-assume: ${{ github.ref_name == 'prod' && secrets.AWS_PROD_ROLE_ARN || secrets.AWS_DEV_ROLE_ARN }}
 
       - name: Create Lambda env file
+        env:
+          AUTH_ALLOWED_ORIGIN: ${{ secrets.AUTH_SERVICE_AUTH_ALLOWED_ORIGIN }}
+          AUTH_COOKIE_DOMAIN: ${{ secrets.AUTH_SERVICE_AUTH_COOKIE_DOMAIN }}
+          AUTH_COOKIE_SAME_SITE: ${{ secrets.AUTH_SERVICE_AUTH_COOKIE_SAME_SITE }}
+          AUTH_COOKIE_SECURE: ${{ secrets.AUTH_SERVICE_AUTH_COOKIE_SECURE }}
+          AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS: ${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS }}
+          AUTH_REFRESH_COOKIE_NAME: ${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_NAME }}
+          AUTH_REFRESH_COOKIE_PATH: ${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_PATH }}
+          COGNITO_API_ENDPOINT: ${{ secrets.AUTH_SERVICE_COGNITO_API_ENDPOINT }}
+          COGNITO_USER_POOL_CLIENT_ID: ${{ secrets.AUTH_SERVICE_COGNITO_USER_POOL_CLIENT_ID }}
         run: |
-          AUTH_ALLOWED_ORIGIN="${{ secrets.AUTH_SERVICE_AUTH_ALLOWED_ORIGIN }}"
-          AUTH_COOKIE_DOMAIN="${{ secrets.AUTH_SERVICE_AUTH_COOKIE_DOMAIN }}"
-          AUTH_COOKIE_SAME_SITE="${{ secrets.AUTH_SERVICE_AUTH_COOKIE_SAME_SITE }}"
-          AUTH_COOKIE_SECURE="${{ secrets.AUTH_SERVICE_AUTH_COOKIE_SECURE }}"
-          AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS="${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS }}"
-          AUTH_REFRESH_COOKIE_NAME="${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_NAME }}"
-          AUTH_REFRESH_COOKIE_PATH="${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_PATH }}"
-          COGNITO_API_ENDPOINT="${{ secrets.AUTH_SERVICE_COGNITO_API_ENDPOINT }}"
-          COGNITO_USER_POOL_CLIENT_ID="${{ secrets.AUTH_SERVICE_COGNITO_USER_POOL_CLIENT_ID }}"
-
           if [ -z "${COGNITO_API_ENDPOINT}" ]; then
             echo "COGNITO_API_ENDPOINT secret is missing."
             exit 1
@@ -104,15 +104,20 @@ jobs:
       - name: Update Lambda environment variables
         env:
           LAMBDA_FUNCTION_NAME: ${{ secrets.AUTH_SERVICE_LAMBDA_FUNCTION_NAME }}
+          COGNITO_API_ENDPOINT: ${{ secrets.AUTH_SERVICE_COGNITO_API_ENDPOINT }}
+          COGNITO_USER_POOL_CLIENT_ID: ${{ secrets.AUTH_SERVICE_COGNITO_USER_POOL_CLIENT_ID }}
+          AUTH_ALLOWED_ORIGIN: ${{ secrets.AUTH_SERVICE_AUTH_ALLOWED_ORIGIN }}
+          AUTH_COOKIE_DOMAIN: ${{ secrets.AUTH_SERVICE_AUTH_COOKIE_DOMAIN }}
+          AUTH_COOKIE_SECURE: ${{ secrets.AUTH_SERVICE_AUTH_COOKIE_SECURE }}
+          AUTH_COOKIE_SAME_SITE: ${{ secrets.AUTH_SERVICE_AUTH_COOKIE_SAME_SITE }}
+          AUTH_REFRESH_COOKIE_NAME: ${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_NAME }}
+          AUTH_REFRESH_COOKIE_PATH: ${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_PATH }}
+          AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS: ${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS }}
         run: |
           if [ -z "${LAMBDA_FUNCTION_NAME}" ]; then
             echo "AUTH_SERVICE_LAMBDA_FUNCTION_NAME secret is missing."
             exit 1
           fi
-
-          set -a
-          source ./.env.lambda
-          set +a
 
           CURRENT_ENV_VARS=$(aws lambda get-function-configuration \
             --function-name "${LAMBDA_FUNCTION_NAME}" \
