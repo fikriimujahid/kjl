@@ -1,3 +1,6 @@
+import { APIGatewayProxyEventV2 } from "aws-lambda";
+import { parseEventBody } from "@shared-utils/request";
+
 interface CreatePaymentPayload {
   productId: string;
 }
@@ -29,23 +32,39 @@ const normalizePayloadObject = (input: unknown): Record<string, unknown> => {
   return input as Record<string, unknown>;
 };
 
+const safeParsePayload = (input: unknown): SafeParseResult<CreatePaymentPayload> => {
+  const payload = normalizePayloadObject(input);
+  const productId = readProductId(payload);
+
+  if (!productId) {
+    return {
+      success: false,
+      error: "productId is required"
+    };
+  }
+
+  return {
+    success: true,
+    data: {
+      productId
+    }
+  };
+};
+
 export const createPaymentSchema = {
   safeParse: (input: unknown): SafeParseResult<CreatePaymentPayload> => {
-    const payload = normalizePayloadObject(input);
-    const productId = readProductId(payload);
-
-    if (!productId) {
+    return safeParsePayload(input);
+  },
+  safeParseEvent: (
+    event: APIGatewayProxyEventV2
+  ): SafeParseResult<CreatePaymentPayload> => {
+    try {
+      return safeParsePayload(parseEventBody(event));
+    } catch {
       return {
         success: false,
-        error: "productId is required"
+        error: "Invalid JSON body"
       };
     }
-
-    return {
-      success: true,
-      data: {
-        productId
-      }
-    };
   }
 };

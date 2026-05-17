@@ -4,21 +4,25 @@ import {
   NotFoundError,
   ValidationError
 } from "../../src/errors/applicationErrors";
-import { createPaymentUseCase } from "../../src/use-cases/createPaymentUseCase";
+import { createPayment } from "../../src/use-cases/createPayment";
 import { generatePaymentOrderId } from "../../src/domain/payment/generatePaymentOrderId";
 import { buildSnapPayload } from "../../src/services/midtrans/buildSnapPayload";
 import { createSnapTransaction } from "../../src/services/midtransService";
-import { hasActiveProductAccess, savePaymentOrder } from "../../src/services/paymentRepository";
-import { fetchProductById } from "../../src/services/productService";
+import { hasActiveProductAccess, savePaymentOrder } from "../../src/repositories/paymentOrderRepository";
+import {
+  getProductDetailById,
+  getProductExistsById
+} from "../../src/services/productServiceInternalClient";
 import { createLogger } from "@shared-utils/logger";
 
-jest.mock("../../src/services/paymentRepository", () => ({
+jest.mock("../../src/repositories/paymentOrderRepository", () => ({
   hasActiveProductAccess: jest.fn(),
   savePaymentOrder: jest.fn()
 }));
 
-jest.mock("../../src/services/productService", () => ({
-  fetchProductById: jest.fn()
+jest.mock("../../src/services/productServiceInternalClient", () => ({
+  getProductDetailById: jest.fn(),
+  getProductExistsById: jest.fn()
 }));
 
 jest.mock("../../src/services/midtransService", () => ({
@@ -39,9 +43,10 @@ jest.mock("@shared-utils/logger", () => ({
   }))
 }));
 
-describe("createPaymentUseCase", () => {
+describe("createPayment", () => {
   const hasActiveProductAccessMock = hasActiveProductAccess as jest.MockedFunction<typeof hasActiveProductAccess>;
-  const fetchProductByIdMock = fetchProductById as jest.MockedFunction<typeof fetchProductById>;
+  const getProductDetailByIdMock = getProductDetailById as jest.MockedFunction<typeof getProductDetailById>;
+  const getProductExistsByIdMock = getProductExistsById as jest.MockedFunction<typeof getProductExistsById>;
   const createSnapTransactionMock = createSnapTransaction as jest.MockedFunction<typeof createSnapTransaction>;
   const savePaymentOrderMock = savePaymentOrder as jest.MockedFunction<typeof savePaymentOrder>;
   const generatePaymentOrderIdMock = generatePaymentOrderId as jest.MockedFunction<typeof generatePaymentOrderId>;
@@ -51,10 +56,12 @@ describe("createPaymentUseCase", () => {
 
   const input = {
     env: {
-      dynamoDbTableName: "kjl-table",
-      midtransServerKey: "midtrans-key",
-      midtransSnapApiUrl: "https://snap.midtrans.test",
-      appBaseUrl: "https://app.kjl.test"
+      DYNAMO_DB_TABLE_NAME: "kjl-table",
+      MIDTRANS_SERVER_KEY: "midtrans-key",
+      MIDTRANS_SNAP_API_URL: "https://snap.midtrans.test",
+      APP_BASE_URL: "https://app.kjl.test",
+      PRODUCT_SERVICE_INTERNAL_API_BASE_URL: "https://service-api.kjl.test",
+      INTERNAL_SERVICE_API_KEY: "internal-secret"
     },
     authenticatedUser: {
       id: "user-1",
@@ -75,7 +82,8 @@ describe("createPaymentUseCase", () => {
     jest.clearAllMocks();
 
     hasActiveProductAccessMock.mockResolvedValue(false);
-    fetchProductByIdMock.mockResolvedValue(product);
+    getProductExistsByIdMock.mockResolvedValue(true);
+  getProductDetailByIdMock.mockResolvedValue(product);
     generatePaymentOrderIdMock.mockReturnValue("KJL~user-1~abc123");
     buildSnapPayloadMock.mockReturnValue({ transaction_details: { order_id: "KJL~user-1~abc123" } });
     createSnapTransactionMock.mockResolvedValue({ token: "snap-token", redirectUrl: "https://pay.example/redirect" });
@@ -85,50 +93,70 @@ describe("createPaymentUseCase", () => {
   it("throws ConflictError when user already has active product access", async () => {
     hasActiveProductAccessMock.mockResolvedValue(true);
 
-    await expect(createPaymentUseCase(input)).rejects.toBeInstanceOf(ConflictError);
-    await expect(createPaymentUseCase(input)).rejects.toMatchObject({
+    await expect(createPayment(input)).rejects.toBeInstanceOf(ConflictError);
+    await expect(createPayment(input)).rejects.toMatchObject({
       message: "User already has the product",
       statusCode: 409
     });
 
-    expect(fetchProductByIdMock).not.toHaveBeenCalled();
+    expect(getProductExistsByIdMock).not.toHaveBeenCalled();
   });
 
   it("throws ExternalServiceError when active access check fails", async () => {
     hasActiveProductAccessMock.mockRejectedValue(new Error("dynamo down"));
 
-    await expect(createPaymentUseCase(input)).rejects.toBeInstanceOf(ExternalServiceError);
-    await expect(createPaymentUseCase(input)).rejects.toMatchObject({
+    await expect(createPayment(input)).rejects.toBeInstanceOf(ExternalServiceError);
+    await expect(createPayment(input)).rejects.toMatchObject({
       message: "Failed to validate existing product access",
       statusCode: 502
     });
   });
 
-  it("throws ExternalServiceError when product lookup fails", async () => {
-    fetchProductByIdMock.mockRejectedValue(new Error("network error"));
+  it("throws ExternalServiceError when product existence check fails", async () => {
+    getProductExistsByIdMock.mockRejectedValue(new Error("network error"));
 
-    await expect(createPaymentUseCase(input)).rejects.toBeInstanceOf(ExternalServiceError);
-    await expect(createPaymentUseCase(input)).rejects.toMatchObject({
-      message: "Failed to load product data",
+    await expect(createPayment(input)).rejects.toBeInstanceOf(ExternalServiceError);
+    await expect(createPayment(input)).rejects.toMatchObject({
+      message: "Failed to validate product existence",
       statusCode: 502
     });
   });
 
   it("throws NotFoundError when product does not exist", async () => {
-    fetchProductByIdMock.mockResolvedValue(null);
+    getProductExistsByIdMock.mockResolvedValue(false);
 
-    await expect(createPaymentUseCase(input)).rejects.toBeInstanceOf(NotFoundError);
-    await expect(createPaymentUseCase(input)).rejects.toMatchObject({
+    await expect(createPayment(input)).rejects.toBeInstanceOf(NotFoundError);
+    await expect(createPayment(input)).rejects.toMatchObject({
+      message: "Product not found",
+      statusCode: 404
+    });
+  });
+
+  it("throws ExternalServiceError when product lookup fails", async () => {
+    getProductDetailByIdMock.mockRejectedValue(new Error("network error"));
+
+    await expect(createPayment(input)).rejects.toBeInstanceOf(ExternalServiceError);
+    await expect(createPayment(input)).rejects.toMatchObject({
+      message: "Failed to load product data",
+      statusCode: 502
+    });
+  });
+
+  it("throws NotFoundError when product metadata is missing after existence check", async () => {
+    getProductDetailByIdMock.mockResolvedValue(null);
+
+    await expect(createPayment(input)).rejects.toBeInstanceOf(NotFoundError);
+    await expect(createPayment(input)).rejects.toMatchObject({
       message: "Product not found",
       statusCode: 404
     });
   });
 
   it("throws ValidationError when rounded product price is invalid", async () => {
-    fetchProductByIdMock.mockResolvedValue({ ...product, price: 0 });
+    getProductDetailByIdMock.mockResolvedValue({ ...product, price: 0 });
 
-    await expect(createPaymentUseCase(input)).rejects.toBeInstanceOf(ValidationError);
-    await expect(createPaymentUseCase(input)).rejects.toMatchObject({
+    await expect(createPayment(input)).rejects.toBeInstanceOf(ValidationError);
+    await expect(createPayment(input)).rejects.toMatchObject({
       message: "Invalid product price",
       statusCode: 400
     });
@@ -137,8 +165,8 @@ describe("createPaymentUseCase", () => {
   it("throws ValidationError when generated order id exceeds maximum length", async () => {
     generatePaymentOrderIdMock.mockReturnValue(`KJL~${"u".repeat(60)}~abc`);
 
-    await expect(createPaymentUseCase(input)).rejects.toBeInstanceOf(ValidationError);
-    await expect(createPaymentUseCase(input)).rejects.toMatchObject({
+    await expect(createPayment(input)).rejects.toBeInstanceOf(ValidationError);
+    await expect(createPayment(input)).rejects.toMatchObject({
       message: "Unable to create valid order id for this user",
       statusCode: 400
     });
@@ -149,8 +177,8 @@ describe("createPaymentUseCase", () => {
   it("throws ExternalServiceError and logs when Midtrans rejects transaction creation", async () => {
     createSnapTransactionMock.mockRejectedValue(new Error("midtrans rejected"));
 
-    await expect(createPaymentUseCase(input)).rejects.toBeInstanceOf(ExternalServiceError);
-    await expect(createPaymentUseCase(input)).rejects.toMatchObject({
+    await expect(createPayment(input)).rejects.toBeInstanceOf(ExternalServiceError);
+    await expect(createPayment(input)).rejects.toMatchObject({
       message: "Midtrans rejected payment creation",
       statusCode: 502
     });
@@ -168,33 +196,30 @@ describe("createPaymentUseCase", () => {
   it("throws ExternalServiceError when payment order persistence fails", async () => {
     savePaymentOrderMock.mockRejectedValue(new Error("write failed"));
 
-    await expect(createPaymentUseCase(input)).rejects.toBeInstanceOf(ExternalServiceError);
-    await expect(createPaymentUseCase(input)).rejects.toMatchObject({
+    await expect(createPayment(input)).rejects.toBeInstanceOf(ExternalServiceError);
+    await expect(createPayment(input)).rejects.toMatchObject({
       message: "Failed to persist payment order",
       statusCode: 502
     });
   });
 
   it("returns snap data and persists normalized payment order on success", async () => {
-    const result = await createPaymentUseCase(input);
+    const result = await createPayment(input);
 
-    expect(hasActiveProductAccessMock).toHaveBeenCalledWith("kjl-table", "user-1", "product-1");
-    expect(fetchProductByIdMock).toHaveBeenCalledWith("product-1", "kjl-table");
+    expect(hasActiveProductAccessMock).toHaveBeenCalledWith("user-1", "product-1");
+    expect(getProductExistsByIdMock).toHaveBeenCalledWith("product-1");
+    expect(getProductDetailByIdMock).toHaveBeenCalledWith("product-1");
     expect(buildSnapPayloadMock).toHaveBeenCalledWith({
       orderId: "KJL~user-1~abc123",
       amount: 199999,
       product,
-      authenticatedUser: input.authenticatedUser,
-      appBaseUrl: "https://app.kjl.test"
+      authenticatedUser: input.authenticatedUser
     });
     expect(createSnapTransactionMock).toHaveBeenCalledWith({
-      serverKey: "midtrans-key",
-      snapApiUrl: "https://snap.midtrans.test",
       payload: { transaction_details: { order_id: "KJL~user-1~abc123" } }
     });
 
     expect(savePaymentOrderMock).toHaveBeenCalledWith(
-      "kjl-table",
       expect.objectContaining({
         PK: "PAYMENT#user-1",
         SK: "PAYMENT#KJL~user-1~abc123",

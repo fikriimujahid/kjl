@@ -9,7 +9,8 @@ interface CreatePaymentMocks {
   getAuthenticatedUser: jest.Mock;
   parseEventBody: jest.Mock;
   hasActiveProductAccess: jest.Mock;
-  fetchProductById: jest.Mock;
+  getProductDetailById: jest.Mock;
+  getProductExistsById: jest.Mock;
   createSnapTransaction: jest.Mock;
   savePaymentOrder: jest.Mock;
   randomUUID: jest.Mock;
@@ -72,7 +73,9 @@ const loadCreatePaymentModule = async (
     DYNAMO_DB_TABLE_NAME: "kjl-table",
     MIDTRANS_SERVER_KEY: "midtrans-server-key",
     MIDTRANS_SNAP_API_URL: "https://snap.example.com/transactions",
-    APP_BASE_URL: ""
+    APP_BASE_URL: "",
+    PRODUCT_SERVICE_INTERNAL_API_BASE_URL: "https://service-api.example.com",
+    INTERNAL_SERVICE_API_KEY: "internal-secret"
   };
 
   for (const [key, value] of Object.entries(envOverrides)) {
@@ -87,7 +90,8 @@ const loadCreatePaymentModule = async (
     getAuthenticatedUser: jest.fn(),
     parseEventBody: jest.fn(),
     hasActiveProductAccess: jest.fn(),
-    fetchProductById: jest.fn(),
+    getProductDetailById: jest.fn(),
+    getProductExistsById: jest.fn(),
     createSnapTransaction: jest.fn(),
     savePaymentOrder: jest.fn(),
     randomUUID: jest.fn().mockReturnValue("a1234567-89ab-cdef-0123-456789abcdef")
@@ -98,31 +102,32 @@ const loadCreatePaymentModule = async (
     randomUUID: mocks.randomUUID
   }));
 
-  jest.doMock("../src/utils/auth", () => ({
+  jest.doMock("@shared-utils/auth", () => ({
     getAuthenticatedUser: mocks.getAuthenticatedUser
   }));
 
-  jest.doMock("../src/utils/request", () => ({
+  jest.doMock("@shared-utils/request", () => ({
     parseEventBody: mocks.parseEventBody
   }));
 
-  jest.doMock("../src/services/paymentRepository", () => ({
+  jest.doMock("../src/repositories/paymentOrderRepository", () => ({
     hasActiveProductAccess: mocks.hasActiveProductAccess,
     savePaymentOrder: mocks.savePaymentOrder
   }));
 
-  jest.doMock("../src/services/productService", () => ({
-    fetchProductById: mocks.fetchProductById
+  jest.doMock("../src/services/productServiceInternalClient", () => ({
+    getProductDetailById: mocks.getProductDetailById,
+    getProductExistsById: mocks.getProductExistsById
   }));
 
   jest.doMock("../src/services/midtransService", () => ({
     createSnapTransaction: mocks.createSnapTransaction
   }));
 
-  const module = require("../src/handlers/createPayment") as {
-    createPayment: CreatePaymentFn;
+  const module = require("../src/handlers/createPaymentHandler") as {
+    createPaymentHandler: CreatePaymentFn;
   };
-  return { createPayment: module.createPayment as CreatePaymentFn, mocks };
+  return { createPayment: module.createPaymentHandler as CreatePaymentFn, mocks };
 };
 
 describe("createPayment", () => {
@@ -160,6 +165,30 @@ describe("createPayment", () => {
     expect(response.statusCode).toBe(500);
     expect(parseBody(response)).toEqual({
       message: "Missing MIDTRANS_SNAP_API_URL environment variable"
+    });
+  });
+
+  it("returns 500 when PRODUCT_SERVICE_INTERNAL_API_BASE_URL is missing", async () => {
+    const { createPayment } = await loadCreatePaymentModule({
+      PRODUCT_SERVICE_INTERNAL_API_BASE_URL: undefined
+    });
+
+    const response = await createPayment(buildEvent());
+
+    expect(response.statusCode).toBe(500);
+    expect(parseBody(response)).toEqual({
+      message: "Missing PRODUCT_SERVICE_INTERNAL_API_BASE_URL environment variable"
+    });
+  });
+
+  it("returns 500 when INTERNAL_SERVICE_API_KEY is missing", async () => {
+    const { createPayment } = await loadCreatePaymentModule({ INTERNAL_SERVICE_API_KEY: undefined });
+
+    const response = await createPayment(buildEvent());
+
+    expect(response.statusCode).toBe(500);
+    expect(parseBody(response)).toEqual({
+      message: "Missing INTERNAL_SERVICE_API_KEY environment variable"
     });
   });
 
@@ -207,7 +236,7 @@ describe("createPayment", () => {
 
     expect(response.statusCode).toBe(409);
     expect(parseBody(response)).toEqual({ message: "User already has the product" });
-    expect(mocks.fetchProductById).not.toHaveBeenCalled();
+    expect(mocks.getProductExistsById).not.toHaveBeenCalled();
   });
 
   it("returns 502 when active access validation fails", async () => {
@@ -222,17 +251,17 @@ describe("createPayment", () => {
     expect(parseBody(response)).toEqual({ message: "Failed to validate existing product access" });
   });
 
-  it("returns 502 when product lookup fails", async () => {
+  it("returns 502 when product existence check fails", async () => {
     const { createPayment, mocks } = await loadCreatePaymentModule();
     mocks.getAuthenticatedUser.mockReturnValue({ id: "user-1", email: "user@example.com", name: "User" });
     mocks.parseEventBody.mockReturnValue({ productId: "product-1" });
     mocks.hasActiveProductAccess.mockResolvedValue(false);
-    mocks.fetchProductById.mockRejectedValue(new Error("network"));
+    mocks.getProductExistsById.mockRejectedValue(new Error("network"));
 
     const response = await createPayment(buildEvent());
 
     expect(response.statusCode).toBe(502);
-    expect(parseBody(response)).toEqual({ message: "Failed to load product data" });
+    expect(parseBody(response)).toEqual({ message: "Failed to validate product existence" });
   });
 
   it("returns 404 when product does not exist", async () => {
@@ -240,7 +269,35 @@ describe("createPayment", () => {
     mocks.getAuthenticatedUser.mockReturnValue({ id: "user-1", email: "user@example.com", name: "User" });
     mocks.parseEventBody.mockReturnValue({ productId: "product-1" });
     mocks.hasActiveProductAccess.mockResolvedValue(false);
-    mocks.fetchProductById.mockResolvedValue(null);
+    mocks.getProductExistsById.mockResolvedValue(false);
+
+    const response = await createPayment(buildEvent());
+
+    expect(response.statusCode).toBe(404);
+    expect(parseBody(response)).toEqual({ message: "Product not found" });
+  });
+
+  it("returns 502 when product lookup fails", async () => {
+    const { createPayment, mocks } = await loadCreatePaymentModule();
+    mocks.getAuthenticatedUser.mockReturnValue({ id: "user-1", email: "user@example.com", name: "User" });
+    mocks.parseEventBody.mockReturnValue({ productId: "product-1" });
+    mocks.hasActiveProductAccess.mockResolvedValue(false);
+    mocks.getProductExistsById.mockResolvedValue(true);
+    mocks.getProductDetailById.mockRejectedValue(new Error("network"));
+
+    const response = await createPayment(buildEvent());
+
+    expect(response.statusCode).toBe(502);
+    expect(parseBody(response)).toEqual({ message: "Failed to load product data" });
+  });
+
+  it("returns 404 when product metadata is missing", async () => {
+    const { createPayment, mocks } = await loadCreatePaymentModule();
+    mocks.getAuthenticatedUser.mockReturnValue({ id: "user-1", email: "user@example.com", name: "User" });
+    mocks.parseEventBody.mockReturnValue({ productId: "product-1" });
+    mocks.hasActiveProductAccess.mockResolvedValue(false);
+    mocks.getProductExistsById.mockResolvedValue(true);
+    mocks.getProductDetailById.mockResolvedValue(null);
 
     const response = await createPayment(buildEvent());
 
@@ -253,7 +310,8 @@ describe("createPayment", () => {
     mocks.getAuthenticatedUser.mockReturnValue({ id: "user-1", email: "user@example.com", name: "User" });
     mocks.parseEventBody.mockReturnValue({ productId: "product-1" });
     mocks.hasActiveProductAccess.mockResolvedValue(false);
-    mocks.fetchProductById.mockResolvedValue({
+    mocks.getProductExistsById.mockResolvedValue(true);
+    mocks.getProductDetailById.mockResolvedValue({
       id: "product-1",
       name: "Starter",
       price: 0,
@@ -271,7 +329,8 @@ describe("createPayment", () => {
     mocks.getAuthenticatedUser.mockReturnValue({ id: "user-1", email: "user@example.com", name: "User" });
     mocks.parseEventBody.mockReturnValue({ productId: "product-1" });
     mocks.hasActiveProductAccess.mockResolvedValue(false);
-    mocks.fetchProductById.mockResolvedValue({
+    mocks.getProductExistsById.mockResolvedValue(true);
+    mocks.getProductDetailById.mockResolvedValue({
       id: "product-1",
       name: "Starter",
       price: 199999.7,
@@ -290,7 +349,8 @@ describe("createPayment", () => {
     mocks.getAuthenticatedUser.mockReturnValue({ id: "user-1", email: "user@example.com", name: "User" });
     mocks.parseEventBody.mockReturnValue({ productId: "product-1" });
     mocks.hasActiveProductAccess.mockResolvedValue(false);
-    mocks.fetchProductById.mockResolvedValue({
+    mocks.getProductExistsById.mockResolvedValue(true);
+    mocks.getProductDetailById.mockResolvedValue({
       id: "product-1",
       name: "Starter",
       price: 100000,
@@ -312,7 +372,8 @@ describe("createPayment", () => {
     mocks.getAuthenticatedUser.mockReturnValue({ id: "user-1", email: "user@example.com", name: "" });
     mocks.parseEventBody.mockReturnValue({ productId: " product-1 " });
     mocks.hasActiveProductAccess.mockResolvedValue(false);
-    mocks.fetchProductById.mockResolvedValue({
+    mocks.getProductExistsById.mockResolvedValue(true);
+    mocks.getProductDetailById.mockResolvedValue({
       id: "product-1",
       name: "Starter",
       price: 199999.49,
@@ -333,12 +394,11 @@ describe("createPayment", () => {
     });
     expect(expectedOrderId.length).toBeLessThanOrEqual(50);
 
-    expect(mocks.hasActiveProductAccess).toHaveBeenCalledWith("kjl-table", "user-1", "product-1");
-    expect(mocks.fetchProductById).toHaveBeenCalledWith("product-1", "kjl-table");
+    expect(mocks.hasActiveProductAccess).toHaveBeenCalledWith("user-1", "product-1");
+    expect(mocks.getProductExistsById).toHaveBeenCalledWith("product-1");
+    expect(mocks.getProductDetailById).toHaveBeenCalledWith("product-1");
     expect(mocks.createSnapTransaction).toHaveBeenCalledWith(
       expect.objectContaining({
-        serverKey: "midtrans-server-key",
-        snapApiUrl: "https://snap.example.com/transactions",
         payload: expect.objectContaining({
           transaction_details: {
             order_id: expectedOrderId,
@@ -366,7 +426,6 @@ describe("createPayment", () => {
     );
 
     expect(mocks.savePaymentOrder).toHaveBeenCalledWith(
-      "kjl-table",
       expect.objectContaining<Partial<PaymentOrderRecord>>({
         PK: "PAYMENT#user-1",
         SK: `PAYMENT#${expectedOrderId}`,

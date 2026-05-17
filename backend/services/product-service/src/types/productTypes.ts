@@ -3,7 +3,7 @@ export interface Product {
   name: string;
   price: number;
   shortDescription: string;
-  level: 'N5' | 'N4' | 'N3' | 'N2' | 'N1' | 'JFT' | 'Beginner';
+  level: string;
   topicsCount: number;
   featuredProducts?: boolean;
   accessDurationDays: number;

@@ -1,15 +1,16 @@
+import { getPaymentServiceEnv } from "../../config/env";
 import { Product } from "../../models/product";
-import { AuthenticatedUser } from "../../utils/auth";
+import { AuthenticatedUser } from "@shared-utils/auth";
 
 interface BuildSnapPayloadInput {
   orderId: string;
   amount: number;
   product: Product;
   authenticatedUser: AuthenticatedUser;
-  appBaseUrl: string;
 }
 
 export const buildSnapPayload = (input: BuildSnapPayloadInput): Record<string, unknown> => {
+  const env = getPaymentServiceEnv();
   const payload: Record<string, unknown> = {
     transaction_details: {
       order_id: input.orderId,
@@ -30,13 +31,11 @@ export const buildSnapPayload = (input: BuildSnapPayloadInput): Record<string, u
     }
   };
 
-  if (input.appBaseUrl) {
-    payload.callbacks = {
-      finish: `${input.appBaseUrl}/payment-success`,
-      error: `${input.appBaseUrl}/payment-failed`,
-      pending: `${input.appBaseUrl}/payment-success?pending=1`
-    };
-  }
+  payload.callbacks = {
+    finish: `${env.APP_BASE_URL}/payment-success`,
+    error: `${env.APP_BASE_URL}/payment-failed`,
+    pending: `${env.APP_BASE_URL}/payment-success?pending=1`
+  };
 
   return payload;
 };

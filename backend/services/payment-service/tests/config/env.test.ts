@@ -1,16 +1,18 @@
-import { getCreatePaymentEnv, getWebhookEnv } from "../../src/config/env";
+import { clearEnvCache, getPaymentServiceEnv } from "../../src/config/env";
 import { ValidationError } from "../../src/errors/applicationErrors";
 
 describe("payment env config", () => {
   const ORIGINAL_ENV = process.env;
 
-  beforeEach(() => {
+  beforeEach(() => { clearEnvCache();
     process.env = {
       ...ORIGINAL_ENV,
       DYNAMO_DB_TABLE_NAME: "kjl-table",
       MIDTRANS_SERVER_KEY: "midtrans-key",
       MIDTRANS_SNAP_API_URL: "https://api.midtrans.test/snap",
-      APP_BASE_URL: "https://app.kjl.test/"
+      APP_BASE_URL: "https://app.kjl.test/",
+      PRODUCT_SERVICE_INTERNAL_API_BASE_URL: "https://service-api.kjl.test/",
+      INTERNAL_SERVICE_API_KEY: "internal-secret"
     };
   });
 
@@ -18,52 +20,60 @@ describe("payment env config", () => {
     process.env = ORIGINAL_ENV;
   });
 
-  it("returns create payment env and normalizes app base URL", () => {
-    const env = getCreatePaymentEnv();
+  it("returns payment env and normalizes app base URL", () => {
+    const env = getPaymentServiceEnv();
 
     expect(env).toEqual({
-      dynamoDbTableName: "kjl-table",
-      midtransServerKey: "midtrans-key",
-      midtransSnapApiUrl: "https://api.midtrans.test/snap",
-      appBaseUrl: "https://app.kjl.test"
+      DYNAMO_DB_TABLE_NAME: "kjl-table",
+      MIDTRANS_SERVER_KEY: "midtrans-key",
+      MIDTRANS_SNAP_API_URL: "https://api.midtrans.test/snap",
+      APP_BASE_URL: "https://app.kjl.test",
+      PRODUCT_SERVICE_INTERNAL_API_BASE_URL: "https://service-api.kjl.test",
+      INTERNAL_SERVICE_API_KEY: "internal-secret"
     });
   });
 
-  it("uses empty appBaseUrl when APP_BASE_URL is not set", () => {
+  it("uses empty APP_BASE_URL when APP_BASE_URL is not set", () => {
     delete process.env.APP_BASE_URL;
 
-    const env = getCreatePaymentEnv();
+    const env = getPaymentServiceEnv();
 
-    expect(env.appBaseUrl).toBe("");
+    expect(env.APP_BASE_URL).toBe("");
   });
 
   it("throws when DYNAMO_DB_TABLE_NAME is missing", () => {
     delete process.env.DYNAMO_DB_TABLE_NAME;
 
-    expect(() => getCreatePaymentEnv()).toThrow(ValidationError);
-    expect(() => getCreatePaymentEnv()).toThrow("Missing DYNAMO_DB_TABLE_NAME environment variable");
+    expect(() => getPaymentServiceEnv()).toThrow(ValidationError);
+    expect(() => getPaymentServiceEnv()).toThrow("Missing DYNAMO_DB_TABLE_NAME environment variable");
   });
 
   it("throws when MIDTRANS_SERVER_KEY is missing", () => {
     delete process.env.MIDTRANS_SERVER_KEY;
 
-    expect(() => getCreatePaymentEnv()).toThrow(ValidationError);
-    expect(() => getCreatePaymentEnv()).toThrow("Missing MIDTRANS_SERVER_KEY environment variable");
+    expect(() => getPaymentServiceEnv()).toThrow(ValidationError);
+    expect(() => getPaymentServiceEnv()).toThrow("Missing MIDTRANS_SERVER_KEY environment variable");
   });
 
   it("throws when MIDTRANS_SNAP_API_URL is missing", () => {
     delete process.env.MIDTRANS_SNAP_API_URL;
 
-    expect(() => getCreatePaymentEnv()).toThrow(ValidationError);
-    expect(() => getCreatePaymentEnv()).toThrow("Missing MIDTRANS_SNAP_API_URL environment variable");
+    expect(() => getPaymentServiceEnv()).toThrow(ValidationError);
+    expect(() => getPaymentServiceEnv()).toThrow("Missing MIDTRANS_SNAP_API_URL environment variable");
   });
 
-  it("returns webhook env with shared required fields", () => {
-    const env = getWebhookEnv();
+  it("throws when PRODUCT_SERVICE_INTERNAL_API_BASE_URL is missing", () => {
+    delete process.env.PRODUCT_SERVICE_INTERNAL_API_BASE_URL;
 
-    expect(env).toEqual({
-      dynamoDbTableName: "kjl-table",
-      midtransServerKey: "midtrans-key"
-    });
+    expect(() => getPaymentServiceEnv()).toThrow(ValidationError);
+    expect(() => getPaymentServiceEnv()).toThrow("Missing PRODUCT_SERVICE_INTERNAL_API_BASE_URL environment variable");
+  });
+
+  it("throws when INTERNAL_SERVICE_API_KEY is missing", () => {
+    delete process.env.INTERNAL_SERVICE_API_KEY;
+
+    expect(() => getPaymentServiceEnv()).toThrow(ValidationError);
+    expect(() => getPaymentServiceEnv()).toThrow("Missing INTERNAL_SERVICE_API_KEY environment variable");
   });
 });
+

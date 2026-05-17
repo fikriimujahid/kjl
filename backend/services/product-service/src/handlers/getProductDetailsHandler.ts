@@ -1,19 +1,22 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
 import { mapProductErrorToResponse } from "../errors/errorToResponse";
+import { getProductDetailsSchema } from "../schemas/getProductDetailsSchema";
 import { getProductDetails } from "../use-cases/getProductDetails";
 
 export const getProductDetailsHandler = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> => {
-  const productId = event.pathParameters?.id;
+  const parsedRequest = getProductDetailsSchema.safeParseEvent(event);
 
-  if (!productId) {
-    return createErrorResponse(event, 400, "Missing product id", { code: "VALIDATION_ERROR" });
+  if (!parsedRequest.success) {
+    return createErrorResponse(event, 400, parsedRequest.error, {
+      code: parsedRequest.error === "Invalid JSON body" ? "INVALID_JSON" : "VALIDATION_ERROR"
+    });
   }
 
   try {
-    const productDetails = await getProductDetails(productId);
+    const productDetails = await getProductDetails(parsedRequest.data.productId);
     return createSuccessResponse(event, 200, productDetails);
   } catch (error) {
     return mapProductErrorToResponse(event, error, {

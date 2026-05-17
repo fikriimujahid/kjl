@@ -256,7 +256,7 @@ service_api = {
 
     cors_allow_origins  = ["*"]
     cors_allow_methods  = ["GET", "POST", "OPTIONS"]
-    cors_allow_headers  = ["content-type", "authorization"]
+    cors_allow_headers  = ["content-type", "authorization", "x-internal-api-key"]
     cors_expose_headers = []
     cors_max_age        = 300
 
@@ -277,6 +277,18 @@ service_api = {
         route_key          = "GET /api/purchased-products/{userId}"
         authorization_type = "JWT"
         operation_name     = "GetPurchasedProductsByUserUnderApi"
+        integration_key    = "product"
+      }
+      get_internal_owned_products_by_user_under_api = {
+        route_key          = "GET /api/internal/products/owned/{userId}"
+        authorization_type = "NONE"
+        operation_name     = "GetInternalOwnedProductsByUserUnderApi"
+        integration_key    = "product"
+      }
+      get_internal_product_exists_under_api = {
+        route_key          = "GET /api/internal/products/{id}/exists"
+        authorization_type = "NONE"
+        operation_name     = "GetInternalProductExistsUnderApi"
         integration_key    = "product"
       }
       create_payment_under_api = {

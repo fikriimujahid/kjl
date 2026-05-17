@@ -13,5 +13,15 @@ export const ROUTES = {
     method: "GET",
     path: "/api/products/owned/{userId}",
     routeKey: "GET /api/products/owned/{userId}",
+  },
+  GET_INTERNAL_OWNED_PRODUCTS: {
+    method: "GET",
+    path: "/api/internal/products/owned/{userId}",
+    routeKey: "GET /api/internal/products/owned/{userId}",
+  },
+  GET_INTERNAL_PRODUCT_SUMMARY: {
+    method: "GET",
+    path: "/api/internal/products/{id}/summary",
+    routeKey: "GET /api/internal/products/{id}/summary",
   }
 } as const;

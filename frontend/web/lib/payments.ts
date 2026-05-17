@@ -1,5 +1,34 @@
 const PAYMENT_API_BASE_URL = (process.env.PAYMENT_API_BASE_URL ?? "").replace(/\/$/, ""); 
 
+interface ApiSuccessEnvelope<TData> {
+  success: true;
+  data: TData;
+}
+
+interface ApiErrorEnvelope {
+  success?: false;
+  error?: {
+    message?: unknown;
+  };
+  message?: unknown;
+}
+
+const isObject = (value: unknown): value is Record<string, unknown> => {
+  return value !== null && typeof value === "object";
+};
+
+const isCreatePaymentResponse = (value: unknown): value is CreatePaymentResponse => {
+  if (!isObject(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.orderId === "string" &&
+    typeof value.snapToken === "string" &&
+    (typeof value.redirectUrl === "string" || value.redirectUrl === null)
+  );
+};
+
 export class PaymentApiError extends Error {
   constructor(readonly statusCode: number, message: string) {
     super(message);
@@ -31,9 +60,13 @@ export async function createPayment({ productId, idToken }: CreatePaymentOptions
   if (!response.ok) {
     let message = "Failed to create payment";
     try {
-      const body = await response.json() as { message?: string };
-      if (typeof body.message === "string") {
-        message = body.message;
+      const payload = (await response.json()) as ApiErrorEnvelope;
+      const envelopeMessage = payload?.error?.message;
+
+      if (typeof envelopeMessage === "string" && envelopeMessage.trim().length > 0) {
+        message = envelopeMessage;
+      } else if (typeof payload?.message === "string" && payload.message.trim().length > 0) {
+        message = payload.message;
       }
     } catch {
       // keep default message
@@ -41,5 +74,24 @@ export async function createPayment({ productId, idToken }: CreatePaymentOptions
     throw new PaymentApiError(response.status, message);
   }
 
-  return response.json() as Promise<CreatePaymentResponse>;
+  const payload = (await response.json()) as
+    | ApiSuccessEnvelope<unknown>
+    | CreatePaymentResponse
+    | Record<string, unknown>;
+
+  if (isObject(payload) && payload.success === true && "data" in payload) {
+    const data = payload.data;
+
+    if (isCreatePaymentResponse(data)) {
+      return data;
+    }
+
+    throw new PaymentApiError(response.status, "Invalid create payment response payload");
+  }
+
+  if (isCreatePaymentResponse(payload)) {
+    return payload;
+  }
+
+  throw new PaymentApiError(response.status, "Invalid create payment response payload");
 }

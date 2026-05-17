@@ -4,6 +4,8 @@ import { logRequestReceived, logRequestResult } from "@shared-utils/requestLifec
 import { createErrorResponse, optionsResponse } from "@shared-utils/response";
 import { getProductServiceEnv } from "./config/env";
 import { getProductDetailsHandler } from "./handlers/getProductDetailsHandler";
+import { getProductSummaryInternalHandler } from "./handlers/getProductSummaryInternalHandler";
+import { getOwnedProductsInternalHandler } from "./handlers/getOwnedProductsInternalHandler";
 import { getOwnedProductsHandler } from "./handlers/getOwnedProductsHandler";
 import { getProductsHandler } from "./handlers/getProductsHandler";
 import { ROUTES } from "./routes";
@@ -18,7 +20,9 @@ const routeHandlers: Record<
 > = {
   [ROUTES.GET_PRODUCTS.routeKey]: getProductsHandler,
   [ROUTES.GET_PRODUCT_DETAIL.routeKey]: getProductDetailsHandler,
-  [ROUTES.GET_OWNED_PRODUCTS.routeKey]: getOwnedProductsHandler
+  [ROUTES.GET_OWNED_PRODUCTS.routeKey]: getOwnedProductsHandler,
+  [ROUTES.GET_INTERNAL_OWNED_PRODUCTS.routeKey]: getOwnedProductsInternalHandler,
+  [ROUTES.GET_INTERNAL_PRODUCT_SUMMARY.routeKey]: getProductSummaryInternalHandler
 };
 
 export const handler = async (

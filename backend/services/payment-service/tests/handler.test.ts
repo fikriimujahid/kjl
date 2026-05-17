@@ -1,16 +1,12 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
-import { createErrorResponse, optionsResponse } from "@shared-utils/response";
-import { handler } from "../src/handler";
-import { createPayment } from "../src/handlers/createPayment";
-import { handleWebhook } from "../src/handlers/handleWebhook";
 import { ROUTES } from "../src/routes";
 
-jest.mock("../src/handlers/createPayment", () => ({
-  createPayment: jest.fn()
+jest.mock("../src/handlers/createPaymentHandler", () => ({
+  createPaymentHandler: jest.fn()
 }));
 
-jest.mock("../src/handlers/handleWebhook", () => ({
-  handleWebhook: jest.fn()
+jest.mock("../src/handlers/handleWebhookHandler", () => ({
+  handleWebhookHandler: jest.fn()
 }));
 
 jest.mock("@shared-utils/response", () => ({
@@ -18,12 +14,57 @@ jest.mock("@shared-utils/response", () => ({
   optionsResponse: jest.fn()
 }));
 
-describe("payment-service handler routing", () => {
-  const createPaymentMock = createPayment as jest.MockedFunction<typeof createPayment>;
-  const handleWebhookMock = handleWebhook as jest.MockedFunction<typeof handleWebhook>;
-  const createErrorResponseMock = createErrorResponse as jest.MockedFunction<typeof createErrorResponse>;
-  const optionsResponseMock = optionsResponse as jest.MockedFunction<typeof optionsResponse>;
+const ORIGINAL_ENV = process.env;
 
+interface LoadedHandlerModule {
+  handler: (event: APIGatewayProxyEventV2) => Promise<APIGatewayProxyStructuredResultV2>;
+  createPaymentMock: jest.Mock;
+  handleWebhookMock: jest.Mock;
+  createErrorResponseMock: jest.Mock;
+  optionsResponseMock: jest.Mock;
+}
+
+const loadHandler = (): LoadedHandlerModule => {
+  jest.resetModules();
+  process.env = {
+    ...ORIGINAL_ENV,
+    DYNAMO_DB_TABLE_NAME: "kjl-table",
+    MIDTRANS_SERVER_KEY: "midtrans-key",
+    MIDTRANS_SNAP_API_URL: "https://api.midtrans.test/snap",
+    PRODUCT_SERVICE_INTERNAL_API_BASE_URL: "https://service-api.kjl.test",
+    INTERNAL_SERVICE_API_KEY: "internal-secret"
+  };
+
+  const { clearEnvCache } = require("../src/config/env") as {
+    clearEnvCache: () => void;
+  };
+
+  clearEnvCache();
+
+  const { handler } = require("../src/handler") as {
+    handler: (event: APIGatewayProxyEventV2) => Promise<APIGatewayProxyStructuredResultV2>;
+  };
+  const { createPaymentHandler } = require("../src/handlers/createPaymentHandler") as {
+    createPaymentHandler: jest.Mock;
+  };
+  const { handleWebhookHandler } = require("../src/handlers/handleWebhookHandler") as {
+    handleWebhookHandler: jest.Mock;
+  };
+  const { createErrorResponse, optionsResponse } = require("@shared-utils/response") as {
+    createErrorResponse: jest.Mock;
+    optionsResponse: jest.Mock;
+  };
+
+  return {
+    handler,
+    createPaymentMock: createPaymentHandler,
+    handleWebhookMock: handleWebhookHandler,
+    createErrorResponseMock: createErrorResponse,
+    optionsResponseMock: optionsResponse
+  };
+};
+
+describe("payment-service handler routing", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(console, "info").mockImplementation(() => undefined);
@@ -32,6 +73,7 @@ describe("payment-service handler routing", () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+    process.env = ORIGINAL_ENV;
   });
 
   const createEvent = (routeKey: string, method = "POST"): APIGatewayProxyEventV2 =>
@@ -63,8 +105,9 @@ describe("payment-service handler routing", () => {
     }) as APIGatewayProxyEventV2;
 
   it("returns CORS response for OPTIONS requests", async () => {
+    const { handler, optionsResponseMock } = loadHandler();
     const event = createEvent("OPTIONS /api/payments/create", "OPTIONS");
-    const optionsResult: ReturnType<typeof optionsResponse> = { statusCode: 204, body: "" };
+    const optionsResult = { statusCode: 204, body: "" };
 
     optionsResponseMock.mockReturnValue(optionsResult);
 
@@ -78,6 +121,7 @@ describe("payment-service handler routing", () => {
   });
 
   it("dispatches create payment route", async () => {
+    const { handler, createPaymentMock, handleWebhookMock } = loadHandler();
     const event = createEvent(ROUTES.CREATE_PAYMENT.routeKey);
     const response = { statusCode: 200, body: "{}" } as APIGatewayProxyStructuredResultV2;
 
@@ -94,6 +138,7 @@ describe("payment-service handler routing", () => {
   });
 
   it("dispatches webhook route", async () => {
+    const { handler, createPaymentMock, handleWebhookMock } = loadHandler();
     const event = createEvent(ROUTES.HANDLE_WEBHOOK.routeKey);
     const response = { statusCode: 200, body: "{}" } as APIGatewayProxyStructuredResultV2;
 
@@ -107,8 +152,9 @@ describe("payment-service handler routing", () => {
   });
 
   it("returns not found response for unsupported route", async () => {
+    const { handler, createErrorResponseMock } = loadHandler();
     const event = createEvent("GET /api/payments/unknown", "GET");
-    const notFound: ReturnType<typeof createErrorResponse> = {
+    const notFound = {
       statusCode: 404,
       body: JSON.stringify({
         success: false,
@@ -136,6 +182,7 @@ describe("payment-service handler routing", () => {
   });
 
   it("logs incoming request metadata", async () => {
+    const { handler, createPaymentMock } = loadHandler();
     const event = createEvent(ROUTES.CREATE_PAYMENT.routeKey);
 
     createPaymentMock.mockResolvedValue({ statusCode: 200, body: "{}" } as APIGatewayProxyStructuredResultV2);
@@ -156,3 +203,4 @@ describe("payment-service handler routing", () => {
     );
   });
 });
+

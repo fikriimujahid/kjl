@@ -4,10 +4,14 @@ import {
   UnauthorizedError,
   ValidationError
 } from "../../src/errors/applicationErrors";
-import { handleWebhookUseCase } from "../../src/use-cases/handleWebhookUseCase";
+import { handleWebhook } from "../../src/use-cases/handleWebhook";
 import { readOrderIdFromWebhookPayload } from "../../src/schemas/handleWebhookSchema";
 import { normalizePaymentStatus, validateWebhookSignature } from "../../src/services/midtransService";
-import { grantProductAccess, readPaymentOrder, savePaymentOrder } from "../../src/services/paymentRepository";
+import {
+  findPaymentOrderById,
+  grantProductAccess,
+  savePaymentOrder
+} from "../../src/repositories/paymentOrderRepository";
 
 jest.mock("../../src/schemas/handleWebhookSchema", () => ({
   readOrderIdFromWebhookPayload: jest.fn()
@@ -18,18 +22,18 @@ jest.mock("../../src/services/midtransService", () => ({
   normalizePaymentStatus: jest.fn()
 }));
 
-jest.mock("../../src/services/paymentRepository", () => ({
-  readPaymentOrder: jest.fn(),
+jest.mock("../../src/repositories/paymentOrderRepository", () => ({
+  findPaymentOrderById: jest.fn(),
   grantProductAccess: jest.fn(),
   savePaymentOrder: jest.fn()
 }));
 
-describe("handleWebhookUseCase", () => {
+describe("handleWebhook", () => {
   const validateWebhookSignatureMock = validateWebhookSignature as jest.MockedFunction<typeof validateWebhookSignature>;
   const normalizePaymentStatusMock = normalizePaymentStatus as jest.MockedFunction<typeof normalizePaymentStatus>;
   const readOrderIdFromWebhookPayloadMock =
     readOrderIdFromWebhookPayload as jest.MockedFunction<typeof readOrderIdFromWebhookPayload>;
-  const readPaymentOrderMock = readPaymentOrder as jest.MockedFunction<typeof readPaymentOrder>;
+  const findPaymentOrderByIdMock = findPaymentOrderById as jest.MockedFunction<typeof findPaymentOrderById>;
   const grantProductAccessMock = grantProductAccess as jest.MockedFunction<typeof grantProductAccess>;
   const savePaymentOrderMock = savePaymentOrder as jest.MockedFunction<typeof savePaymentOrder>;
 
@@ -53,8 +57,12 @@ describe("handleWebhookUseCase", () => {
 
   const input = {
     env: {
-      dynamoDbTableName: "kjl-table",
-      midtransServerKey: "midtrans-key"
+      DYNAMO_DB_TABLE_NAME: "kjl-table",
+      MIDTRANS_SERVER_KEY: "midtrans-key",
+      MIDTRANS_SNAP_API_URL: "https://snap.midtrans.test",
+      APP_BASE_URL: "",
+      PRODUCT_SERVICE_INTERNAL_API_BASE_URL: "https://service-api.kjl.test",
+      INTERNAL_SERVICE_API_KEY: "internal-secret"
     },
     payload: {
       order_id: "KJL~user-1~abc123",
@@ -74,7 +82,7 @@ describe("handleWebhookUseCase", () => {
 
     validateWebhookSignatureMock.mockReturnValue(true);
     readOrderIdFromWebhookPayloadMock.mockReturnValue("KJL~user-1~abc123");
-    readPaymentOrderMock.mockResolvedValue(existingOrder);
+    findPaymentOrderByIdMock.mockResolvedValue(existingOrder);
     normalizePaymentStatusMock.mockReturnValue("SUCCESS");
     grantProductAccessMock.mockResolvedValue("2026-06-14T00:00:00.000Z");
     savePaymentOrderMock.mockResolvedValue(undefined);
@@ -83,40 +91,40 @@ describe("handleWebhookUseCase", () => {
   it("throws UnauthorizedError when Midtrans signature is invalid", async () => {
     validateWebhookSignatureMock.mockReturnValue(false);
 
-    await expect(handleWebhookUseCase(input)).rejects.toBeInstanceOf(UnauthorizedError);
-    await expect(handleWebhookUseCase(input)).rejects.toMatchObject({
+    await expect(handleWebhook(input)).rejects.toBeInstanceOf(UnauthorizedError);
+    await expect(handleWebhook(input)).rejects.toMatchObject({
       message: "Invalid Midtrans signature",
       statusCode: 401
     });
 
-    expect(readPaymentOrderMock).not.toHaveBeenCalled();
+    expect(findPaymentOrderByIdMock).not.toHaveBeenCalled();
   });
 
   it("throws ValidationError when order_id is missing", async () => {
     readOrderIdFromWebhookPayloadMock.mockReturnValue(null);
 
-    await expect(handleWebhookUseCase(input)).rejects.toBeInstanceOf(ValidationError);
-    await expect(handleWebhookUseCase(input)).rejects.toMatchObject({
+    await expect(handleWebhook(input)).rejects.toBeInstanceOf(ValidationError);
+    await expect(handleWebhook(input)).rejects.toMatchObject({
       message: "Missing order_id",
       statusCode: 400
     });
   });
 
   it("throws ExternalServiceError when reading payment order fails", async () => {
-    readPaymentOrderMock.mockRejectedValue(new Error("dynamo down"));
+    findPaymentOrderByIdMock.mockRejectedValue(new Error("dynamo down"));
 
-    await expect(handleWebhookUseCase(input)).rejects.toBeInstanceOf(ExternalServiceError);
-    await expect(handleWebhookUseCase(input)).rejects.toMatchObject({
+    await expect(handleWebhook(input)).rejects.toBeInstanceOf(ExternalServiceError);
+    await expect(handleWebhook(input)).rejects.toMatchObject({
       message: "Failed to read payment order",
       statusCode: 502
     });
   });
 
   it("throws NotFoundError when payment order does not exist", async () => {
-    readPaymentOrderMock.mockResolvedValue(null);
+    findPaymentOrderByIdMock.mockResolvedValue(null);
 
-    await expect(handleWebhookUseCase(input)).rejects.toBeInstanceOf(NotFoundError);
-    await expect(handleWebhookUseCase(input)).rejects.toMatchObject({
+    await expect(handleWebhook(input)).rejects.toBeInstanceOf(NotFoundError);
+    await expect(handleWebhook(input)).rejects.toMatchObject({
       message: "Payment order not found",
       statusCode: 404
     });
@@ -126,8 +134,8 @@ describe("handleWebhookUseCase", () => {
     normalizePaymentStatusMock.mockReturnValue("SUCCESS");
     grantProductAccessMock.mockRejectedValue(new Error("grant failed"));
 
-    await expect(handleWebhookUseCase(input)).rejects.toBeInstanceOf(ExternalServiceError);
-    await expect(handleWebhookUseCase(input)).rejects.toMatchObject({
+    await expect(handleWebhook(input)).rejects.toBeInstanceOf(ExternalServiceError);
+    await expect(handleWebhook(input)).rejects.toMatchObject({
       message: "Failed to grant product access",
       statusCode: 502
     });
@@ -136,15 +144,15 @@ describe("handleWebhookUseCase", () => {
   it("throws ExternalServiceError when payment order update fails", async () => {
     savePaymentOrderMock.mockRejectedValue(new Error("write failed"));
 
-    await expect(handleWebhookUseCase(input)).rejects.toBeInstanceOf(ExternalServiceError);
-    await expect(handleWebhookUseCase(input)).rejects.toMatchObject({
+    await expect(handleWebhook(input)).rejects.toBeInstanceOf(ExternalServiceError);
+    await expect(handleWebhook(input)).rejects.toMatchObject({
       message: "Failed to update payment order",
       statusCode: 502
     });
   });
 
   it("grants product access on first SUCCESS and persists enriched payment order", async () => {
-    const result = await handleWebhookUseCase(input);
+    const result = await handleWebhook(input);
 
     expect(grantProductAccessMock).toHaveBeenCalledWith(
       "kjl-table",
@@ -177,13 +185,13 @@ describe("handleWebhookUseCase", () => {
 
   it("does not grant product access when SUCCESS already granted previously", async () => {
     normalizePaymentStatusMock.mockReturnValue("SUCCESS");
-    readPaymentOrderMock.mockResolvedValue({
+    findPaymentOrderByIdMock.mockResolvedValue({
       ...existingOrder,
       accessGrantedAt: "2026-05-01T00:00:00.000Z",
       expiryDate: "2026-05-31T00:00:00.000Z"
     });
 
-    const result = await handleWebhookUseCase(input);
+    const result = await handleWebhook(input);
 
     expect(grantProductAccessMock).not.toHaveBeenCalled();
     expect(savePaymentOrderMock).toHaveBeenCalled();
@@ -204,7 +212,7 @@ describe("handleWebhookUseCase", () => {
       }
     };
 
-    const result = await handleWebhookUseCase(pendingInput);
+    const result = await handleWebhook(pendingInput);
 
     expect(grantProductAccessMock).not.toHaveBeenCalled();
     expect(savePaymentOrderMock).toHaveBeenCalledWith(

@@ -3,6 +3,8 @@ import { logRequestReceived, logRequestResult } from "@shared-utils/requestLifec
 import { createErrorResponse } from "@shared-utils/response";
 import { handler } from "../src/handler";
 import { getProductDetailsHandler } from "../src/handlers/getProductDetailsHandler";
+import { getProductExistsInternalHandler } from "../src/handlers/getProductSummaryInternalHandler";
+import { getOwnedProductsInternalHandler } from "../src/handlers/getOwnedProductsInternalHandler";
 import { getOwnedProductsHandler } from "../src/handlers/getOwnedProductsHandler";
 import { getProductsHandler } from "../src/handlers/getProductsHandler";
 import { ROUTES } from "../src/routes";
@@ -10,7 +12,8 @@ import { ROUTES } from "../src/routes";
 jest.mock("../src/config/env", () => ({
   getProductServiceEnv: jest.fn(() => ({
     DYNAMO_DB_TABLE_NAME: "test-table",
-    MEDIA_PRIVATE_BUCKET_NAME: "test-bucket"
+    MEDIA_PRIVATE_BUCKET_NAME: "test-bucket",
+    INTERNAL_SERVICE_API_KEY: "internal-test-key"
   }))
 }));
 
@@ -39,6 +42,14 @@ jest.mock("../src/handlers/getOwnedProductsHandler", () => ({
   getOwnedProductsHandler: jest.fn(),
 }));
 
+jest.mock("../src/handlers/getOwnedProductsInternalHandler", () => ({
+  getOwnedProductsInternalHandler: jest.fn(),
+}));
+
+jest.mock("../src/handlers/getProductExistsInternalHandler", () => ({
+  getProductExistsInternalHandler: jest.fn(),
+}));
+
 jest.mock("@shared-utils/response", () => ({
   createErrorResponse: jest.fn(),
 }));
@@ -47,6 +58,8 @@ describe("product-service handler routing", () => {
   const getProductsMock = getProductsHandler as jest.MockedFunction<typeof getProductsHandler>;
   const getProductDetailsMock = getProductDetailsHandler as jest.MockedFunction<typeof getProductDetailsHandler>;
   const getOwnedProductsMock = getOwnedProductsHandler as jest.MockedFunction<typeof getOwnedProductsHandler>;
+  const getOwnedProductsInternalMock = getOwnedProductsInternalHandler as jest.MockedFunction<typeof getOwnedProductsInternalHandler>;
+  const getProductExistsInternalMock = getProductExistsInternalHandler as jest.MockedFunction<typeof getProductExistsInternalHandler>;
   const createErrorResponseMock = createErrorResponse as jest.MockedFunction<typeof createErrorResponse>;
   const logRequestReceivedMock = logRequestReceived as jest.MockedFunction<typeof logRequestReceived>;
   const logRequestResultMock = logRequestResult as jest.MockedFunction<typeof logRequestResult>;
@@ -159,6 +172,7 @@ describe("product-service handler routing", () => {
     expect(getOwnedProductsMock).toHaveBeenCalledWith(event);
     expect(getProductsMock).not.toHaveBeenCalled();
     expect(getProductDetailsMock).not.toHaveBeenCalled();
+    expect(getOwnedProductsInternalMock).not.toHaveBeenCalled();
     expect(result).toBe(response);
     expect(logRequestReceivedMock).toHaveBeenCalledWith(
       expect.any(Object),
@@ -171,6 +185,70 @@ describe("product-service handler routing", () => {
     expect(logRequestResultMock).toHaveBeenCalledWith(
       expect.any(Object),
       expect.objectContaining({ routeKey: ROUTES.GET_OWNED_PRODUCTS.routeKey, requestId: "req-123" }),
+      response
+    );
+  });
+
+  it("routes GET /api/internal/products/owned/{userId} to getOwnedProductsInternal", async () => {
+    const response: APIGatewayProxyStructuredResultV2 = {
+      statusCode: 200,
+      body: JSON.stringify([{ id: "purchase-1" }]),
+    };
+    getOwnedProductsInternalMock.mockResolvedValue(response);
+
+    const event = createEvent(ROUTES.GET_INTERNAL_OWNED_PRODUCTS.routeKey, "user-1");
+    const result = await handler(event);
+
+    expect(getOwnedProductsInternalMock).toHaveBeenCalledTimes(1);
+    expect(getOwnedProductsInternalMock).toHaveBeenCalledWith(event);
+    expect(getProductsMock).not.toHaveBeenCalled();
+    expect(getProductDetailsMock).not.toHaveBeenCalled();
+    expect(getOwnedProductsMock).not.toHaveBeenCalled();
+    expect(getProductExistsInternalMock).not.toHaveBeenCalled();
+    expect(result).toBe(response);
+    expect(logRequestReceivedMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        routeKey: ROUTES.GET_INTERNAL_OWNED_PRODUCTS.routeKey,
+        requestId: "req-123",
+        method: "GET"
+      })
+    );
+    expect(logRequestResultMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ routeKey: ROUTES.GET_INTERNAL_OWNED_PRODUCTS.routeKey, requestId: "req-123" }),
+      response
+    );
+  });
+
+  it("routes GET /api/internal/products/{id}/exists to getProductExistsInternal", async () => {
+    const response: APIGatewayProxyStructuredResultV2 = {
+      statusCode: 200,
+      body: JSON.stringify(true),
+    };
+    getProductExistsInternalMock.mockResolvedValue(response);
+
+    const event = createEvent(ROUTES.GET_INTERNAL_PRODUCT_EXISTS.routeKey, "prod-1");
+    const result = await handler(event);
+
+    expect(getProductExistsInternalMock).toHaveBeenCalledTimes(1);
+    expect(getProductExistsInternalMock).toHaveBeenCalledWith(event);
+    expect(getProductsMock).not.toHaveBeenCalled();
+    expect(getProductDetailsMock).not.toHaveBeenCalled();
+    expect(getOwnedProductsMock).not.toHaveBeenCalled();
+    expect(getOwnedProductsInternalMock).not.toHaveBeenCalled();
+    expect(result).toBe(response);
+    expect(logRequestReceivedMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        routeKey: ROUTES.GET_INTERNAL_PRODUCT_EXISTS.routeKey,
+        requestId: "req-123",
+        method: "GET"
+      })
+    );
+    expect(logRequestResultMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ routeKey: ROUTES.GET_INTERNAL_PRODUCT_EXISTS.routeKey, requestId: "req-123" }),
       response
     );
   });
@@ -194,6 +272,8 @@ describe("product-service handler routing", () => {
     expect(getProductsMock).not.toHaveBeenCalled();
     expect(getProductDetailsMock).not.toHaveBeenCalled();
     expect(getOwnedProductsMock).not.toHaveBeenCalled();
+    expect(getOwnedProductsInternalMock).not.toHaveBeenCalled();
+    expect(getProductExistsInternalMock).not.toHaveBeenCalled();
     expect(createErrorResponseMock).toHaveBeenCalledWith(event, 404, "Route not found", {
       code: "ROUTE_NOT_FOUND"
     });
@@ -208,7 +288,9 @@ describe("product-service handler routing", () => {
   it.each([
     [ROUTES.GET_PRODUCTS.routeKey],
     [ROUTES.GET_PRODUCT_DETAIL.routeKey],
-    [ROUTES.GET_OWNED_PRODUCTS.routeKey]
+    [ROUTES.GET_OWNED_PRODUCTS.routeKey],
+    [ROUTES.GET_INTERNAL_OWNED_PRODUCTS.routeKey],
+    [ROUTES.GET_INTERNAL_PRODUCT_EXISTS.routeKey]
   ])("logs request lifecycle metadata for route %s", async (routeKey) => {
     const defaultResponse: APIGatewayProxyStructuredResultV2 = {
       statusCode: 200,
@@ -218,12 +300,16 @@ describe("product-service handler routing", () => {
     getProductsMock.mockResolvedValue(defaultResponse);
     getProductDetailsMock.mockResolvedValue(defaultResponse);
     getOwnedProductsMock.mockResolvedValue(defaultResponse);
+    getOwnedProductsInternalMock.mockResolvedValue(defaultResponse);
+    getProductExistsInternalMock.mockResolvedValue(defaultResponse);
 
     const pathParameter =
       routeKey === ROUTES.GET_PRODUCTS.routeKey
         ? undefined
         : routeKey === ROUTES.GET_PRODUCT_DETAIL.routeKey
           ? "prod-1"
+          : routeKey === ROUTES.GET_INTERNAL_PRODUCT_EXISTS.routeKey
+            ? "prod-1"
           : "user-1";
     const event = createEvent(routeKey, pathParameter);
 

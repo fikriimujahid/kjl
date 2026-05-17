@@ -141,7 +141,7 @@ describe("getOwnedProductsHandler", () => {
         level: "N5",
         name: "JLPT N5",
         purchaseDate: "2026-01-01T00:00:00.000Z",
-        accessExpiryDate: "2026-12-31T00:00:00.000Z"
+        expiryDate: "2026-12-31T00:00:00.000Z"
       }
     ];
 
@@ -206,14 +206,14 @@ describe("getOwnedProductsHandler", () => {
     expect(createErrorResponse).toHaveBeenCalledWith(
       event,
       502,
-      "Failed to load purchased product data",
+      "Failed to load owned product data",
       {
         code: "OWNED_PRODUCTS_FETCH_FAILED"
       }
     );
     expect(result).toEqual({
       statusCode: 502,
-      message: "Failed to load purchased product data",
+      message: "Failed to load owned product data",
       meta: {
         code: "OWNED_PRODUCTS_FETCH_FAILED"
       },

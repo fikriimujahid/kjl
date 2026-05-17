@@ -71,6 +71,8 @@ jobs:
           MIDTRANS_SERVER_KEY="${{ secrets.PAYMENT_SERVICE_MIDTRANS_SERVER_KEY }}"
           MIDTRANS_SNAP_API_URL="${{ secrets.PAYMENT_SERVICE_MIDTRANS_SNAP_API_URL }}"
           APP_BASE_URL="${{ secrets.PAYMENT_SERVICE_APP_BASE_URL }}"
+          PRODUCT_SERVICE_INTERNAL_API_BASE_URL="${{ secrets.PAYMENT_SERVICE_PRODUCT_SERVICE_INTERNAL_API_BASE_URL }}"
+          PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY="${{ secrets.PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY }}"
 
           if [ -z "${DYNAMO_DB_TABLE_NAME}" ]; then
             echo "DYNAMO_DB_TABLE_NAME is missing. Set vars.DYNAMO_DB_TABLE_NAME or secrets.DYNAMO_DB_TABLE_NAME."
@@ -82,11 +84,23 @@ jobs:
             exit 1
           fi
 
+          if [ -z "${PRODUCT_SERVICE_INTERNAL_API_BASE_URL}" ]; then
+            echo "PRODUCT_SERVICE_INTERNAL_API_BASE_URL is missing. Set vars.PAYMENT_SERVICE_PRODUCT_SERVICE_INTERNAL_API_BASE_URL or secrets.PAYMENT_SERVICE_PRODUCT_SERVICE_INTERNAL_API_BASE_URL."
+            exit 1
+          fi
+
+          if [ -z "${PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY}" ]; then
+            echo "PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY is missing. Set vars.PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY or secrets.PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY."
+            exit 1
+          fi
+
           cat > .env.lambda <<EOF
           DYNAMO_DB_TABLE_NAME=${DYNAMO_DB_TABLE_NAME}
           MIDTRANS_SERVER_KEY=${MIDTRANS_SERVER_KEY}
           MIDTRANS_SNAP_API_URL=${MIDTRANS_SNAP_API_URL}
           APP_BASE_URL=${APP_BASE_URL}
+          PRODUCT_SERVICE_INTERNAL_API_BASE_URL=${PRODUCT_SERVICE_INTERNAL_API_BASE_URL}
+          PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY=${PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY}
           EOF
 
       - name: Update Lambda environment variables
@@ -112,11 +126,15 @@ jobs:
             --arg midtransServerKey "${MIDTRANS_SERVER_KEY}" \
             --arg midtransSnapApiUrl "${MIDTRANS_SNAP_API_URL}" \
             --arg appBaseUrl "${APP_BASE_URL}" \
+            --arg productServiceInternalApiBaseUrl "${PRODUCT_SERVICE_INTERNAL_API_BASE_URL}" \
+            --arg productServiceInternalServiceApiKey "${PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY}" \
             '. + {
               DYNAMO_DB_TABLE_NAME: $dynamoDbTableName,
               MIDTRANS_SERVER_KEY: $midtransServerKey,
               MIDTRANS_SNAP_API_URL: $midtransSnapApiUrl,
-              APP_BASE_URL: $appBaseUrl
+              APP_BASE_URL: $appBaseUrl,
+              PRODUCT_SERVICE_INTERNAL_API_BASE_URL: $productServiceInternalApiBaseUrl,
+              PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY: $productServiceInternalServiceApiKey
             }')
 
           UPDATE_PAYLOAD=$(jq -cn \
