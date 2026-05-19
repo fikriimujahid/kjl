@@ -1,3 +1,3 @@
-export * from './api-clients/products.client';
-export * from './api-clients/payments.client';
+export * from '../services/products/productsApi';
+export * from '../services/payments/paymentsApi';
 export * from './api-clients/quiz.client';

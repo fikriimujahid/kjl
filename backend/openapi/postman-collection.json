@@ -1,6 +1,6 @@
 {
   "info": {
-    "_postman_id": "267673c6-0324-409b-b8d9-0dffde7e406a",
+    "_postman_id": "fc5cc8da-a6fa-4f7c-8df3-9cfc8044114e",
     "name": "KeJepangDulu API (Generated)",
     "description": "Generated from backend/openapi/swagger.json with per-service collection variables.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -169,6 +169,15 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "List owned products for an internal trusted service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{productServiceBaseUrl}}/api/internal/products/owned/{userId}"
+          },
+          "response": []
         }
       ]
     },
@@ -195,6 +204,25 @@
                 }
               }
             },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get authenticated user payment history",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{paymentServiceBaseUrl}}/api/payments/history",
             "auth": {
               "type": "bearer",
               "bearer": [

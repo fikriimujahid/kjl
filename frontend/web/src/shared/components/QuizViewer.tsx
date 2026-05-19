@@ -5,7 +5,7 @@ import { motion } from 'motion/react';
 import { CheckCircle2, ArrowRight, ArrowLeft, RefreshCcw, Volume2 } from 'lucide-react';
 import { Question } from '@/types';
 import { submitQuizExam, SubmitQuizExamResponse } from '@/infrastructure/api-clients/quiz.client';
-import { cn } from '@/shared/utils';
+import { cn } from '@/utils/classnames';
 
 function getPaginationItems(current: number, total: number): (number | '...')[] {
   if (total <= 9) return Array.from({ length: total }, (_, i) => i);

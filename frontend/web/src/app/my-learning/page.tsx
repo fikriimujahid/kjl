@@ -7,10 +7,10 @@ import { Product, Session, SessionDetail } from '@/types';
 import { motion, AnimatePresence } from 'motion/react';
 import QuizViewer from '@/shared/components/QuizViewer';
 import ImageViewer from '@/shared/components/ImageViewer';
-import { cn } from '@/shared/utils';
-import { RequireAuth } from '@/features/auth/components/RequireAuth';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import { fetchProductSessionDetails, getOwnedProducts } from '@/infrastructure/api-clients/products.client';
+import { cn } from '@/utils/classnames';
+import { RequireAuth } from '@/components/auth/RequireAuth';
+import { useAuth } from '@/hooks/useAuth';
+import { fetchProductSessionDetails, getOwnedProducts } from '@/services/products/productsApi';
 
 export default function MyLearningPage() {
   const { status, user, accessToken } = useAuth();
@@ -196,7 +196,7 @@ export default function MyLearningPage() {
         <div className="lg:col-span-4 space-y-8 order-2 lg:order-1 overflow-visible">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 overflow-x-auto whitespace-nowrap lg:whitespace-normal no-scrollbar">
             <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4 px-2 hidden lg:block">Produk Saya</h3>
-            <div className="flex lg:flex-col gap-2">
+            {/* <div className="flex lg:flex-col gap-2">
               {ownedProducts.map((product) => (
                 <button
                   key={product.id}
@@ -217,7 +217,7 @@ export default function MyLearningPage() {
                   <span className="line-clamp-1">{product.name}</span>
                 </button>
               ))}
-            </div>
+            </div> */}
           </div>
 
           {selectedProduct && (

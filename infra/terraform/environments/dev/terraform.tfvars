@@ -97,6 +97,29 @@ auth_cognito = {
     }
   }
 
+  user_pool_schema_attributes = [
+    {
+      name                = "email"
+      attribute_data_type = "String"
+      required            = true
+      mutable             = true
+      string_attribute_constraints = {
+        min_length = 5
+        max_length = 2048
+      }
+    },
+    {
+      name                = "name"
+      attribute_data_type = "String"
+      required            = false
+      mutable             = true
+      string_attribute_constraints = {
+        min_length = 1
+        max_length = 2048
+      }
+    }
+  ]
+
   enabled_identity_providers = ["COGNITO"]
   verification_message_template = {
     default_email_option  = "CONFIRM_WITH_LINK"
@@ -189,8 +212,8 @@ service_api = {
       dynamodb_access = {
         learning_content = {
           table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/learning-content-dev"
-          read  = true
-          write = true
+          read      = true
+          write     = true
         }
       }
       s3_access = {
@@ -215,8 +238,8 @@ service_api = {
       dynamodb_access = {
         learning_content = {
           table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/learning-content-dev"
-          read  = true
-          write = true
+          read      = true
+          write     = true
         }
       }
     }
@@ -234,8 +257,8 @@ service_api = {
       dynamodb_access = {
         learning_content = {
           table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/learning-content-dev"
-          read  = true
-          write = true
+          read      = true
+          write     = true
         }
       }
       s3_access = {
@@ -248,15 +271,15 @@ service_api = {
     }
 
     auth = {
-      name        = "kejepangdulu-dev-auth-api"
-      description = "Auth API Lambda."
-      source_dir  = "../../../../backend/services/auth-service/build/lambda"
-      handler     = "services/auth-service/src/handler.handler"
-      runtime     = "nodejs22.x"
-      memory_size = 256
-      timeout     = 15
-      environment_variables = {} 
-      publish = true
+      name                  = "kejepangdulu-dev-auth-api"
+      description           = "Auth API Lambda."
+      source_dir            = "../../../../backend/services/auth-service/build/lambda"
+      handler               = "services/auth-service/src/handler.handler"
+      runtime               = "nodejs22.x"
+      memory_size           = 256
+      timeout               = 15
+      environment_variables = {}
+      publish               = true
     }
   }
 
@@ -306,6 +329,12 @@ service_api = {
         route_key          = "POST /api/payments/create"
         authorization_type = "JWT"
         operation_name     = "CreatePaymentUnderApi"
+        integration_key    = "payment"
+      }
+      get_payment_history_under_api = {
+        route_key          = "GET /api/payments/history"
+        authorization_type = "JWT"
+        operation_name     = "GetPaymentHistoryUnderApi"
         integration_key    = "payment"
       }
       payment_webhook_under_api = {

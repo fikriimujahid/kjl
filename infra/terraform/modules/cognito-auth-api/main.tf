@@ -11,6 +11,7 @@ module "base" {
 
   callback_urls                 = var.callback_urls
   logout_urls                   = var.logout_urls
+  user_pool_schema_attributes   = var.user_pool_schema_attributes
   verification_message_template = var.verification_message_template
   token_validity                = var.token_validity
 }

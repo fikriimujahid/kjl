@@ -7,10 +7,10 @@ import { Product, Session, SessionDetail } from '@/types';
 import { motion, AnimatePresence } from 'motion/react';
 import QuizViewer from '@/shared/components/QuizViewer';
 import ImageViewer from '@/shared/components/ImageViewer';
-import { cn } from '@/shared/utils';
-import { RequireAuth } from '@/features/auth/components/RequireAuth';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import { fetchProductSessionDetails, getOwnedProducts } from '@/infrastructure/api-clients/products.client';
+import { cn } from '@/utils/classnames';
+import { RequireAuth } from '@/components/auth/RequireAuth';
+import { useAuth } from '@/hooks/useAuth';
+import { fetchProductSessionDetails, getOwnedProducts } from '@/services/products/productsApi';
 
 export default function MyLearningPage() {
   const { status, user, accessToken } = useAuth();
@@ -277,7 +277,7 @@ export default function MyLearningPage() {
         <div className="lg:col-span-8 order-1 lg:order-2">
           {activeSession ? (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              {/* <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
+              <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-900 mt-4 tracking-tight">{activeSession.title}</h2>
                 </div>
@@ -290,7 +290,7 @@ export default function MyLearningPage() {
                 >
                   Tutup Materi
                 </button>
-              </div> */}
+              </div>
 
               <div className="min-h-[400px]">
                 

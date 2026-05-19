@@ -146,7 +146,8 @@ module "cognito" {
 
   callback_urls = var.auth_cognito.callback_urls
 
-  logout_urls = var.auth_cognito.logout_urls
+  logout_urls                 = var.auth_cognito.logout_urls
+  user_pool_schema_attributes = var.auth_cognito.user_pool_schema_attributes
 
   token_validity = try(var.auth_cognito.token_validity, {})
 

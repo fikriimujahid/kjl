@@ -86,6 +86,36 @@ export const findPaymentOrderById = async (
   }
 };
 
+export const listPaymentOrdersByUserId = async (
+  userId: string
+): Promise<PaymentOrderRecord[]> => {
+  const paymentPartitionKey = `${PAYMENT_PARTITION_KEY_PREFIX}${userId}`;
+  const dynamoDbDocumentClient = createDynamoDocumentClient();
+  const tableName = getPaymentServiceEnv().DYNAMO_DB_TABLE_NAME;
+
+  try {
+    const response = await selectItems<PaymentOrderRecord & Record<string, unknown>>(dynamoDbDocumentClient, {
+      from: tableName,
+      keyWhere: {
+        PK: paymentPartitionKey
+      },
+      keyBeginsWith: {
+        SK: PAYMENT_SORT_KEY_PREFIX
+      }
+    });
+
+    return response.items;
+  } catch (error) {
+    logger.error("dynamodb.paymentOrder.list.failed", {
+      tableName,
+      userId,
+      paymentPartitionKey,
+      error
+    });
+    throw error;
+  }
+};
+
 export const grantProductAccess = async (
   order: PaymentOrderRecord,
   nowIsoString: string
