@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { ArrowLeft, ArrowRight, Image as ImageIcon } from 'lucide-react';
-import { cn } from '@/shared/utils';
+import { cn } from '@/utils/classnames';
 
 interface ImageViewerProps {
   images: string[];

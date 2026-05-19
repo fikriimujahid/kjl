@@ -4,6 +4,7 @@ import { logRequestReceived, logRequestResult } from "@shared-utils/requestLifec
 import { createErrorResponse, optionsResponse } from "@shared-utils/response";
 import { getPaymentServiceEnv } from "./config/env";
 import { createPaymentHandler } from "./handlers/createPaymentHandler";
+import { getPaymentHistoryHandler } from "./handlers/getPaymentHistoryHandler";
 import { handleWebhookHandler } from "./handlers/handleWebhookHandler";
 import { ROUTES } from "./routes";
 
@@ -16,6 +17,7 @@ const routeHandlers: Record<
   (event: APIGatewayProxyEventV2) => Promise<APIGatewayProxyStructuredResultV2>
 > = {
   [ROUTES.CREATE_PAYMENT.routeKey]: createPaymentHandler,
+  [ROUTES.GET_PAYMENT_HISTORY.routeKey]: getPaymentHistoryHandler,
   [ROUTES.HANDLE_WEBHOOK.routeKey]: handleWebhookHandler
 };
 

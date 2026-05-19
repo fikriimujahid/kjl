@@ -164,6 +164,33 @@ variable "auth_cognito" {
     callback_urls = list(string)
     logout_urls   = list(string)
 
+    user_pool_schema_attributes = optional(list(object({
+      name                     = string
+      attribute_data_type      = string
+      developer_only_attribute = optional(bool, false)
+      mutable                  = optional(bool, true)
+      required                 = optional(bool, false)
+      string_attribute_constraints = optional(object({
+        min_length = optional(number)
+        max_length = optional(number)
+      }))
+      number_attribute_constraints = optional(object({
+        min_value = optional(number)
+        max_value = optional(number)
+      }))
+      })), [
+      {
+        name                = "email"
+        attribute_data_type = "String"
+        required            = true
+        mutable             = true
+        string_attribute_constraints = {
+          min_length = 5
+          max_length = 2048
+        }
+      }
+    ])
+
     token_validity = optional(object({
       access_token_validity  = optional(number)
       id_token_validity      = optional(number)

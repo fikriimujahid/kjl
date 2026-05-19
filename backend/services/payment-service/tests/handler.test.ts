@@ -5,6 +5,10 @@ jest.mock("../src/handlers/createPaymentHandler", () => ({
   createPaymentHandler: jest.fn()
 }));
 
+jest.mock("../src/handlers/getPaymentHistoryHandler", () => ({
+  getPaymentHistoryHandler: jest.fn()
+}));
+
 jest.mock("../src/handlers/handleWebhookHandler", () => ({
   handleWebhookHandler: jest.fn()
 }));
@@ -19,6 +23,7 @@ const ORIGINAL_ENV = process.env;
 interface LoadedHandlerModule {
   handler: (event: APIGatewayProxyEventV2) => Promise<APIGatewayProxyStructuredResultV2>;
   createPaymentMock: jest.Mock;
+  getPaymentHistoryMock: jest.Mock;
   handleWebhookMock: jest.Mock;
   createErrorResponseMock: jest.Mock;
   optionsResponseMock: jest.Mock;
@@ -32,7 +37,7 @@ const loadHandler = (): LoadedHandlerModule => {
     MIDTRANS_SERVER_KEY: "midtrans-key",
     MIDTRANS_SNAP_API_URL: "https://api.midtrans.test/snap",
     PRODUCT_SERVICE_INTERNAL_API_BASE_URL: "https://service-api.kjl.test",
-    INTERNAL_SERVICE_API_KEY: "internal-secret"
+    PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY: "internal-secret"
   };
 
   const { clearEnvCache } = require("../src/config/env") as {
@@ -47,6 +52,9 @@ const loadHandler = (): LoadedHandlerModule => {
   const { createPaymentHandler } = require("../src/handlers/createPaymentHandler") as {
     createPaymentHandler: jest.Mock;
   };
+  const { getPaymentHistoryHandler } = require("../src/handlers/getPaymentHistoryHandler") as {
+    getPaymentHistoryHandler: jest.Mock;
+  };
   const { handleWebhookHandler } = require("../src/handlers/handleWebhookHandler") as {
     handleWebhookHandler: jest.Mock;
   };
@@ -58,6 +66,7 @@ const loadHandler = (): LoadedHandlerModule => {
   return {
     handler,
     createPaymentMock: createPaymentHandler,
+    getPaymentHistoryMock: getPaymentHistoryHandler,
     handleWebhookMock: handleWebhookHandler,
     createErrorResponseMock: createErrorResponse,
     optionsResponseMock: optionsResponse
@@ -121,7 +130,7 @@ describe("payment-service handler routing", () => {
   });
 
   it("dispatches create payment route", async () => {
-    const { handler, createPaymentMock, handleWebhookMock } = loadHandler();
+    const { handler, createPaymentMock, getPaymentHistoryMock, handleWebhookMock } = loadHandler();
     const event = createEvent(ROUTES.CREATE_PAYMENT.routeKey);
     const response = { statusCode: 200, body: "{}" } as APIGatewayProxyStructuredResultV2;
 
@@ -133,6 +142,22 @@ describe("payment-service handler routing", () => {
       expect.stringContaining('"event":"request.succeeded"')
     );
     expect(createPaymentMock).toHaveBeenCalledWith(event);
+    expect(getPaymentHistoryMock).not.toHaveBeenCalled();
+    expect(handleWebhookMock).not.toHaveBeenCalled();
+    expect(result).toBe(response);
+  });
+
+  it("dispatches get payment history route", async () => {
+    const { handler, createPaymentMock, getPaymentHistoryMock, handleWebhookMock } = loadHandler();
+    const event = createEvent(ROUTES.GET_PAYMENT_HISTORY.routeKey, "GET");
+    const response = { statusCode: 200, body: "[]" } as APIGatewayProxyStructuredResultV2;
+
+    getPaymentHistoryMock.mockResolvedValue(response);
+
+    const result = await handler(event);
+
+    expect(getPaymentHistoryMock).toHaveBeenCalledWith(event);
+    expect(createPaymentMock).not.toHaveBeenCalled();
     expect(handleWebhookMock).not.toHaveBeenCalled();
     expect(result).toBe(response);
   });
