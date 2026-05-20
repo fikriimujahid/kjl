@@ -22,7 +22,7 @@ export default function CourseDetailPage({ productId }: CourseDetailPageProps) {
     switch (type) {
       case 'quiz':
         return <Play size={18} className="text-orange-500" />;
-      case 'pdf':
+      case 'images':
         return <FileText size={18} className="text-red-500" />;
       case 'audio':
         return <Music size={18} className="text-blue-500" />;

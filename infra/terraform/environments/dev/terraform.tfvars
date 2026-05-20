@@ -343,12 +343,6 @@ service_api = {
         operation_name     = "PaymentWebhookUnderApi"
         integration_key    = "payment"
       }
-      submit_quiz_exam_under_api = {
-        route_key          = "POST /api/quiz/exam/submit"
-        authorization_type = "JWT"
-        operation_name     = "SubmitQuizExamUnderApi"
-        integration_key    = "quiz"
-      }
       register_under_api = {
         route_key          = "POST /api/auth/register"
         authorization_type = "NONE"
