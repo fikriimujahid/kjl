@@ -17,7 +17,7 @@
           { "id": "sIntroA", "title": "Apa itu Hiragana?", "type": "images" },
           { "id": "sIntroB", "title": "Cara Belajar Hiragana dengan Efektif", "type": "images" },
           { "id": "sIntroC", "title": "Tips Menghafal Hiragana dengan Cepat", "type": "images" },
-          { "id": "sIntroD", "title": "Quiz Pengenalan Hiragana", "type": "quiz" }
+          { "id": "sIntroD", "title": "Ujian Pengenalan Hiragana", "type": "exam" }
         ]
       },
       {
@@ -28,8 +28,8 @@
           { "id": "s0b", "title": "Cara Menulis Hiragana A-I-U-E-O", "type": "images" },
           { "id": "s0c", "title": "Contoh Kata Hiragana A-I-U-E-O", "type": "images" },
           { "id": "s0d", "title": "Latihan Membaca Hiragana A-I-U-E-O", "type": "images" },
-          { "id": "s0e", "title": "Latihan Soal Hiragana A-I-U-E-O", "type": "quiz" },
-          { "id": "s0f", "title": "Ujian Hiragana A-I-U-E-O", "type": "quiz" }
+          { "id": "s0e", "title": "Latihan Soal Hiragana A-I-U-E-O", "type": "practice" },
+          { "id": "s0f", "title": "Ujian Hiragana A-I-U-E-O", "type": "exam" }
         ]
       },
       {
@@ -40,8 +40,8 @@
           { "id": "s1b", "title": "Cara Menulis Hiragana KA-KI-KU-KE-KO", "type": "images" },
           { "id": "s1c", "title": "Contoh Kata Hiragana KA-KI-KU-KE-KO", "type": "images" },
           { "id": "s1d", "title": "Latihan Membaca Hiragana KA-KI-KU-KE-KO", "type": "images" },
-          { "id": "s1e", "title": "Latihan Soal Hiragana KA-KI-KU-KE-KO", "type": "quiz" },
-          { "id": "s1f", "title": "Ujian Hiragana KA-KI-KU-KE-KO", "type": "quiz" }
+          { "id": "s1e", "title": "Latihan Soal Hiragana KA-KI-KU-KE-KO", "type": "practice" },
+          { "id": "s1f", "title": "Ujian Hiragana KA-KI-KU-KE-KO", "type": "exam" }
         ]
       },
       {
@@ -52,8 +52,8 @@
           { "id": "s2b", "title": "Cara Menulis Hiragana SA-SHI-SU-SE-SO", "type": "images" },
           { "id": "s2c", "title": "Contoh Kata Hiragana SA-SHI-SU-SE-SO", "type": "images" },
           { "id": "s2d", "title": "Latihan Membaca Hiragana SA-SHI-SU-SE-SO", "type": "images" },
-          { "id": "s2e", "title": "Latihan Soal Hiragana SA-SHI-SU-SE-SO", "type": "quiz" },
-          { "id": "s2f", "title": "Ujian Hiragana SA-SHI-SU-SE-SO", "type": "quiz" }
+          { "id": "s2e", "title": "Latihan Soal Hiragana SA-SHI-SU-SE-SO", "type": "practice" },
+          { "id": "s2f", "title": "Ujian Hiragana SA-SHI-SU-SE-SO", "type": "exam" }
         ]
       },
       {
@@ -64,8 +64,8 @@
           { "id": "s3b", "title": "Cara Menulis Hiragana TA-CHI-TSU-TE-TO", "type": "images" },
           { "id": "s3c", "title": "Contoh Kata Hiragana TA-CHI-TSU-TE-TO", "type": "images" },
           { "id": "s3d", "title": "Latihan Membaca Hiragana TA-CHI-TSU-TE-TO", "type": "images" },
-          { "id": "s3e", "title": "Latihan Soal Hiragana TA-CHI-TSU-TE-TO", "type": "quiz" },
-          { "id": "s3f", "title": "Ujian Hiragana TA-CHI-TSU-TE-TO", "type": "quiz" }
+          { "id": "s3e", "title": "Latihan Soal Hiragana TA-CHI-TSU-TE-TO", "type": "practice" },
+          { "id": "s3f", "title": "Ujian Hiragana TA-CHI-TSU-TE-TO", "type": "exam" }
         ]
       },
       {
@@ -76,8 +76,8 @@
           { "id": "s4b", "title": "Cara Menulis Hiragana NA-NI-NU-NE-NO", "type": "images" },
           { "id": "s4c", "title": "Contoh Kata Hiragana NA-NI-NU-NE-NO", "type": "images" },
           { "id": "s4d", "title": "Latihan Membaca Hiragana NA-NI-NU-NE-NO", "type": "images" },
-          { "id": "s4e", "title": "Latihan Soal Hiragana NA-NI-NU-NE-NO", "type": "quiz" },
-          { "id": "s4f", "title": "Ujian Hiragana NA-NI-NU-NE-NO", "type": "quiz" }
+          { "id": "s4e", "title": "Latihan Soal Hiragana NA-NI-NU-NE-NO", "type": "practice" },
+          { "id": "s4f", "title": "Ujian Hiragana NA-NI-NU-NE-NO", "type": "exam" }
         ]
       },
       {
@@ -87,8 +87,8 @@
           { "id": "s5a", "title": "Tabel Lengkap Hiragana Dasar", "type": "images" },
           { "id": "s5b", "title": "Contoh Kata Campuran Hiragana", "type": "images" },
           { "id": "s5c", "title": "Latihan Membaca Hiragana Campuran", "type": "images" },
-          { "id": "s5d", "title": "Latihan Soal Hiragana Dasar Full", "type": "quiz" },
-          { "id": "s5e", "title": "Ujian Hiragana Dasar Full", "type": "quiz" }
+          { "id": "s5d", "title": "Latihan Soal Hiragana Dasar Full", "type": "practice" },
+          { "id": "s5e", "title": "Ujian Hiragana Dasar Full", "type": "exam" }
         ]
       }
     ]
@@ -111,7 +111,7 @@
           { "id": "sIntroA", "title": "Apa itu Katakana ?", "type": "images" },
           { "id": "sIntroB", "title": "Cara Belajar Katakana dengan Efektif", "type": "images" },
           { "id": "sIntroC", "title": "Tips Menghafal Katakana dengan Cepat", "type": "images" },
-          { "id": "sIntroD", "title": "Quiz Pengenalan Katakana", "type": "quiz", "passingScore": 70 }
+          { "id": "sIntroD", "title": "Quiz Pengenalan Katakana", "type": "exam" }
         ]
       },
       {
@@ -122,8 +122,8 @@
           { "id": "s0b", "title": "Cara Menulis Katakana A-I-U-E-O", "type": "images" },
           { "id": "s0c", "title": "Contoh Kata Katakana A-I-U-E-O", "type": "images" },
           { "id": "s0d", "title": "Latihan Membaca Katakana A-I-U-E-O", "type": "images" },
-          { "id": "s0e", "title": "Latihan Soal Katakana A-I-U-E-O", "type": "quiz", "passingScore": 70 },
-          { "id": "s0f", "title": "Ujian Katakana A-I-U-E-O", "type": "quiz", "passingScore": 70 }
+          { "id": "s0e", "title": "Latihan Soal Katakana A-I-U-E-O", "type": "practice" },
+          { "id": "s0f", "title": "Ujian Katakana A-I-U-E-O", "type": "exam" }
         ]
       },
 
@@ -135,8 +135,8 @@
           { "id": "s1b", "title": "Cara Menulis Katakana KA-KI-KU-KE-KO", "type": "images" },
           { "id": "s1c", "title": "Contoh Kata Katakana KA-KI-KU-KE-KO", "type": "images" },
           { "id": "s1d", "title": "Latihan Membaca Katakana KA-KI-KU-KE-KO", "type": "images" },
-          { "id": "s1e", "title": "Latihan Soal Katakana KA-KI-KU-KE-KO", "type": "quiz", "passingScore": 70 },
-          { "id": "s1f", "title": "Ujian Katakana KA-KI-KU-KE-KO", "type": "quiz", "passingScore": 70 }
+          { "id": "s1e", "title": "Latihan Soal Katakana KA-KI-KU-KE-KO", "type": "practice" },
+          { "id": "s1f", "title": "Ujian Katakana KA-KI-KU-KE-KO", "type": "exam" }
         ]
       },
 
@@ -148,8 +148,8 @@
           { "id": "s2b", "title": "Cara Menulis Katakana SA-SHI-SU-SE-SO", "type": "images" },
           { "id": "s2c", "title": "Contoh Kata Katakana SA-SHI-SU-SE-SO", "type": "images" },
           { "id": "s2d", "title": "Latihan Membaca Katakana SA-SHI-SU-SE-SO", "type": "images" },
-          { "id": "s2e", "title": "Latihan Soal Katakana SA-SHI-SU-SE-SO", "type": "quiz", "passingScore": 70 },
-          { "id": "s2f", "title": "Ujian Katakana SA-SHI-SU-SE-SO", "type": "quiz", "passingScore": 70 }
+          { "id": "s2e", "title": "Latihan Soal Katakana SA-SHI-SU-SE-SO", "type": "practice" },
+          { "id": "s2f", "title": "Ujian Katakana SA-SHI-SU-SE-SO", "type": "exam" }
         ]
       },
 
@@ -161,8 +161,8 @@
           { "id": "s3b", "title": "Cara Menulis Katakana TA-CHI-TSU-TE-TO", "type": "images" },
           { "id": "s3c", "title": "Contoh Kata Katakana TA-CHI-TSU-TE-TO", "type": "images" },
           { "id": "s3d", "title": "Latihan Membaca Katakana TA-CHI-TSU-TE-TO", "type": "images" },
-          { "id": "s3e", "title": "Latihan Soal Katakana TA-CHI-TSU-TE-TO", "type": "quiz", "passingScore": 70 },
-          { "id": "s3f", "title": "Ujian Katakana TA-CHI-TSU-TE-TO", "type": "quiz", "passingScore": 70 }
+          { "id": "s3e", "title": "Latihan Soal Katakana TA-CHI-TSU-TE-TO", "type": "practice" },
+          { "id": "s3f", "title": "Ujian Katakana TA-CHI-TSU-TE-TO", "type": "exam" }
         ]
       },
 
@@ -174,8 +174,8 @@
           { "id": "s4b", "title": "Cara Menulis Katakana NA-NI-NU-NE-NO", "type": "images" },
           { "id": "s4c", "title": "Contoh Kata Katakana NA-NI-NU-NE-NO", "type": "images" },
           { "id": "s4d", "title": "Latihan Membaca Katakana NA-NI-NU-NE-NO", "type": "images" },
-          { "id": "s4e", "title": "Latihan Soal Katakana NA-NI-NU-NE-NO", "type": "quiz", "passingScore": 70 },
-          { "id": "s4f", "title": "Ujian Katakana NA-NI-NU-NE-NO", "type": "quiz", "passingScore": 70 }
+          { "id": "s4e", "title": "Latihan Soal Katakana NA-NI-NU-NE-NO", "type": "practice" },
+          { "id": "s4f", "title": "Ujian Katakana NA-NI-NU-NE-NO", "type": "exam" }
         ]
       },
 
@@ -186,8 +186,8 @@
           { "id": "s5a", "title": "Tabel Lengkap Katakana Dasar", "type": "images" },
           { "id": "s5b", "title": "Contoh Kata Campuran Katakana", "type": "images" },
           { "id": "s5c", "title": "Latihan Membaca Katakana Campuran", "type": "images" },
-          { "id": "s5d", "title": "Latihan Soal Katakana Dasar Full", "type": "quiz" },
-          { "id": "s5e", "title": "Ujian Katakana Dasar Full", "type": "quiz" }
+          { "id": "s5d", "title": "Latihan Soal Katakana Dasar Full", "type": "practice" },
+          { "id": "s5e", "title": "Ujian Katakana Dasar Full", "type": "exam" }
         ]
       }
 

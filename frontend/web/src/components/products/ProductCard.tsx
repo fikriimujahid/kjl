@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { BookOpen } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '@/utils/classnames';
-import { formatPrice } from '@/shared/utils';
+import { formatPrice } from '@/utils/formatters';
 import type { Product } from '@/types/product';
 
 interface ProductCardProps {

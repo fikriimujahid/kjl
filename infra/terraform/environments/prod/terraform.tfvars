@@ -216,6 +216,34 @@ service_api = {
       }
     }
 
+    learning = {
+      name                  = "kejepangdulu-prod-learning-api"
+      description           = "Private Learning Content API Lambda."
+      source_dir            = "../../../../backend/services/learning-service/build/lambda"
+      handler               = "services/learning-service/src/handler.handler"
+      runtime               = "nodejs22.x"
+      memory_size           = 256
+      timeout               = 10
+      environment_variables = {
+        DYNAMO_DB_TABLE_NAME      = "learning-content"
+        MEDIA_PRIVATE_BUCKET_NAME = "kejepangdulu-prod-media-private"
+      }
+      publish = true
+      dynamodb_access = {
+        learning_content = {
+          read  = true
+          write = false
+        }
+      }
+      s3_access = {
+        media_private = {
+          s3_arn = "arn:aws:s3:::kejepangdulu-prod-media-private"
+          read   = true
+          write  = false
+        }
+      }
+    }
+
     payment = {
       name                  = "kejepangdulu-prod-payment-api"
       description           = "Midtrans Payment API Lambda."
@@ -313,6 +341,12 @@ service_api = {
         authorization_type = "NONE"
         operation_name     = "GetInternalProductExistsUnderApi"
         integration_key    = "product"
+      }
+      get_learning_session_images_under_api = {
+        route_key          = "GET /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/images"
+        authorization_type = "JWT"
+        operation_name     = "GetLearningSessionImagesUnderApi"
+        integration_key    = "learning"
       }
       create_payment_under_api = {
         route_key          = "POST /api/payments/create"

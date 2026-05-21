@@ -14,19 +14,21 @@ function CourseContent() {
   }
 
   return (
-    <RequireAuth>
-      <div className="p-4">
-        <h1 className="text-2xl font-bold mb-4">Course Page</h1>
-        <p>Welcome to the course page! Here you can find all your courses and materials.</p>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-8 text-center">
+        <h1 className="text-2xl font-bold text-slate-800 tracking-tight mb-3">Pilih Produk Belajar</h1>
+        <p className="text-sm text-slate-500 font-medium">Buka halaman produk dan pilih paket yang sudah kamu miliki untuk memulai sesi belajar.</p>
       </div>
-    </RequireAuth>
+    </div>
   );
 }
 
 export default function Page() {
   return (
-    <Suspense fallback={<div className="p-4" />}>
-      <CourseContent />
-    </Suspense>
+    <RequireAuth>
+      <Suspense fallback={<div className="p-4" />}>
+        <CourseContent />
+      </Suspense>
+    </RequireAuth>
   );
 }

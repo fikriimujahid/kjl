@@ -23,7 +23,7 @@ export interface Topic {
 export interface Session {
   id: string;
   title: string;
-  type: 'quiz' | 'pdf' | 'audio' | 'images' | 'video';
+  type: 'practice' | 'pdf' | 'audio' | 'images' | 'video' | 'exam';
 }
 
 export interface OwnedProduct {
