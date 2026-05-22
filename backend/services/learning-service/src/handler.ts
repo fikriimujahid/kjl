@@ -4,8 +4,11 @@ import { logRequestReceived, logRequestResult } from "@shared-utils/requestLifec
 import { createErrorResponse, optionsResponse } from "@shared-utils/response";
 import { getLearningServiceEnv } from "./config/env";
 import { checkSessionAnswerHandler } from "./handlers/checkSessionAnswerHandler";
+import { finishSessionAttemptHandler } from "./handlers/finishSessionAttemptHandler";
+import { getSessionAttemptsHandler } from "./handlers/getSessionAttemptsHandler";
 import { getSessionImagesHandler } from "./handlers/getSessionImagesHandler";
 import { getSessionQuestionsHandler } from "./handlers/getSessionQuestionsHandler";
+import { startSessionAttemptHandler } from "./handlers/startSessionAttemptHandler";
 import { ROUTES } from "./routes";
 
 getLearningServiceEnv();
@@ -18,7 +21,10 @@ const routeHandlers: Record<
 > = {
   [ROUTES.GET_SESSION_IMAGES.routeKey]: getSessionImagesHandler,
   [ROUTES.GET_SESSION_QUESTIONS.routeKey]: getSessionQuestionsHandler,
-  [ROUTES.CHECK_SESSION_ANSWER.routeKey]: checkSessionAnswerHandler
+  [ROUTES.CHECK_SESSION_ANSWER.routeKey]: checkSessionAnswerHandler,
+  [ROUTES.START_SESSION_ATTEMPT.routeKey]: startSessionAttemptHandler,
+  [ROUTES.GET_SESSION_ATTEMPTS.routeKey]: getSessionAttemptsHandler,
+  [ROUTES.FINISH_SESSION_ATTEMPT.routeKey]: finishSessionAttemptHandler
 };
 
 export const handler = async (

@@ -26,6 +26,7 @@ export interface Session {
   contentUrl: string;
   title: string;
   type: 'practice' | 'pdf' | 'audio' | 'images' | 'video' | 'exam';
+  passingScore?: number;
 }
 
 export interface OwnedProduct {

@@ -3,8 +3,8 @@
 import { useCourseDetail } from '@/hooks/useCourseDetail';
 import { useAuth } from '@/hooks/useAuth';
 import { useActiveCourseSession } from '@/hooks/useActiveCourseSession';
-import { CourseCurriculumSidebar } from '@/components/course/detail/CourseCurriculumSidebar';
-import { CourseSessionContent } from '@/components/course/detail/CourseSessionContent';
+import { CourseCurriculumSidebar } from '@/components/course/CourseCurriculumSidebar';
+import { CourseSessionContent } from '@/components/course/CourseSessionContent';
 
 interface CourseDetailPageProps {
   productId: string;
@@ -16,8 +16,6 @@ export default function CourseDetailPage({ productId }: CourseDetailPageProps) {
   const {
     loadingSessionId,
     activeSession,
-    activeImagePages,
-    activeQuestions,
     openSession,
   } = useActiveCourseSession({
     selectedProduct,
@@ -42,8 +40,6 @@ export default function CourseDetailPage({ productId }: CourseDetailPageProps) {
           <CourseSessionContent
             productId={productId}
             activeSession={activeSession}
-            activeImagePages={activeImagePages}
-            activeQuestions={activeQuestions}
             accessToken={accessToken ?? undefined}
           />
         </div>

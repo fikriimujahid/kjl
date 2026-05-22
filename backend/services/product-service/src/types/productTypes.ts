@@ -24,6 +24,7 @@ export interface Session {
   id: string;
   title: string;
   type: 'practice' | 'pdf' | 'audio' | 'images' | 'video' | 'exam';
+  passingScore?: number;
 }
 
 export interface OwnedProduct {
@@ -65,4 +66,5 @@ export interface SessionRecord {
   title: string;
   type: Session["type"];
   contentUrl?: string;
+  passingScore?: number;
 }

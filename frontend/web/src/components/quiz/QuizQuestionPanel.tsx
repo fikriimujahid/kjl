@@ -36,7 +36,7 @@ export function QuizQuestionPanel({
   onSelectAnswer,
 }: QuizQuestionPanelProps) {
   return (
-    <motion.div key={currentIndex} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-2xl">
+    <motion.div key={currentIndex} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-1xl">
       <div className="mb-8 p-8 bg-slate-50 rounded-xl border border-slate-100 w-full">
         <span className="text-xs text-slate-400 font-bold mb-2 block uppercase tracking-wider">Pilih jawaban yang benar</span>
 

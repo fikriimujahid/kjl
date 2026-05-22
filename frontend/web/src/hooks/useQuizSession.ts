@@ -1,9 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Question } from '@/types/product';
 import type { LearningSessionAnswerCheckResult } from '@/services/learning/learningApi';
-import { checkLearningSessionAnswer } from '@/services/learning/learningApi';
+import { checkLearningSessionAnswer, finishLearningSessionAttempt } from '@/services/learning/learningApi';
 import type { QuizMode, QuizResult, QuizResultDetail, SelectedAnswer } from '@/types/quiz';
 
 interface UseQuizSessionOptions {
@@ -12,6 +12,7 @@ interface UseQuizSessionOptions {
   productId: string;
   topicId: string;
   sessionId: string;
+  attemptId?: string;
   accessToken?: string;
 }
 
@@ -20,6 +21,7 @@ interface UseQuizSessionResult {
   currentQuestion: Question;
   answers: Record<number, SelectedAnswer>;
   checkedAnswers: Record<number, LearningSessionAnswerCheckResult>;
+  bookmarkedIndexes: Set<number>;
   isSubmitting: boolean;
   submitError: string | null;
   result: QuizResult | null;
@@ -33,6 +35,7 @@ interface UseQuizSessionResult {
   handlePrimaryAction: () => Promise<void>;
   goPrevious: () => void;
   goToQuestion: (index: number) => void;
+  toggleBookmark: (index: number) => void;
   reset: () => void;
 }
 
@@ -62,14 +65,21 @@ export function useQuizSession({
   productId,
   topicId,
   sessionId,
+  attemptId,
   accessToken,
 }: UseQuizSessionOptions): UseQuizSessionResult {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, SelectedAnswer>>({});
   const [checkedAnswers, setCheckedAnswers] = useState<Record<number, LearningSessionAnswerCheckResult>>({});
+  const [bookmarkedIndexes, setBookmarkedIndexes] = useState<Set<number>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [result, setResult] = useState<QuizResult | null>(null);
+  const attemptStartedAtMsRef = useRef<number>(Date.now());
+
+  useEffect(() => {
+    attemptStartedAtMsRef.current = Date.now();
+  }, [attemptId]);
 
   const currentQuestion = questions[currentIndex];
   const isPracticeMode = mode === 'practice';
@@ -81,7 +91,7 @@ export function useQuizSession({
   const actionLabel = useMemo(() => {
     if (isPracticeMode) {
       if (!isCurrentAnswerChecked) {
-        return 'Cek Jawaban';
+        return 'Periksa Jawaban';
       }
 
       return isOnLastQuestion ? 'Selesaikan' : 'Selanjutnya';
@@ -110,6 +120,31 @@ export function useQuizSession({
     });
 
     setSubmitError(null);
+  };
+
+  const finalizeAttempt = async (summaryResult: QuizResult) => {
+    if (!attemptId || !accessToken) {
+      return;
+    }
+
+    const correctAnswers = summaryResult.details.filter((detail) => detail.isCorrect).length;
+    const durationSeconds = Math.max(0, Math.round((Date.now() - attemptStartedAtMsRef.current) / 1000));
+
+    await finishLearningSessionAttempt({
+      productId,
+      topicId,
+      sessionId,
+      attemptId,
+      totalQuestions: summaryResult.totalQuestions,
+      correctAnswers,
+      maxScore: summaryResult.maxScore,
+      obtainedScore: summaryResult.obtainedScore,
+      percentage: summaryResult.percentage,
+      passingScore: summaryResult.passingScore,
+      passed: summaryResult.passed,
+      durationSeconds,
+      accessToken,
+    });
   };
 
   const submitExamDummy = async () => {
@@ -152,7 +187,9 @@ export function useQuizSession({
         };
       });
 
-      setResult(buildSummaryResult(details, questions.length));
+      const summaryResult = buildSummaryResult(details, questions.length);
+      setResult(summaryResult);
+      await finalizeAttempt(summaryResult);
     } finally {
       setIsSubmitting(false);
     }
@@ -198,7 +235,7 @@ export function useQuizSession({
     }
   };
 
-  const finishPractice = () => {
+  const finishPractice = async () => {
     const details: QuizResultDetail[] = questions.map((question, index) => {
       const checkedAnswer = checkedAnswers[index];
       const selectedAnswer = answers[index];
@@ -222,7 +259,9 @@ export function useQuizSession({
       };
     });
 
-    setResult(buildSummaryResult(details, questions.length));
+    const summaryResult = buildSummaryResult(details, questions.length);
+    setResult(summaryResult);
+    await finalizeAttempt(summaryResult);
   };
 
   const handlePrimaryAction = async () => {
@@ -237,7 +276,7 @@ export function useQuizSession({
         return;
       }
 
-      finishPractice();
+      await finishPractice();
       return;
     }
 
@@ -257,10 +296,23 @@ export function useQuizSession({
     setCurrentIndex(index);
   };
 
+  const toggleBookmark = (index: number) => {
+    setBookmarkedIndexes((current) => {
+      const next = new Set(current);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
+  };
+
   const reset = () => {
     setCurrentIndex(0);
     setAnswers({});
     setCheckedAnswers({});
+    setBookmarkedIndexes(new Set());
     setIsSubmitting(false);
     setSubmitError(null);
     setResult(null);
@@ -271,6 +323,7 @@ export function useQuizSession({
     currentQuestion,
     answers,
     checkedAnswers,
+    bookmarkedIndexes,
     isSubmitting,
     submitError,
     result,
@@ -284,6 +337,7 @@ export function useQuizSession({
     handlePrimaryAction,
     goPrevious,
     goToQuestion,
+    toggleBookmark,
     reset,
   };
 }

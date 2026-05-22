@@ -6,6 +6,7 @@ import {
   InvalidSessionAnswersPayloadError,
   InvalidSessionQuestionsPayloadError,
   SessionAnswerNotFoundError,
+  SessionAttemptNotFoundError,
   SessionAnswersNotFoundError,
   SessionNotFoundError,
   SessionQuestionsNotFoundError,
@@ -56,6 +57,12 @@ export const mapLearningErrorToResponse = (
   if (error instanceof SessionAnswerNotFoundError) {
     return createErrorResponse(event, 404, error.message, {
       code: "SESSION_ANSWER_NOT_FOUND"
+    });
+  }
+
+  if (error instanceof SessionAttemptNotFoundError) {
+    return createErrorResponse(event, 404, error.message, {
+      code: "SESSION_ATTEMPT_NOT_FOUND"
     });
   }
 

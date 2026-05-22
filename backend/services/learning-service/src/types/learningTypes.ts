@@ -69,3 +69,68 @@ export interface SessionSingleAnswerCheckResult {
   awardedScore: number;
   explanation?: string;
 }
+
+export type SessionAttemptSessionType = "practice" | "exam";
+export type SessionAttemptStatus = "ACTIVE" | "FINISHED";
+
+export interface SessionAttemptRecord {
+  PK: string;
+  SK: string;
+  entityType: "SESSION_ATTEMPT";
+  attemptId: string;
+  attemptNumber: number;
+  userId: string;
+  productId: string;
+  topicId: string;
+  sessionId: string;
+  sessionType: SessionAttemptSessionType;
+  status: SessionAttemptStatus;
+  isActive: boolean;
+  startedAt: string;
+  finishedAt?: string;
+  updatedAt: string;
+  totalQuestions?: number;
+  correctAnswers?: number;
+  maxScore?: number;
+  obtainedScore?: number;
+  percentage?: number;
+  passingScore?: number;
+  passed?: boolean;
+  durationSeconds?: number;
+}
+
+export interface SessionAttemptItem {
+  attemptId: string;
+  attemptNumber: number;
+  status: SessionAttemptStatus;
+  isActive: boolean;
+  startedAt: string;
+  finishedAt?: string;
+  updatedAt: string;
+  totalQuestions?: number;
+  correctAnswers?: number;
+  maxScore?: number;
+  obtainedScore?: number;
+  percentage?: number;
+  passingScore?: number;
+  passed?: boolean;
+  durationSeconds?: number;
+}
+
+export interface SessionAttemptHistoryResponse {
+  productId: string;
+  topicId: string;
+  sessionId: string;
+  sessionType: SessionAttemptSessionType;
+  hasActiveAttempt: boolean;
+  attempts: SessionAttemptItem[];
+}
+
+export interface StartSessionAttemptResponse extends SessionAttemptHistoryResponse {
+  resumed: boolean;
+  attempt: SessionAttemptItem;
+}
+
+export interface FinishSessionAttemptResponse extends SessionAttemptHistoryResponse {
+  attempt: SessionAttemptItem;
+}

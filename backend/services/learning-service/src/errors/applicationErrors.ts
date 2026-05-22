@@ -60,3 +60,10 @@ export class SessionAnswerNotFoundError extends Error {
     this.name = "SessionAnswerNotFoundError";
   }
 }
+
+export class SessionAttemptNotFoundError extends Error {
+  constructor(attemptId: string) {
+    super(`Session attempt not found: ${attemptId}`);
+    this.name = "SessionAttemptNotFoundError";
+  }
+}

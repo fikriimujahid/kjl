@@ -31,6 +31,36 @@ describe("learning routes", () => {
     );
   });
 
+  it("keeps START_SESSION_ATTEMPT route contract", () => {
+    expect(ROUTES.START_SESSION_ATTEMPT.method).toBe("POST");
+    expect(ROUTES.START_SESSION_ATTEMPT.path).toBe(
+      "/api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts/start"
+    );
+    expect(ROUTES.START_SESSION_ATTEMPT.routeKey).toBe(
+      "POST /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts/start"
+    );
+  });
+
+  it("keeps GET_SESSION_ATTEMPTS route contract", () => {
+    expect(ROUTES.GET_SESSION_ATTEMPTS.method).toBe("GET");
+    expect(ROUTES.GET_SESSION_ATTEMPTS.path).toBe(
+      "/api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts"
+    );
+    expect(ROUTES.GET_SESSION_ATTEMPTS.routeKey).toBe(
+      "GET /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts"
+    );
+  });
+
+  it("keeps FINISH_SESSION_ATTEMPT route contract", () => {
+    expect(ROUTES.FINISH_SESSION_ATTEMPT.method).toBe("POST");
+    expect(ROUTES.FINISH_SESSION_ATTEMPT.path).toBe(
+      "/api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts/{attemptId}/finish"
+    );
+    expect(ROUTES.FINISH_SESSION_ATTEMPT.routeKey).toBe(
+      "POST /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts/{attemptId}/finish"
+    );
+  });
+
   it("uses unique route keys", () => {
     const routeKeys = Object.values(ROUTES).map((route) => route.routeKey);
     const uniqueRouteKeys = new Set(routeKeys);
