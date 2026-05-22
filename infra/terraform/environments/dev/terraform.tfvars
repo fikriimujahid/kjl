@@ -360,6 +360,18 @@ service_api = {
         operation_name     = "GetLearningSessionImagesUnderApi"
         integration_key    = "learning"
       }
+      get_learning_session_questions_under_api = {
+        route_key          = "GET /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/questions"
+        authorization_type = "JWT"
+        operation_name     = "GetLearningSessionQuestionsUnderApi"
+        integration_key    = "learning"
+      }
+      check_learning_session_answer_under_api = {
+        route_key          = "POST /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/answers/check"
+        authorization_type = "JWT"
+        operation_name     = "CheckLearningSessionAnswerUnderApi"
+        integration_key    = "learning"
+      }
       create_payment_under_api = {
         route_key          = "POST /api/payments/create"
         authorization_type = "JWT"

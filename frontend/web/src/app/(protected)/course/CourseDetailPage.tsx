@@ -2,7 +2,6 @@
 
 import { useCourseDetail } from '@/hooks/useCourseDetail';
 import { useAuth } from '@/hooks/useAuth';
-import { useState } from 'react';
 import { useActiveCourseSession } from '@/hooks/useActiveCourseSession';
 import { CourseCurriculumSidebar } from '@/components/course/detail/CourseCurriculumSidebar';
 import { CourseSessionContent } from '@/components/course/detail/CourseSessionContent';
@@ -14,21 +13,16 @@ interface CourseDetailPageProps {
 export default function CourseDetailPage({ productId }: CourseDetailPageProps) {
   const { accessToken } = useAuth();
   const { selectedProduct, isLoadingProduct, productError } = useCourseDetail({ productId });
-  const [expandedTopic, setExpandedTopic] = useState<string | null>(null);
   const {
     loadingSessionId,
     activeSession,
     activeImagePages,
+    activeQuestions,
     openSession,
-    closeSession,
   } = useActiveCourseSession({
     selectedProduct,
     accessToken: accessToken ?? undefined,
   });
-
-  const handleToggleTopic = (topicId: string) => {
-    setExpandedTopic((currentTopicId) => (currentTopicId === topicId ? null : topicId));
-  };
 
   return (
     <div className="mx-auto px-3 sm:px-6 lg:px-8 py-10">
@@ -38,20 +32,19 @@ export default function CourseDetailPage({ productId }: CourseDetailPageProps) {
             selectedProduct={selectedProduct}
             isLoadingProduct={isLoadingProduct}
             productError={productError}
-            expandedTopic={expandedTopic}
             loadingSessionId={loadingSessionId}
             activeSessionId={activeSession?.id ?? null}
-            onToggleTopic={handleToggleTopic}
             onSessionClick={openSession}
           />
         </div>
 
         <div className="lg:col-span-9 order-1 lg:order-2">
           <CourseSessionContent
+            productId={productId}
             activeSession={activeSession}
             activeImagePages={activeImagePages}
-            isLoadingProduct={isLoadingProduct}
-            onCloseSession={closeSession}
+            activeQuestions={activeQuestions}
+            accessToken={accessToken ?? undefined}
           />
         </div>
       </div>

@@ -3,7 +3,12 @@ import { createErrorResponse } from "@shared-utils/response";
 import {
   AuthenticationRequiredError,
   ForbiddenLearningContentAccessError,
+  InvalidSessionAnswersPayloadError,
+  InvalidSessionQuestionsPayloadError,
+  SessionAnswerNotFoundError,
+  SessionAnswersNotFoundError,
   SessionNotFoundError,
+  SessionQuestionsNotFoundError,
   UnsupportedSessionTypeError
 } from "./applicationErrors";
 
@@ -33,6 +38,36 @@ export const mapLearningErrorToResponse = (
   if (error instanceof SessionNotFoundError) {
     return createErrorResponse(event, 404, error.message, {
       code: "SESSION_NOT_FOUND"
+    });
+  }
+
+  if (error instanceof SessionQuestionsNotFoundError) {
+    return createErrorResponse(event, 404, error.message, {
+      code: "SESSION_QUESTIONS_NOT_FOUND"
+    });
+  }
+
+  if (error instanceof SessionAnswersNotFoundError) {
+    return createErrorResponse(event, 404, error.message, {
+      code: "SESSION_ANSWERS_NOT_FOUND"
+    });
+  }
+
+  if (error instanceof SessionAnswerNotFoundError) {
+    return createErrorResponse(event, 404, error.message, {
+      code: "SESSION_ANSWER_NOT_FOUND"
+    });
+  }
+
+  if (error instanceof InvalidSessionQuestionsPayloadError) {
+    return createErrorResponse(event, 502, error.message, {
+      code: "INVALID_SESSION_QUESTIONS_PAYLOAD"
+    });
+  }
+
+  if (error instanceof InvalidSessionAnswersPayloadError) {
+    return createErrorResponse(event, 502, error.message, {
+      code: "INVALID_SESSION_ANSWERS_PAYLOAD"
     });
   }
 

@@ -25,3 +25,38 @@ export class UnsupportedSessionTypeError extends Error {
     this.name = "UnsupportedSessionTypeError";
   }
 }
+
+export class SessionQuestionsNotFoundError extends Error {
+  constructor() {
+    super("Session questions not found");
+    this.name = "SessionQuestionsNotFoundError";
+  }
+}
+
+export class InvalidSessionQuestionsPayloadError extends Error {
+  constructor() {
+    super("Session questions payload is invalid");
+    this.name = "InvalidSessionQuestionsPayloadError";
+  }
+}
+
+export class SessionAnswersNotFoundError extends Error {
+  constructor() {
+    super("Session answers not found");
+    this.name = "SessionAnswersNotFoundError";
+  }
+}
+
+export class InvalidSessionAnswersPayloadError extends Error {
+  constructor() {
+    super("Session answers payload is invalid");
+    this.name = "InvalidSessionAnswersPayloadError";
+  }
+}
+
+export class SessionAnswerNotFoundError extends Error {
+  constructor(questionId: string) {
+    super(`Answer key not found for question: ${questionId}`);
+    this.name = "SessionAnswerNotFoundError";
+  }
+}

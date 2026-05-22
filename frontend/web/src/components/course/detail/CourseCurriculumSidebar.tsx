@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/utils/classnames';
@@ -10,10 +11,8 @@ interface CourseCurriculumSidebarProps {
   selectedProduct: ProductDetail | null;
   isLoadingProduct: boolean;
   productError: string | null;
-  expandedTopic: string | null;
   loadingSessionId: string | null;
   activeSessionId: string | null;
-  onToggleTopic: (topicId: string) => void;
   onSessionClick: (topicId: string, session: Session) => void;
 }
 
@@ -21,12 +20,16 @@ export function CourseCurriculumSidebar({
   selectedProduct,
   isLoadingProduct,
   productError,
-  expandedTopic,
   loadingSessionId,
   activeSessionId,
-  onToggleTopic,
   onSessionClick,
 }: CourseCurriculumSidebarProps) {
+  const [expandedTopic, setExpandedTopic] = useState<string | null>(null);
+
+  const handleToggleTopic = (topicId: string) => {
+    setExpandedTopic((currentTopicId) => (currentTopicId === topicId ? null : topicId));
+  };
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
       <div className="p-6 bg-slate-50/50 border-b border-slate-100">
@@ -57,7 +60,7 @@ export function CourseCurriculumSidebar({
         {!isLoadingProduct && !productError && selectedProduct && selectedProduct.topics.length > 0 && selectedProduct.topics.map((topic) => (
           <div key={topic.id} className="overflow-hidden">
             <button
-              onClick={() => onToggleTopic(topic.id)}
+              onClick={() => handleToggleTopic(topic.id)}
               className="w-full p-5 flex justify-between items-center bg-white hover:bg-slate-50 transition-colors text-left"
             >
               <span className="font-bold text-slate-800 text-xs leading-tight pr-4">{topic.title}</span>

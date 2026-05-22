@@ -3,7 +3,9 @@ import { createLogger } from "@shared-utils/logger";
 import { logRequestReceived, logRequestResult } from "@shared-utils/requestLifecycle";
 import { createErrorResponse, optionsResponse } from "@shared-utils/response";
 import { getLearningServiceEnv } from "./config/env";
+import { checkSessionAnswerHandler } from "./handlers/checkSessionAnswerHandler";
 import { getSessionImagesHandler } from "./handlers/getSessionImagesHandler";
+import { getSessionQuestionsHandler } from "./handlers/getSessionQuestionsHandler";
 import { ROUTES } from "./routes";
 
 getLearningServiceEnv();
@@ -14,7 +16,9 @@ const routeHandlers: Record<
   string,
   (event: APIGatewayProxyEventV2) => Promise<APIGatewayProxyStructuredResultV2>
 > = {
-  [ROUTES.GET_SESSION_IMAGES.routeKey]: getSessionImagesHandler
+  [ROUTES.GET_SESSION_IMAGES.routeKey]: getSessionImagesHandler,
+  [ROUTES.GET_SESSION_QUESTIONS.routeKey]: getSessionQuestionsHandler,
+  [ROUTES.CHECK_SESSION_ANSWER.routeKey]: checkSessionAnswerHandler
 };
 
 export const handler = async (

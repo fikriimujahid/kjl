@@ -1,4 +1,4 @@
-export type LearningSessionType = "quiz" | "pdf" | "audio" | "images" | "video";
+export type LearningSessionType = "quiz" | "practice" | "exam" | "pdf" | "audio" | "images" | "video";
 
 export interface OwnedProduct {
   id: string;
@@ -28,4 +28,44 @@ export interface SessionImageContent {
   topicId: string;
   sessionId: string;
   images: string[];
+}
+
+export interface SessionQuestionOption {
+  id: string;
+  text: string;
+}
+
+export interface SessionQuestion {
+  id: string;
+  text: string;
+  image?: string;
+  audio?: string;
+  options: SessionQuestionOption[];
+}
+
+export interface SessionQuestionContent {
+  productId: string;
+  topicId: string;
+  sessionId: string;
+  questions: SessionQuestion[];
+}
+
+export interface SessionAnswerKey {
+  id: string;
+  correctAnswer: string;
+  score: number;
+  explanation?: string;
+}
+
+export interface SessionSingleAnswerCheckResult {
+  productId: string;
+  topicId: string;
+  sessionId: string;
+  questionId: string;
+  selectedOptionId: string;
+  correctAnswer: string;
+  isCorrect: boolean;
+  score: number;
+  awardedScore: number;
+  explanation?: string;
 }
