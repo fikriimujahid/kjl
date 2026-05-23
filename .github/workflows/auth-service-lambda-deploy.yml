@@ -137,6 +137,7 @@ jobs:
             --arg authRefreshCookieName "${AUTH_REFRESH_COOKIE_NAME}" \
             --arg authRefreshCookiePath "${AUTH_REFRESH_COOKIE_PATH}" \
             --arg authRefreshCookieMaxAgeSeconds "${AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS}" \
+            --arg dynamoDbTableName "${DYNAMO_DB_TABLE_NAME}" \
             '. + {
               COGNITO_API_ENDPOINT: $cognitoApiEndpoint,
               COGNITO_USER_POOL_CLIENT_ID: $cognitoUserPoolClientId
