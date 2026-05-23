@@ -15,6 +15,7 @@ const COGNITO_TARGETS = {
   confirmForgotPassword: "AWSCognitoIdentityProviderService.ConfirmForgotPassword",
   forgotPassword: "AWSCognitoIdentityProviderService.ForgotPassword",
   initiateAuth: "AWSCognitoIdentityProviderService.InitiateAuth",
+  updateUserAttributes: "AWSCognitoIdentityProviderService.UpdateUserAttributes",
   revokeToken: "AWSCognitoIdentityProviderService.RevokeToken",
   signUp: "AWSCognitoIdentityProviderService.SignUp"
 } as const;
@@ -110,6 +111,19 @@ export const createCognitoClient = (config: CognitoClientConfig) => {
     return mapForgotPasswordResult(result);
   };
 
+  const updateUserAttributes = async (
+    accessToken: string,
+    attributes: Array<{ name: string; value: string }>
+  ): Promise<void> => {
+    await post<Record<string, unknown>>(COGNITO_TARGETS.updateUserAttributes, {
+      AccessToken: accessToken,
+      UserAttributes: attributes.map((attribute) => ({
+        Name: attribute.name,
+        Value: attribute.value
+      }))
+    });
+  };
+
   const confirmForgotPassword = async (
     email: string,
     confirmationCode: string,
@@ -129,6 +143,7 @@ export const createCognitoClient = (config: CognitoClientConfig) => {
     refreshWithToken,
     registerWithPassword,
     requestForgotPassword,
+    updateUserAttributes,
     revokeRefreshToken
   };
 };

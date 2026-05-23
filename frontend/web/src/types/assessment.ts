@@ -6,6 +6,7 @@ export interface AssessmentHistoryViewProps {
   mode: AssessmentMode;
   sessionTitle: string;
   passingScore?: number;
+  duration?: number;
   productId: string;
   topicId: string;
   sessionId: string;

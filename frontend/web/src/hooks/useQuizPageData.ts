@@ -16,6 +16,7 @@ interface UseQuizPageDataResult {
   questions: Question[];
   isLoading: boolean;
   error: string | null;
+  durationMinutes: number | undefined;
 }
 
 export function useQuizPageData(accessToken?: string): UseQuizPageDataResult {
@@ -26,6 +27,8 @@ export function useQuizPageData(accessToken?: string): UseQuizPageDataResult {
   const sessionId = searchParams.get('sessionId')?.trim() ?? '';
   const rawMode = searchParams.get('mode');
   const attemptId = searchParams.get('attemptId')?.trim() || undefined;
+  const rawDuration = searchParams.get('duration');
+  const durationMinutes = rawDuration != null && rawDuration !== '' ? (Number(rawDuration) || undefined) : undefined;
 
   const mode: QuizMode = rawMode === 'exam' ? 'exam' : 'practice';
   const backHref = productId ? `/course?productId=${productId}` : '/course';
@@ -85,5 +88,6 @@ export function useQuizPageData(accessToken?: string): UseQuizPageDataResult {
     questions,
     isLoading,
     error,
-  }), [productId, topicId, sessionId, attemptId, mode, backHref, questions, isLoading, error]);
+    durationMinutes,
+  }), [productId, topicId, sessionId, attemptId, mode, backHref, questions, isLoading, error, durationMinutes]);
 }

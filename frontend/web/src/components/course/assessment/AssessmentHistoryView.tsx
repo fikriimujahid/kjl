@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { RotateCcw, Trophy, CheckCircle2, XCircle, Clock, Calendar, TrendingUp, Target } from 'lucide-react';
+import { RotateCcw, Trophy, CheckCircle2, XCircle, Clock, Calendar, TrendingUp, Target, Timer } from 'lucide-react';
 import {
   fetchLearningSessionAttempts,
   type LearningSessionAttempt,
@@ -47,6 +47,7 @@ export function AssessmentHistoryView({
   mode,
   sessionTitle,
   passingScore,
+  duration,
   productId,
   topicId,
   sessionId,
@@ -113,7 +114,6 @@ export function AssessmentHistoryView({
     ? Math.round(finishedAttempts.reduce((sum, attempt) => sum + attempt.score, 0) / finishedAttempts.length)
     : 0;
 
-  const passCount = finishedAttempts.filter((attempt) => attempt.passed).length;
   const hasActiveAttempt = formattedAttempts.some((attempt) => attempt.isActive);
 
   return (
@@ -146,18 +146,6 @@ export function AssessmentHistoryView({
             </div>
           </div>
           <div className="px-6 py-5 flex items-center gap-3">
-            <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center">
-              <CheckCircle2 size={20} className="text-teal-500" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-400 font-medium">{config.passedLabel}</p>
-              <p className="text-2xl font-bold text-slate-800">
-                {passCount}
-                <span className="text-base text-slate-400 font-semibold"> / {finishedAttempts.length}</span>
-              </p>
-            </div>
-          </div>
-          <div className="px-6 py-5 flex items-center gap-3">
             <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
               <Target size={20} className="text-indigo-500" />
             </div>
@@ -165,6 +153,17 @@ export function AssessmentHistoryView({
               <p className="text-xs text-slate-400 font-medium">Minimal Kelulusan</p>
               <p className="text-2xl font-bold text-slate-800">
                 {passingScore != null ? `${passingScore}%` : '-'} Benar
+              </p>
+            </div>
+          </div>
+          <div className="px-6 py-5 flex items-center gap-3">
+            <div className="w-10 h-10 bg-sky-50 rounded-xl flex items-center justify-center">
+              <Timer size={20} className="text-sky-500" />
+            </div>
+            <div>
+              <p className="text-xs text-slate-400 font-medium">Durasi</p>
+              <p className="text-2xl font-bold text-slate-800">
+                {duration != null ? formatDurationSeconds(duration * 60) : '-'}
               </p>
             </div>
           </div>

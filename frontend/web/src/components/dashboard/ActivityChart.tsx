@@ -17,6 +17,12 @@ export function ActivityChart({
   streakDays,
   todayIndex,
 }: ActivityChartProps) {
+  const totalDays = activityWeeks.reduce((count, week) => count + week.values.length, 0);
+  const activeDays = activityWeeks.reduce(
+    (count, week) => count + week.values.filter((value) => value > 0).length,
+    0,
+  );
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -80,8 +86,8 @@ export function ActivityChart({
 
           <div className="mt-6 pt-5 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-3 gap-4">
             <div>
-              <p className="text-2xl font-black text-slate-900">14</p>
-              <p className="text-xs text-slate-500 mt-0.5">hari belajar <span className="text-slate-300">/ 21 hari</span></p>
+              <p className="text-2xl font-black text-slate-900">{activeDays}</p>
+              <p className="text-xs text-slate-500 mt-0.5">hari belajar <span className="text-slate-300">/ {totalDays} hari</span></p>
             </div>
             <div>
               <p className="text-2xl font-black text-indigo-600">{streakDays}</p>

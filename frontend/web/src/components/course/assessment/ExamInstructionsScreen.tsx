@@ -21,7 +21,6 @@ export function ExamInstructionsScreen({
   onBack,
   durationMinutes = 130,
   passingScorePercent = 72,
-  passingScorePoints = 720,
 }: ExamInstructionsScreenProps) {
   const hours = Math.floor(durationMinutes / 60);
   const mins = durationMinutes % 60;
@@ -41,34 +40,45 @@ export function ExamInstructionsScreen({
             <p className="text-rose-100 text-sm font-medium mt-1 line-clamp-2">{sessionTitle}</p>
           </div>
 
-          <div className="px-8 pt-6 pb-0">
-            <div className="flex items-center gap-2 bg-teal-50 border border-teal-200 text-teal-700 text-sm font-semibold rounded-xl px-4 py-3">
-              <CheckSquare size={16} className="shrink-0" />
-              Ujian latihan berhasil diselesaikan.
-            </div>
-          </div>
-
           <div className="px-8 pt-5 pb-0">
             <p className="text-slate-700 font-semibold text-sm">
               {totalQuestions} soal · {durationLabel} · {passingScorePercent}% jawaban benar diperlukan untuk lulus
             </p>
           </div>
 
-          <div className="px-8 pt-5 pb-2">
-            <h2 className="text-slate-800 font-bold text-sm uppercase tracking-widest mb-3">
-              Tentang ujian latihan ini:
-            </h2>
-            <ul className="space-y-2">
+          <div className="px-8 py-4">
+            <h2 className="text-slate-800 font-bold text-sm uppercase tracking-widest mb-4">Petunjuk:</h2>
+            <ul className="space-y-3">
               {[
-                'Urutan soal dan urutan pilihan jawaban diacak setiap percobaan.',
-                'Kamu hanya dapat meninjau jawaban setelah menyelesaikan ujian.',
-                `Terdiri dari ${totalQuestions} soal, durasi ${durationMinutes} menit, passing score ${passingScorePoints}.`,
-              ].map((text, idx) => (
-                <li key={idx} className="flex items-start gap-2.5 text-slate-600 text-sm leading-relaxed">
-                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
-                  {text}
-                </li>
-              ))}
+                {
+                  icon: Pause,
+                  text: 'Kamu dapat menjeda ujian kapan saja dan melanjutkannya nanti.',
+                },
+                {
+                  icon: RefreshCcw,
+                  text: 'Kamu dapat mengulang ujian sebanyak yang kamu inginkan.',
+                },
+                {
+                  icon: BarChart2,
+                  text: 'Progress bar di bagian atas layar akan menampilkan progresmu beserta sisa waktu. Jika waktu habis, ujian akan otomatis selesai.',
+                },
+                {
+                  icon: Bookmark,
+                  text: 'Kamu dapat mengklik ikon bookmark untuk menandai soal untuk ditinjau, atau klik "lewati soal" untuk melewatinya.',
+                },
+                {
+                  icon: CheckSquare,
+                  text: 'Klik "Selesaikan Ujian" untuk mengakhiri ujian dan melihat hasilmu segera.',
+                },
+              ].map((item, idx) => {
+                const Icon = item.icon;
+                return (
+                  <li key={idx} className="flex items-start gap-3 text-slate-600 text-sm leading-relaxed">
+                    <Icon size={16} className={cn('shrink-0 mt-0.5', 'text-rose-500')} />
+                    <span>{item.text}</span>
+                  </li>
+                );
+              })}
             </ul>
           </div>
 
@@ -98,42 +108,6 @@ export function ExamInstructionsScreen({
 
           <div className="px-8 pt-3 pb-2">
             <p className="text-slate-600 text-sm font-semibold text-center">Semoga sukses, dan selamat belajar!</p>
-          </div>
-
-          <div className="px-8 py-4">
-            <h2 className="text-slate-800 font-bold text-sm uppercase tracking-widest mb-4">Petunjuk:</h2>
-            <ul className="space-y-3">
-              {[
-                {
-                  icon: Pause,
-                  text: 'Kamu dapat menjeda ujian kapan saja dan melanjutkannya nanti.',
-                },
-                {
-                  icon: RefreshCcw,
-                  text: 'Kamu dapat mengulang ujian sebanyak yang kamu inginkan.',
-                },
-                {
-                  icon: BarChart2,
-                  text: 'Progress bar di bagian atas layar akan menampilkan progresmu beserta sisa waktu. Jika waktu habis, jangan khawatir, kamu masih bisa menyelesaikan ujian.',
-                },
-                {
-                  icon: Bookmark,
-                  text: 'Kamu dapat mengklik ikon bookmark untuk menandai soal untuk ditinjau, atau klik "lewati soal" untuk melewatinya.',
-                },
-                {
-                  icon: CheckSquare,
-                  text: 'Klik "Selesaikan Ujian" untuk mengakhiri ujian dan melihat hasilmu segera.',
-                },
-              ].map((item, idx) => {
-                const Icon = item.icon;
-                return (
-                  <li key={idx} className="flex items-start gap-3 text-slate-600 text-sm leading-relaxed">
-                    <Icon size={16} className={cn('shrink-0 mt-0.5', 'text-rose-500')} />
-                    <span>{item.text}</span>
-                  </li>
-                );
-              })}
-            </ul>
           </div>
 
           <div className="px-8 py-6 border-t border-slate-100 flex items-center justify-between gap-3">

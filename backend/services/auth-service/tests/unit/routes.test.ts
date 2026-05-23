@@ -2,6 +2,8 @@ import { ROUTES } from "../../src/routes";
 
 describe("auth routes", () => {
   it.each([
+    ["CHECKIN", ROUTES.CHECKIN, "POST", "/api/auth/checkin", "POST /api/auth/checkin"],
+    ["GET_CHECKIN_ACTIVITY", ROUTES.GET_CHECKIN_ACTIVITY, "GET", "/api/auth/checkin", "GET /api/auth/checkin"],
     ["LOGIN", ROUTES.LOGIN, "POST", "/api/auth/login", "POST /api/auth/login"],
     ["REGISTER", ROUTES.REGISTER, "POST", "/api/auth/register", "POST /api/auth/register"],
     [

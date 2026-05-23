@@ -38,5 +38,6 @@ export function getAuthUserFromIdToken(idToken: string): AuthUser | null {
     id,
     email,
     name,
+    lastCheckinDate: payload['custom:last_checkin_date'],
   };
 }

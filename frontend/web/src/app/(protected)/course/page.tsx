@@ -8,9 +8,17 @@ import CourseDetailPage from './CourseDetailPage';
 function CourseContent() {
   const searchParams = useSearchParams();
   const productId = searchParams.get('productId')?.trim();
+  const topicId = searchParams.get('topicId')?.trim();
+  const sessionId = searchParams.get('sessionId')?.trim();
 
   if (productId) {
-    return <CourseDetailPage productId={productId} />;
+    return (
+      <CourseDetailPage
+        productId={productId}
+        topicId={topicId}
+        sessionId={sessionId}
+      />
+    );
   }
 
   return (

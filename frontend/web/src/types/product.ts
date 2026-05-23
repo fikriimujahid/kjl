@@ -27,6 +27,7 @@ export interface Session {
   title: string;
   type: 'practice' | 'pdf' | 'audio' | 'images' | 'video' | 'exam';
   passingScore?: number;
+  duration?: number;
 }
 
 export interface OwnedProduct {

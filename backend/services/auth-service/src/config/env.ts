@@ -7,6 +7,7 @@ import {
 } from "@shared-utils/env";
 
 const authEnvSchema = defineEnvSchema({
+  DYNAMO_DB_TABLE_NAME: { required: true, parse: (rawValue) => rawValue },
   COGNITO_API_ENDPOINT: { required: true },
   COGNITO_USER_POOL_CLIENT_ID: { required: true },
   AUTH_ALLOWED_ORIGIN: { defaultValue: "" },

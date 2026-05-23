@@ -46,6 +46,16 @@ interface FetchLearningSessionAttemptsOptions {
 	accessToken?: string;
 }
 
+interface FetchLearningSessionAttemptProgressOptions {
+	productId: string;
+	topicId: string;
+	sessionId: string;
+	attemptId: string;
+	signal?: AbortSignal;
+	cache?: RequestCache;
+	accessToken?: string;
+}
+
 interface StartLearningSessionAttemptOptions {
 	productId: string;
 	topicId: string;
@@ -68,6 +78,22 @@ interface FinishLearningSessionAttemptOptions {
 	passingScore: number;
 	passed: boolean;
 	durationSeconds?: number;
+	signal?: AbortSignal;
+	cache?: RequestCache;
+	accessToken?: string;
+}
+
+interface SaveLearningSessionAttemptProgressOptions {
+	productId: string;
+	topicId: string;
+	sessionId: string;
+	attemptId: string;
+	currentQuestionIndex: number;
+	answeredQuestionIndexes: number[];
+	answers: Record<string, LearningSessionProgressAnswer>;
+	checkedAnswers: Record<string, LearningSessionProgressCheckedAnswer>;
+	bookmarkedIndexes: number[];
+	durationSeconds: number;
 	signal?: AbortSignal;
 	cache?: RequestCache;
 	accessToken?: string;
@@ -106,6 +132,21 @@ export interface LearningSessionAnswerCheckResult {
 	explanation?: string;
 }
 
+export interface LearningSessionProgressAnswer {
+	option: string;
+	optionId: string;
+}
+
+export interface LearningSessionProgressCheckedAnswer {
+	questionId: string;
+	selectedOptionId: string;
+	correctAnswer: string;
+	isCorrect: boolean;
+	score: number;
+	awardedScore: number;
+	explanation?: string;
+}
+
 export type LearningAttemptStatus = 'ACTIVE' | 'FINISHED';
 export type LearningAttemptSessionType = 'practice' | 'exam';
 
@@ -125,6 +166,13 @@ export interface LearningSessionAttempt {
 	passingScore?: number;
 	passed?: boolean;
 	durationSeconds?: number;
+	progressCurrentQuestionIndex?: number;
+	progressAnsweredQuestionIndexes?: number[];
+	progressAnswers?: Record<string, LearningSessionProgressAnswer>;
+	progressCheckedAnswers?: Record<string, LearningSessionProgressCheckedAnswer>;
+	progressBookmarkedIndexes?: number[];
+	progressDurationSeconds?: number;
+	progressSavedAt?: string;
 }
 
 export interface LearningSessionAttemptHistoryResponse {
@@ -142,6 +190,24 @@ export interface StartLearningSessionAttemptResponse extends LearningSessionAtte
 }
 
 export interface FinishLearningSessionAttemptResponse extends LearningSessionAttemptHistoryResponse {
+	attempt: LearningSessionAttempt;
+}
+
+export interface SaveLearningSessionAttemptProgressResponse {
+	productId: string;
+	topicId: string;
+	sessionId: string;
+	attemptId: string;
+	savedAt: string;
+	attempt: LearningSessionAttempt;
+}
+
+export interface GetLearningSessionAttemptProgressResponse {
+	productId: string;
+	topicId: string;
+	sessionId: string;
+	attemptId: string;
+	savedAt: string;
 	attempt: LearningSessionAttempt;
 }
 
@@ -341,6 +407,59 @@ function isLearningAttemptSessionType(value: unknown): value is LearningAttemptS
 	return value === 'practice' || value === 'exam';
 }
 
+function isLearningSessionProgressAnswer(value: unknown): value is LearningSessionProgressAnswer {
+	if (!value || typeof value !== 'object') {
+		return false;
+	}
+
+	const candidate = value as Record<string, unknown>;
+	return typeof candidate.option === 'string' && typeof candidate.optionId === 'string';
+}
+
+function isLearningSessionProgressCheckedAnswer(value: unknown): value is LearningSessionProgressCheckedAnswer {
+	if (!value || typeof value !== 'object') {
+		return false;
+	}
+
+	const candidate = value as Record<string, unknown>;
+
+	if (
+		typeof candidate.questionId !== 'string'
+		|| typeof candidate.selectedOptionId !== 'string'
+		|| typeof candidate.correctAnswer !== 'string'
+		|| typeof candidate.isCorrect !== 'boolean'
+		|| typeof candidate.score !== 'number'
+		|| typeof candidate.awardedScore !== 'number'
+	) {
+		return false;
+	}
+
+	if (candidate.explanation !== undefined && typeof candidate.explanation !== 'string') {
+		return false;
+	}
+
+	return true;
+}
+
+function isRecordOf<T>(
+	value: unknown,
+	entryGuard: (entry: unknown) => entry is T,
+): value is Record<string, T> {
+	if (!value || typeof value !== 'object' || Array.isArray(value)) {
+		return false;
+	}
+
+	return Object.values(value as Record<string, unknown>).every(entryGuard);
+}
+
+function isArrayOfNonNegativeIntegers(value: unknown): value is number[] {
+	if (!Array.isArray(value)) {
+		return false;
+	}
+
+	return value.every((item) => typeof item === 'number' && Number.isInteger(item) && item >= 0);
+}
+
 function isLearningSessionAttempt(value: unknown): value is LearningSessionAttempt {
 	if (!value || typeof value !== 'object') {
 		return false;
@@ -383,6 +502,36 @@ function isLearningSessionAttempt(value: unknown): value is LearningSessionAttem
 		return false;
 	}
 
+	if (candidate.progressCurrentQuestionIndex !== undefined) {
+		if (typeof candidate.progressCurrentQuestionIndex !== 'number' || candidate.progressCurrentQuestionIndex < 0) {
+			return false;
+		}
+	}
+
+	if (candidate.progressAnsweredQuestionIndexes !== undefined && !isArrayOfNonNegativeIntegers(candidate.progressAnsweredQuestionIndexes)) {
+		return false;
+	}
+
+	if (candidate.progressAnswers !== undefined && !isRecordOf(candidate.progressAnswers, isLearningSessionProgressAnswer)) {
+		return false;
+	}
+
+	if (candidate.progressCheckedAnswers !== undefined && !isRecordOf(candidate.progressCheckedAnswers, isLearningSessionProgressCheckedAnswer)) {
+		return false;
+	}
+
+	if (candidate.progressBookmarkedIndexes !== undefined && !isArrayOfNonNegativeIntegers(candidate.progressBookmarkedIndexes)) {
+		return false;
+	}
+
+	if (candidate.progressDurationSeconds !== undefined && (typeof candidate.progressDurationSeconds !== 'number' || candidate.progressDurationSeconds < 0)) {
+		return false;
+	}
+
+	if (candidate.progressSavedAt !== undefined && typeof candidate.progressSavedAt !== 'string') {
+		return false;
+	}
+
 	return true;
 }
 
@@ -420,6 +569,36 @@ function isFinishLearningSessionAttemptResponse(value: unknown): value is Finish
 
 	const candidate = value as unknown as Record<string, unknown>;
 	return isLearningSessionAttempt(candidate.attempt);
+}
+
+function isSaveLearningSessionAttemptProgressResponse(value: unknown): value is SaveLearningSessionAttemptProgressResponse {
+	if (!value || typeof value !== 'object') {
+		return false;
+	}
+
+	const candidate = value as Record<string, unknown>;
+
+	return typeof candidate.productId === 'string'
+		&& typeof candidate.topicId === 'string'
+		&& typeof candidate.sessionId === 'string'
+		&& typeof candidate.attemptId === 'string'
+		&& typeof candidate.savedAt === 'string'
+		&& isLearningSessionAttempt(candidate.attempt);
+}
+
+function isGetLearningSessionAttemptProgressResponse(value: unknown): value is GetLearningSessionAttemptProgressResponse {
+	if (!value || typeof value !== 'object') {
+		return false;
+	}
+
+	const candidate = value as Record<string, unknown>;
+
+	return typeof candidate.productId === 'string'
+		&& typeof candidate.topicId === 'string'
+		&& typeof candidate.sessionId === 'string'
+		&& typeof candidate.attemptId === 'string'
+		&& typeof candidate.savedAt === 'string'
+		&& isLearningSessionAttempt(candidate.attempt);
 }
 
 export async function checkLearningSessionAnswer({
@@ -499,6 +678,46 @@ export async function fetchLearningSessionAttempts({
 		const data = extractSuccessData<unknown>(payload);
 
 		if (isLearningSessionAttemptHistoryResponse(data)) {
+			return data;
+		}
+
+		return null;
+	} catch {
+		return null;
+	}
+}
+
+export async function fetchLearningSessionAttemptProgress({
+	productId,
+	topicId,
+	sessionId,
+	attemptId,
+	signal,
+	cache = 'no-store',
+	accessToken,
+}: FetchLearningSessionAttemptProgressOptions): Promise<GetLearningSessionAttemptProgressResponse | null> {
+	try {
+		const headers: HeadersInit = accessToken
+			? { Authorization: `Bearer ${accessToken}` }
+			: {};
+
+		const response = await fetch(
+			`${LEARNING_API_BASE_URL}/products/${encodeURIComponent(productId)}/topics/${encodeURIComponent(topicId)}/sessions/${encodeURIComponent(sessionId)}/attempts/${encodeURIComponent(attemptId)}/progress`,
+			{
+				signal,
+				cache,
+				headers,
+			},
+		);
+
+		if (!response.ok) {
+			return null;
+		}
+
+		const payload: unknown = await response.json();
+		const data = extractSuccessData<unknown>(payload);
+
+		if (isGetLearningSessionAttemptProgressResponse(data)) {
 			return data;
 		}
 
@@ -600,6 +819,62 @@ export async function finishLearningSessionAttempt({
 		const data = extractSuccessData<unknown>(payload);
 
 		if (isFinishLearningSessionAttemptResponse(data)) {
+			return data;
+		}
+
+		return null;
+	} catch {
+		return null;
+	}
+}
+
+export async function saveLearningSessionAttemptProgress({
+	productId,
+	topicId,
+	sessionId,
+	attemptId,
+	currentQuestionIndex,
+	answeredQuestionIndexes,
+	answers,
+	checkedAnswers,
+	bookmarkedIndexes,
+	durationSeconds,
+	signal,
+	cache = 'no-store',
+	accessToken,
+}: SaveLearningSessionAttemptProgressOptions): Promise<SaveLearningSessionAttemptProgressResponse | null> {
+	try {
+		const headers: HeadersInit = {
+			'content-type': 'application/json',
+			...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+		};
+
+		const response = await fetch(
+			`${LEARNING_API_BASE_URL}/products/${encodeURIComponent(productId)}/topics/${encodeURIComponent(topicId)}/sessions/${encodeURIComponent(sessionId)}/attempts/${encodeURIComponent(attemptId)}/progress`,
+			{
+				method: 'PUT',
+				signal,
+				cache,
+				headers,
+				body: JSON.stringify({
+					currentQuestionIndex,
+					answeredQuestionIndexes,
+					answers,
+					checkedAnswers,
+					bookmarkedIndexes,
+					durationSeconds,
+				}),
+			},
+		);
+
+		if (!response.ok) {
+			return null;
+		}
+
+		const payload: unknown = await response.json();
+		const data = extractSuccessData<unknown>(payload);
+
+		if (isSaveLearningSessionAttemptProgressResponse(data)) {
 			return data;
 		}
 

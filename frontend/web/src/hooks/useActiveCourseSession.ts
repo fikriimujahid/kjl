@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { fetchLearningSessionImages, fetchLearningSessionQuestions } from '@/services/learning/learningApi';
+import { saveSessionCheckin } from '@/services/auth/checkinApi';
 import type { ActiveCourseSession } from '@/types/course-session';
 import type { ProductDetail, Session } from '@/types/product';
 
 interface UseActiveCourseSessionOptions {
   selectedProduct: ProductDetail | null;
   accessToken?: string;
+  lastCheckinDate?: string;
 }
 
 interface UseActiveCourseSessionResult {
@@ -19,13 +21,43 @@ interface UseActiveCourseSessionResult {
 export function useActiveCourseSession({ 
   selectedProduct,
   accessToken,
+  lastCheckinDate,
 }: UseActiveCourseSessionOptions): UseActiveCourseSessionResult {
   const [loadingSessionId, setLoadingSessionId] = useState<string | null>(null);
   const [activeSession, setActiveSession] = useState<ActiveCourseSession | null>(null);
+  const lastCheckinDateRef = useRef<string | undefined>(lastCheckinDate);
+
+  useEffect(() => {
+    lastCheckinDateRef.current = lastCheckinDate;
+  }, [lastCheckinDate]);
+
+  const toJakartaDateKey = (): string => {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Jakarta',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date());
+  };
 
   const openSession = async (topicId: string, session: Session) => {
     if (loadingSessionId === session.id || !selectedProduct) {
       return;
+    }
+
+    const today = toJakartaDateKey();
+
+    if (accessToken && lastCheckinDateRef.current !== today) {
+      void saveSessionCheckin({
+        productId: selectedProduct.id,
+        topicId,
+        sessionId: session.id,
+        accessToken,
+      }).then((checkinResult) => {
+        if (checkinResult?.activityDate) {
+          lastCheckinDateRef.current = checkinResult.activityDate;
+        }
+      });
     }
 
     setLoadingSessionId(session.id);

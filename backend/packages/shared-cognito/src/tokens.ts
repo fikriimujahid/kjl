@@ -39,6 +39,7 @@ export const getAuthUserFromIdToken = (idToken: string): AuthUser | null => {
   return {
     id,
     email,
-    name
+    name,
+    lastCheckinDate: payload["custom:last_checkin_date"]
   };
 };

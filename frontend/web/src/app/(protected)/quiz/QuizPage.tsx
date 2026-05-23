@@ -20,6 +20,7 @@ export default function QuizPage() {
     attemptId,
     isLoading,
     error,
+    durationMinutes,
   } = useQuizPageData(accessToken ?? undefined);
 
   return (
@@ -63,6 +64,7 @@ export default function QuizPage() {
             sessionId={sessionId}
             attemptId={attemptId}
             accessToken={accessToken ?? undefined}
+            durationMinutes={durationMinutes}
           />
         )}
       </div>

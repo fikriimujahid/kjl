@@ -6,6 +6,7 @@ import {
   InvalidSessionAnswersPayloadError,
   InvalidSessionQuestionsPayloadError,
   SessionAnswerNotFoundError,
+  SessionAttemptAlreadyFinishedError,
   SessionAttemptNotFoundError,
   SessionAnswersNotFoundError,
   SessionNotFoundError,
@@ -63,6 +64,12 @@ export const mapLearningErrorToResponse = (
   if (error instanceof SessionAttemptNotFoundError) {
     return createErrorResponse(event, 404, error.message, {
       code: "SESSION_ATTEMPT_NOT_FOUND"
+    });
+  }
+
+  if (error instanceof SessionAttemptAlreadyFinishedError) {
+    return createErrorResponse(event, 409, error.message, {
+      code: "SESSION_ATTEMPT_ALREADY_FINISHED"
     });
   }
 

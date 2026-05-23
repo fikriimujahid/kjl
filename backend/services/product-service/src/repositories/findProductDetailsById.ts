@@ -74,7 +74,8 @@ export const findProductDetailsById = async (
         id: sessionRecord.id,
         title: sessionRecord.title,
         type: sessionRecord.type,
-        passingScore: sessionRecord.passingScore ?? undefined
+        passingScore: sessionRecord.passingScore ?? undefined,
+        duration: sessionRecord.duration ?? undefined
       };
 
       const currentSessions = sessionsByTopicId.get(sessionRecord.topicId) ?? [];

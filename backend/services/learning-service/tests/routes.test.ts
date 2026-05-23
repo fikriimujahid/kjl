@@ -61,6 +61,26 @@ describe("learning routes", () => {
     );
   });
 
+  it("keeps GET_SESSION_ATTEMPT_PROGRESS route contract", () => {
+    expect(ROUTES.GET_SESSION_ATTEMPT_PROGRESS.method).toBe("GET");
+    expect(ROUTES.GET_SESSION_ATTEMPT_PROGRESS.path).toBe(
+      "/api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts/{attemptId}/progress"
+    );
+    expect(ROUTES.GET_SESSION_ATTEMPT_PROGRESS.routeKey).toBe(
+      "GET /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts/{attemptId}/progress"
+    );
+  });
+
+  it("keeps SAVE_SESSION_ATTEMPT_PROGRESS route contract", () => {
+    expect(ROUTES.SAVE_SESSION_ATTEMPT_PROGRESS.method).toBe("PUT");
+    expect(ROUTES.SAVE_SESSION_ATTEMPT_PROGRESS.path).toBe(
+      "/api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts/{attemptId}/progress"
+    );
+    expect(ROUTES.SAVE_SESSION_ATTEMPT_PROGRESS.routeKey).toBe(
+      "PUT /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts/{attemptId}/progress"
+    );
+  });
+
   it("uses unique route keys", () => {
     const routeKeys = Object.values(ROUTES).map((route) => route.routeKey);
     const uniqueRouteKeys = new Set(routeKeys);

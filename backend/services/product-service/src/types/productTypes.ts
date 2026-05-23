@@ -25,6 +25,7 @@ export interface Session {
   title: string;
   type: 'practice' | 'pdf' | 'audio' | 'images' | 'video' | 'exam';
   passingScore?: number;
+  duration?: number; // duration in minutes, applicable for exam type
 }
 
 export interface OwnedProduct {
@@ -67,4 +68,5 @@ export interface SessionRecord {
   type: Session["type"];
   contentUrl?: string;
   passingScore?: number;
+  duration?: number; // duration in minutes, applicable for exam type
 }

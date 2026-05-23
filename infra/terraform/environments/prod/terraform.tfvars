@@ -116,6 +116,16 @@ auth_cognito = {
         min_length = 1
         max_length = 2048
       }
+    },
+    {
+      name                = "last_checkin_date"
+      attribute_data_type = "String"
+      required            = false
+      mutable             = true
+      string_attribute_constraints = {
+        min_length = 10
+        max_length = 10
+      }
     }
   ]
 
@@ -295,8 +305,17 @@ service_api = {
       runtime               = "nodejs22.x"
       memory_size           = 256
       timeout               = 15
-      environment_variables = {}
+      environment_variables = {
+        DYNAMO_DB_TABLE_NAME = "learning-content"
+      }
       publish               = true
+      dynamodb_access = {
+        learning_content = {
+          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/learning-content"
+          read      = true
+          write     = true
+        }
+      }
     }
   }
 
@@ -378,6 +397,18 @@ service_api = {
         operation_name     = "FinishLearningSessionAttemptUnderApi"
         integration_key    = "learning"
       }
+      get_learning_session_attempt_progress_under_api = {
+        route_key          = "GET /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts/{attemptId}/progress"
+        authorization_type = "JWT"
+        operation_name     = "GetLearningSessionAttemptProgressUnderApi"
+        integration_key    = "learning"
+      }
+      save_learning_session_attempt_progress_under_api = {
+        route_key          = "PUT /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts/{attemptId}/progress"
+        authorization_type = "JWT"
+        operation_name     = "SaveLearningSessionAttemptProgressUnderApi"
+        integration_key    = "learning"
+      }
       create_payment_under_api = {
         route_key          = "POST /api/payments/create"
         authorization_type = "JWT"
@@ -436,6 +467,18 @@ service_api = {
         route_key          = "GET /api/auth/session"
         authorization_type = "NONE"
         operation_name     = "GetSessionUnderApi"
+        integration_key    = "auth"
+      }
+      post_checkin_under_api = {
+        route_key          = "POST /api/auth/checkin"
+        authorization_type = "JWT"
+        operation_name     = "PostCheckinUnderApi"
+        integration_key    = "auth"
+      }
+      get_checkin_under_api = {
+        route_key          = "GET /api/auth/checkin"
+        authorization_type = "JWT"
+        operation_name     = "GetCheckinUnderApi"
         integration_key    = "auth"
       }
       logout_under_api = {

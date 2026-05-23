@@ -2,6 +2,7 @@ export interface AuthUser {
   id: string;
   email: string;
   name: string;
+  lastCheckinDate?: string;
 }
 
 export interface StoredAuthSession {
@@ -32,6 +33,7 @@ export type JwtPayload = {
   name?: string;
   exp?: number;
   ['cognito:username']?: string;
+  ['custom:last_checkin_date']?: string;
 };
 
 export interface SessionPayload {

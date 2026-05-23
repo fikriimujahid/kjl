@@ -5,7 +5,12 @@ import { createDynamoDocumentClient } from "@shared-dynamodb/client";
 import { createLogger } from "@shared-utils/logger";
 import { randomUUID } from "crypto";
 import { getLearningServiceEnv } from "../config/env";
-import { SessionAttemptRecord, SessionAttemptSessionType } from "../types/learningTypes";
+import {
+  SessionAttemptProgressAnswer,
+  SessionAttemptProgressCheckedAnswer,
+  SessionAttemptRecord,
+  SessionAttemptSessionType
+} from "../types/learningTypes";
 
 const logger = createLogger("learning-service");
 
@@ -35,6 +40,16 @@ interface FinishSessionAttemptInput {
   passingScore: number;
   passed: boolean;
   durationSeconds?: number;
+}
+
+interface SaveSessionAttemptProgressInput {
+  attempt: SessionAttemptRecord;
+  currentQuestionIndex: number;
+  answeredQuestionIndexes: number[];
+  answers: Record<string, SessionAttemptProgressAnswer>;
+  checkedAnswers: Record<string, SessionAttemptProgressCheckedAnswer>;
+  bookmarkedIndexes: number[];
+  durationSeconds: number;
 }
 
 const buildPartitionKey = (userId: string): string => `${USER_PARTITION_KEY_PREFIX}${userId}`;
@@ -212,6 +227,75 @@ export const finishSessionAttemptInRepository = async (
       topicId: input.attempt.topicId,
       sessionId: input.attempt.sessionId,
       attemptId: input.attempt.attemptId,
+      error
+    });
+    throw error;
+  }
+};
+
+export const saveSessionAttemptProgressInRepository = async (
+  input: SaveSessionAttemptProgressInput
+): Promise<SessionAttemptRecord> => {
+  const dynamoDbDocumentClient = createDynamoDocumentClient();
+  const tableName = getLearningServiceEnv().DYNAMO_DB_TABLE_NAME;
+  const savedAt = new Date().toISOString();
+
+  try {
+    const updatedAttempt = await updateItem<SessionAttemptRecord & Record<string, unknown>>(
+      dynamoDbDocumentClient,
+      {
+        TableName: tableName,
+        Key: {
+          PK: input.attempt.PK,
+          SK: input.attempt.SK
+        },
+        UpdateExpression: [
+          "SET #updatedAt = :updatedAt",
+          "#progressSavedAt = :progressSavedAt",
+          "#progressCurrentQuestionIndex = :progressCurrentQuestionIndex",
+          "#progressAnsweredQuestionIndexes = :progressAnsweredQuestionIndexes",
+          "#progressAnswers = :progressAnswers",
+          "#progressCheckedAnswers = :progressCheckedAnswers",
+          "#progressBookmarkedIndexes = :progressBookmarkedIndexes",
+          "#progressDurationSeconds = :progressDurationSeconds"
+        ].join(", "),
+        ExpressionAttributeNames: {
+          "#updatedAt": "updatedAt",
+          "#progressSavedAt": "progressSavedAt",
+          "#progressCurrentQuestionIndex": "progressCurrentQuestionIndex",
+          "#progressAnsweredQuestionIndexes": "progressAnsweredQuestionIndexes",
+          "#progressAnswers": "progressAnswers",
+          "#progressCheckedAnswers": "progressCheckedAnswers",
+          "#progressBookmarkedIndexes": "progressBookmarkedIndexes",
+          "#progressDurationSeconds": "progressDurationSeconds"
+        },
+        ExpressionAttributeValues: {
+          ":updatedAt": savedAt,
+          ":progressSavedAt": savedAt,
+          ":progressCurrentQuestionIndex": input.currentQuestionIndex,
+          ":progressAnsweredQuestionIndexes": input.answeredQuestionIndexes,
+          ":progressAnswers": input.answers,
+          ":progressCheckedAnswers": input.checkedAnswers,
+          ":progressBookmarkedIndexes": input.bookmarkedIndexes,
+          ":progressDurationSeconds": input.durationSeconds
+        },
+        ReturnValues: "ALL_NEW"
+      }
+    );
+
+    if (!updatedAttempt) {
+      throw new Error("Failed to update session attempt progress");
+    }
+
+    return updatedAttempt;
+  } catch (error) {
+    logger.error("dynamodb.sessionAttempt.saveProgress.failure", {
+      tableName,
+      attemptId: input.attempt.attemptId,
+      userId: input.attempt.userId,
+      productId: input.attempt.productId,
+      topicId: input.attempt.topicId,
+      sessionId: input.attempt.sessionId,
       error
     });
     throw error;

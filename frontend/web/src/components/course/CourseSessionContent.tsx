@@ -63,6 +63,7 @@ export function CourseSessionContent({
       sessionId: activeSession.id,
       mode,
       ...(attemptId ? { attemptId } : {}),
+      ...(activeSession.duration != null ? { duration: String(activeSession.duration) } : {}),
     });
     router.push(`/quiz?${params.toString()}`);
   };
@@ -78,6 +79,7 @@ export function CourseSessionContent({
             mode={mode}
             sessionTitle={activeSession.title}
             passingScore={activeSession.passingScore}
+            duration={activeSession.duration}
             productId={productId}
             topicId={activeSession.topicId}
             sessionId={activeSession.id}
@@ -92,7 +94,7 @@ export function CourseSessionContent({
           return (
             <PracticeInstructionsScreen
               sessionTitle={activeSession.title}
-              totalQuestions={activeSession.content.questions.length || 65}
+              totalQuestions={activeSession.content.questions.length}
               onBegin={() => {
                 void goToTesting(mode);
               }}
@@ -104,10 +106,9 @@ export function CourseSessionContent({
         return (
           <ExamInstructionsScreen
             sessionTitle={activeSession.title}
-            totalQuestions={activeSession.content.questions.length || 65}
-            durationMinutes={130}
-            passingScorePercent={72}
-            passingScorePoints={720}
+            totalQuestions={activeSession.content.questions.length}
+            durationMinutes={activeSession.duration}
+            passingScorePercent={activeSession.passingScore}
             onBegin={() => {
               void goToTesting(mode);
             }}

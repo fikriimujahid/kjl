@@ -67,3 +67,10 @@ export class SessionAttemptNotFoundError extends Error {
     this.name = "SessionAttemptNotFoundError";
   }
 }
+
+export class SessionAttemptAlreadyFinishedError extends Error {
+  constructor(attemptId: string) {
+    super(`Session attempt already finished: ${attemptId}`);
+    this.name = "SessionAttemptAlreadyFinishedError";
+  }
+}

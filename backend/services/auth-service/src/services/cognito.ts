@@ -39,3 +39,12 @@ export const confirmForgotPassword = (
 ) => {
   return getCognitoClient().confirmForgotPassword(email, confirmationCode, newPassword);
 };
+
+export const updateUserLastCheckinDate = (accessToken: string, lastCheckinDate: string) => {
+  return getCognitoClient().updateUserAttributes(accessToken, [
+    {
+      name: "custom:last_checkin_date",
+      value: lastCheckinDate
+    }
+  ]);
+};

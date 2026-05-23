@@ -4,13 +4,12 @@ import { RequireAuth } from '@/components/auth/RequireAuth';
 import { motion } from 'motion/react';
 import { useAuth } from '@/hooks/useAuth';
 import {
-  DAILY_ACTIVITY,
   DAYS_SHORT,
   PRODUCT_PROGRESS,
-  STREAK_DAYS,
   WORD_OF_THE_DAY,
 } from '@/constants/dashboard';
 import { useOwnedProducts } from '@/hooks/useOwnedProducts';
+import { useDashboardCheckinActivity } from '@/hooks/useDashboardCheckinActivity';
 import { cn } from '@/utils/classnames';
 import { ActivityChart } from '@/components/dashboard/ActivityChart';
 import { MotivationCard } from '@/components/dashboard/MotivationCard';
@@ -20,6 +19,10 @@ import { OwnedProducts } from '@/components/dashboard/OwnedProducts';
 
 export default function DashboardPage() {
   const { status, user, accessToken } = useAuth();
+  const { activityWeeks, streakDays } = useDashboardCheckinActivity({
+    status,
+    accessToken,
+  });
   const { ownedProducts, isLoadingOwnedProducts } = useOwnedProducts({
     status,
     userId: user?.id,
@@ -44,15 +47,15 @@ export default function DashboardPage() {
             </motion.header>
 
             <ActivityChart
-              activityWeeks={DAILY_ACTIVITY}
+              activityWeeks={activityWeeks}
               daysShort={DAYS_SHORT}
-              streakDays={STREAK_DAYS}
+              streakDays={streakDays}
               todayIndex={todayIndex}
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <WordOfDayCard wordOfTheDay={WORD_OF_THE_DAY} />
-              <MotivationCard streakDays={STREAK_DAYS} />
+              <MotivationCard streakDays={streakDays} />
             </div>
           </div>
         </main>

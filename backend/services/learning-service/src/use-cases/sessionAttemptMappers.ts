@@ -15,7 +15,14 @@ export const mapAttemptItem = (attempt: SessionAttemptRecord): SessionAttemptIte
   percentage: attempt.percentage,
   passingScore: attempt.passingScore,
   passed: attempt.passed,
-  durationSeconds: attempt.durationSeconds
+  durationSeconds: attempt.durationSeconds,
+  progressCurrentQuestionIndex: attempt.progressCurrentQuestionIndex,
+  progressAnsweredQuestionIndexes: attempt.progressAnsweredQuestionIndexes,
+  progressAnswers: attempt.progressAnswers,
+  progressCheckedAnswers: attempt.progressCheckedAnswers,
+  progressBookmarkedIndexes: attempt.progressBookmarkedIndexes,
+  progressDurationSeconds: attempt.progressDurationSeconds,
+  progressSavedAt: attempt.progressSavedAt
 });
 
 export const orderAttemptsByRecent = <T extends { startedAt: string }>(attempts: T[]): T[] => {

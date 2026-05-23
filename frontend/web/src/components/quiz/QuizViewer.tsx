@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowLeft, ArrowRight, Bookmark, BookmarkCheck, LayoutList, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, ArrowRight, Bookmark, BookmarkCheck, Clock, LayoutList, X } from 'lucide-react';
 import { cn } from '@/utils/classnames';
 import type { Question } from '@/types/product';
 import type { QuizMode } from '@/types/quiz';
@@ -18,6 +19,7 @@ interface QuizViewerProps {
   sessionId: string;
   attemptId?: string;
   accessToken?: string;
+  durationMinutes?: number;
 }
 
 export default function QuizViewer({
@@ -28,7 +30,9 @@ export default function QuizViewer({
   sessionId,
   attemptId,
   accessToken,
+  durationMinutes,
 }: QuizViewerProps) {
+  const router = useRouter();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const quiz = useQuizSession({
@@ -39,6 +43,7 @@ export default function QuizViewer({
     sessionId,
     attemptId,
     accessToken,
+    durationMinutes,
   });
 
   if (questions.length === 0) {
@@ -51,7 +56,20 @@ export default function QuizViewer({
   }
 
   if (quiz.isComplete && quiz.result) {
-    return <QuizCompletionView mode={mode} result={quiz.result} onReset={quiz.reset} />;
+    return (
+      <QuizCompletionView
+        mode={mode}
+        result={quiz.result}
+        onBackToMaterial={() => {
+          const params = new URLSearchParams({
+            productId,
+            topicId,
+            sessionId,
+          });
+          router.push(`/course?${params.toString()}`);
+        }}
+      />
+    );
   }
 
   const isBookmarked = quiz.bookmarkedIndexes.has(quiz.currentIndex);
@@ -150,6 +168,22 @@ export default function QuizViewer({
               </div>
               <span className="text-[10px] text-slate-400 font-medium">{answeredCount}/{questions.length} terjawab</span>
             </div>
+
+            {quiz.timerDisplay !== '--:--' && (
+              <div
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold tabular-nums',
+                  quiz.timerIsLow
+                    ? 'bg-red-50 border-red-300 text-red-600 animate-pulse'
+                    : quiz.isPracticeMode
+                      ? 'bg-slate-50 border-slate-200 text-slate-500'
+                      : 'bg-rose-50 border-rose-200 text-rose-500',
+                )}
+              >
+                <Clock size={12} />
+                {quiz.timerDisplay}
+              </div>
+            )}
 
             <button
               onClick={() => quiz.toggleBookmark(quiz.currentIndex)}

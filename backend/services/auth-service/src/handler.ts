@@ -3,8 +3,10 @@ import { createLogger } from "@shared-utils/logger";
 import { logRequestReceived, logRequestResult } from "@shared-utils/requestLifecycle";
 import { createErrorResponse, optionsResponse } from "@shared-utils/response";
 import { getAuthServiceEnv } from "./config/env";
+import { checkinHandler } from "./handlers/checkinHandler";
 import { confirmForgotPasswordHandler } from "./handlers/confirmForgotPasswordHandler";
 import { forgotPasswordHandler } from "./handlers/forgotPasswordHandler";
+import { getCheckinActivityHandler } from "./handlers/getCheckinActivityHandler";
 import { loginHandler } from "./handlers/loginHandler";
 import { logoutHandler } from "./handlers/logoutHandler";
 import { refreshHandler } from "./handlers/refreshHandler";
@@ -20,6 +22,8 @@ const routeHandlers: Record<
   string,
   (event: APIGatewayProxyEventV2) => Promise<APIGatewayProxyStructuredResultV2>
 > = {
+  [ROUTES.CHECKIN.routeKey]: checkinHandler,
+  [ROUTES.GET_CHECKIN_ACTIVITY.routeKey]: getCheckinActivityHandler,
   [ROUTES.LOGIN.routeKey]: loginHandler,
   [ROUTES.FORGOT_PASSWORD.routeKey]: forgotPasswordHandler,
   [ROUTES.CONFIRM_FORGOT_PASSWORD.routeKey]: confirmForgotPasswordHandler,

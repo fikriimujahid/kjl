@@ -28,5 +28,15 @@ export const ROUTES = {
     method: "POST",
     path: "/api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts/{attemptId}/finish",
     routeKey: "POST /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts/{attemptId}/finish"
+  },
+  GET_SESSION_ATTEMPT_PROGRESS: {
+    method: "GET",
+    path: "/api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts/{attemptId}/progress",
+    routeKey: "GET /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts/{attemptId}/progress"
+  },
+  SAVE_SESSION_ATTEMPT_PROGRESS: {
+    method: "PUT",
+    path: "/api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts/{attemptId}/progress",
+    routeKey: "PUT /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts/{attemptId}/progress"
   }
 } as const;

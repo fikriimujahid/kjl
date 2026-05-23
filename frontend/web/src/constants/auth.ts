@@ -5,6 +5,7 @@ export const AUTH_ENDPOINTS = {
   refresh: `${AUTH_API_BASE_URL}/refresh`,
   session: `${AUTH_API_BASE_URL}/session`,
   logout: `${AUTH_API_BASE_URL}/logout`,
+  checkin: `${AUTH_API_BASE_URL}/checkin`,
   register: `${AUTH_API_BASE_URL}/register`,
   forgotPassword: `${AUTH_API_BASE_URL}/forgot-password`,
   confirmForgotPassword: `${AUTH_API_BASE_URL}/forgot-password/confirm`,

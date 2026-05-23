@@ -1,17 +1,17 @@
 'use client';
 
 import { motion } from 'motion/react';
-import { CheckCircle2, RefreshCcw } from 'lucide-react';
+import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/utils/classnames';
 import type { QuizMode, QuizResult } from '@/types/quiz';
 
 interface QuizCompletionViewProps {
   mode: QuizMode;
   result: QuizResult;
-  onReset: () => void;
+  onBackToMaterial: () => void;
 }
 
-export function QuizCompletionView({ mode, result, onReset }: QuizCompletionViewProps) {
+export function QuizCompletionView({ mode, result, onBackToMaterial }: QuizCompletionViewProps) {
   const correctCount = result.details.filter((detail) => detail.isCorrect).length;
   const failed = !result.passed;
 
@@ -52,10 +52,10 @@ export function QuizCompletionView({ mode, result, onReset }: QuizCompletionView
 
       <div className="flex gap-4 justify-center">
         <button
-          onClick={onReset}
+            onClick={onBackToMaterial}
           className="px-8 py-4 bg-slate-100 text-slate-700 rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-slate-200 transition-all flex items-center gap-2"
         >
-          <RefreshCcw size={18} /> Ulangi Kuis
+            <ArrowLeft size={18} /> Kembali ke Materi
         </button>
       </div>
     </motion.div>

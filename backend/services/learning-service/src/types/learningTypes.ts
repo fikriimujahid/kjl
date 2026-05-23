@@ -73,6 +73,21 @@ export interface SessionSingleAnswerCheckResult {
 export type SessionAttemptSessionType = "practice" | "exam";
 export type SessionAttemptStatus = "ACTIVE" | "FINISHED";
 
+export interface SessionAttemptProgressAnswer {
+  option: string;
+  optionId: string;
+}
+
+export interface SessionAttemptProgressCheckedAnswer {
+  questionId: string;
+  selectedOptionId: string;
+  correctAnswer: string;
+  isCorrect: boolean;
+  score: number;
+  awardedScore: number;
+  explanation?: string;
+}
+
 export interface SessionAttemptRecord {
   PK: string;
   SK: string;
@@ -97,6 +112,13 @@ export interface SessionAttemptRecord {
   passingScore?: number;
   passed?: boolean;
   durationSeconds?: number;
+  progressCurrentQuestionIndex?: number;
+  progressAnsweredQuestionIndexes?: number[];
+  progressAnswers?: Record<string, SessionAttemptProgressAnswer>;
+  progressCheckedAnswers?: Record<string, SessionAttemptProgressCheckedAnswer>;
+  progressBookmarkedIndexes?: number[];
+  progressDurationSeconds?: number;
+  progressSavedAt?: string;
 }
 
 export interface SessionAttemptItem {
@@ -115,6 +137,13 @@ export interface SessionAttemptItem {
   passingScore?: number;
   passed?: boolean;
   durationSeconds?: number;
+  progressCurrentQuestionIndex?: number;
+  progressAnsweredQuestionIndexes?: number[];
+  progressAnswers?: Record<string, SessionAttemptProgressAnswer>;
+  progressCheckedAnswers?: Record<string, SessionAttemptProgressCheckedAnswer>;
+  progressBookmarkedIndexes?: number[];
+  progressDurationSeconds?: number;
+  progressSavedAt?: string;
 }
 
 export interface SessionAttemptHistoryResponse {
@@ -132,5 +161,23 @@ export interface StartSessionAttemptResponse extends SessionAttemptHistoryRespon
 }
 
 export interface FinishSessionAttemptResponse extends SessionAttemptHistoryResponse {
+  attempt: SessionAttemptItem;
+}
+
+export interface GetSessionAttemptProgressResponse {
+  productId: string;
+  topicId: string;
+  sessionId: string;
+  attemptId: string;
+  savedAt: string;
+  attempt: SessionAttemptItem;
+}
+
+export interface SaveSessionAttemptProgressResponse {
+  productId: string;
+  topicId: string;
+  sessionId: string;
+  attemptId: string;
+  savedAt: string;
   attempt: SessionAttemptItem;
 }
