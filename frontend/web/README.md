@@ -28,6 +28,7 @@ Copy `.env.example` to `.env.local`.
 API base URLs are public configuration in this project.
 
 - `PRODUCT_API_BASE_URL`: product service base URL, for example `https://api.example.com/products`.
+- `LEARNING_API_BASE_URL`: learning service base URL, for example `https://api.example.com/learning`.
 - `PAYMENT_API_BASE_URL`: payment service base URL, for example `https://api.example.com/payments`.
 - `AUTH_API_BASE_URL`: auth service base URL, for example `https://api.example.com/auth`.
 - `NEXT_API_BASE_URL` (optional): shared fallback base URL used by some legacy clients.

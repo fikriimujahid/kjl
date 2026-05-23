@@ -15,6 +15,7 @@ export interface LoginResult {
     id: string;
     email: string;
     name: string;
+    lastCheckinDate?: string;
   };
   refreshToken: string;
 }

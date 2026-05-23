@@ -44,7 +44,7 @@ export function OwnedProducts({
                 </div>
                 <ArrowRight size={14} className="text-slate-300 group-hover:text-indigo-500 transition-colors shrink-0" />
               </div>
-              <div>
+              {/* <div>
                 <div className="flex justify-between text-[10px] mb-1">
                   <span className="text-slate-400">Progres</span>
                   <span className={cn('font-bold', pct > 0 ? 'text-indigo-500' : 'text-slate-400')}>{pct}%</span>
@@ -52,7 +52,7 @@ export function OwnedProducts({
                 <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                   <div className="h-full bg-indigo-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
                 </div>
-              </div>
+              </div> */}
             </Link>
           );
         })}

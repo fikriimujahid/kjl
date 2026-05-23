@@ -2,6 +2,7 @@ export interface AuthUser {
   id: string;
   email: string;
   name: string;
+  lastCheckinDate?: string;
 }
 
 export type JwtPayload = {
@@ -9,6 +10,7 @@ export type JwtPayload = {
   email?: string;
   name?: string;
   ["cognito:username"]?: string;
+  ["custom:last_checkin_date"]?: string;
 };
 
 export interface CognitoAuthResult {

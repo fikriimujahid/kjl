@@ -78,6 +78,7 @@ jobs:
           AUTH_REFRESH_COOKIE_PATH: ${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_PATH }}
           COGNITO_API_ENDPOINT: ${{ secrets.AUTH_SERVICE_COGNITO_API_ENDPOINT }}
           COGNITO_USER_POOL_CLIENT_ID: ${{ secrets.AUTH_SERVICE_COGNITO_USER_POOL_CLIENT_ID }}
+          DYNAMO_DB_TABLE_NAME: ${{ secrets.AUTH_SERVICE_DYNAMO_DB_TABLE_NAME }}
         run: |
           if [ -z "${COGNITO_API_ENDPOINT}" ]; then
             echo "COGNITO_API_ENDPOINT secret is missing."
@@ -99,6 +100,7 @@ jobs:
           AUTH_REFRESH_COOKIE_NAME=${AUTH_REFRESH_COOKIE_NAME}
           AUTH_REFRESH_COOKIE_PATH=${AUTH_REFRESH_COOKIE_PATH}
           AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS=${AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS}
+          DYNAMO_DB_TABLE_NAME=${DYNAMO_DB_TABLE_NAME}
           EOF
 
       - name: Update Lambda environment variables
@@ -113,6 +115,7 @@ jobs:
           AUTH_REFRESH_COOKIE_NAME: ${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_NAME }}
           AUTH_REFRESH_COOKIE_PATH: ${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_PATH }}
           AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS: ${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS }}
+          DYNAMO_DB_TABLE_NAME: ${{ secrets.AUTH_SERVICE_DYNAMO_DB_TABLE_NAME }}
         run: |
           if [ -z "${LAMBDA_FUNCTION_NAME}" ]; then
             echo "AUTH_SERVICE_LAMBDA_FUNCTION_NAME secret is missing."
@@ -144,7 +147,8 @@ jobs:
             | if $authCookieSameSite == "" then del(.AUTH_COOKIE_SAME_SITE) else . + {AUTH_COOKIE_SAME_SITE: $authCookieSameSite} end
             | if $authRefreshCookieName == "" then del(.AUTH_REFRESH_COOKIE_NAME) else . + {AUTH_REFRESH_COOKIE_NAME: $authRefreshCookieName} end
             | if $authRefreshCookiePath == "" then del(.AUTH_REFRESH_COOKIE_PATH) else . + {AUTH_REFRESH_COOKIE_PATH: $authRefreshCookiePath} end
-            | if $authRefreshCookieMaxAgeSeconds == "" then del(.AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS) else . + {AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS: $authRefreshCookieMaxAgeSeconds} end')
+            | if $authRefreshCookieMaxAgeSeconds == "" then del(.AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS) else . + {AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS: $authRefreshCookieMaxAgeSeconds} end
+            | if $dynamoDbTableName == "" then del(.DYNAMO_DB_TABLE_NAME) else . + {DYNAMO_DB_TABLE_NAME: $dynamoDbTableName} end')
 
           UPDATE_PAYLOAD=$(jq -cn \
             --arg functionName "${LAMBDA_FUNCTION_NAME}" \

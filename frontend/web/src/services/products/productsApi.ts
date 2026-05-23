@@ -1,3 +1,4 @@
+import { extractSuccessData } from '@/lib/api/response';
 import type {
 	OwnedProduct,
 	Product,
@@ -42,19 +43,6 @@ interface FetchPurchasedProductDetailsOptions {
 	signal?: AbortSignal;
 	cache?: RequestCache;
 	accessToken?: string;
-}
-
-function extractSuccessData<T>(payload: unknown): T | null {
-	if (!payload || typeof payload !== 'object') {
-		return null;
-	}
-
-	const candidate = payload as Record<string, unknown>;
-	if (candidate.success !== true || !('data' in candidate)) {
-		return null;
-	}
-
-	return candidate.data as T;
 }
 
 function isProduct(value: unknown): value is Product {
@@ -233,4 +221,3 @@ export async function fetchProductSessionDetails({
 		return null;
 	}
 }
-

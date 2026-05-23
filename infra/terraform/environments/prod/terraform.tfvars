@@ -116,6 +116,16 @@ auth_cognito = {
         min_length = 1
         max_length = 2048
       }
+    },
+    {
+      name                = "last_checkin_date"
+      attribute_data_type = "String"
+      required            = false
+      mutable             = true
+      string_attribute_constraints = {
+        min_length = 10
+        max_length = 10
+      }
     }
   ]
 
@@ -216,6 +226,34 @@ service_api = {
       }
     }
 
+    learning = {
+      name                  = "kejepangdulu-prod-learning-api"
+      description           = "Private Learning Content API Lambda."
+      source_dir            = "../../../../backend/services/learning-service/build/lambda"
+      handler               = "services/learning-service/src/handler.handler"
+      runtime               = "nodejs22.x"
+      memory_size           = 256
+      timeout               = 10
+      environment_variables = {
+        DYNAMO_DB_TABLE_NAME      = "learning-content"
+        MEDIA_PRIVATE_BUCKET_NAME = "kejepangdulu-prod-media-private"
+      }
+      publish = true
+      dynamodb_access = {
+        learning_content = {
+          read  = true
+          write = false
+        }
+      }
+      s3_access = {
+        media_private = {
+          s3_arn = "arn:aws:s3:::kejepangdulu-prod-media-private"
+          read   = true
+          write  = false
+        }
+      }
+    }
+
     payment = {
       name                  = "kejepangdulu-prod-payment-api"
       description           = "Midtrans Payment API Lambda."
@@ -267,8 +305,17 @@ service_api = {
       runtime               = "nodejs22.x"
       memory_size           = 256
       timeout               = 15
-      environment_variables = {}
+      environment_variables = {
+        DYNAMO_DB_TABLE_NAME = "learning-content"
+      }
       publish               = true
+      dynamodb_access = {
+        learning_content = {
+          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/learning-content"
+          read      = true
+          write     = true
+        }
+      }
     }
   }
 
@@ -313,6 +360,54 @@ service_api = {
         authorization_type = "NONE"
         operation_name     = "GetInternalProductExistsUnderApi"
         integration_key    = "product"
+      }
+      get_learning_session_images_under_api = {
+        route_key          = "GET /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/images"
+        authorization_type = "JWT"
+        operation_name     = "GetLearningSessionImagesUnderApi"
+        integration_key    = "learning"
+      }
+      get_learning_session_questions_under_api = {
+        route_key          = "GET /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/questions"
+        authorization_type = "JWT"
+        operation_name     = "GetLearningSessionQuestionsUnderApi"
+        integration_key    = "learning"
+      }
+      check_learning_session_answer_under_api = {
+        route_key          = "POST /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/answers/check"
+        authorization_type = "JWT"
+        operation_name     = "CheckLearningSessionAnswerUnderApi"
+        integration_key    = "learning"
+      }
+      start_learning_session_attempt_under_api = {
+        route_key          = "POST /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts/start"
+        authorization_type = "JWT"
+        operation_name     = "StartLearningSessionAttemptUnderApi"
+        integration_key    = "learning"
+      }
+      get_learning_session_attempts_under_api = {
+        route_key          = "GET /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts"
+        authorization_type = "JWT"
+        operation_name     = "GetLearningSessionAttemptsUnderApi"
+        integration_key    = "learning"
+      }
+      finish_learning_session_attempt_under_api = {
+        route_key          = "POST /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts/{attemptId}/finish"
+        authorization_type = "JWT"
+        operation_name     = "FinishLearningSessionAttemptUnderApi"
+        integration_key    = "learning"
+      }
+      get_learning_session_attempt_progress_under_api = {
+        route_key          = "GET /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts/{attemptId}/progress"
+        authorization_type = "JWT"
+        operation_name     = "GetLearningSessionAttemptProgressUnderApi"
+        integration_key    = "learning"
+      }
+      save_learning_session_attempt_progress_under_api = {
+        route_key          = "PUT /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts/{attemptId}/progress"
+        authorization_type = "JWT"
+        operation_name     = "SaveLearningSessionAttemptProgressUnderApi"
+        integration_key    = "learning"
       }
       create_payment_under_api = {
         route_key          = "POST /api/payments/create"
@@ -372,6 +467,18 @@ service_api = {
         route_key          = "GET /api/auth/session"
         authorization_type = "NONE"
         operation_name     = "GetSessionUnderApi"
+        integration_key    = "auth"
+      }
+      post_checkin_under_api = {
+        route_key          = "POST /api/auth/checkin"
+        authorization_type = "JWT"
+        operation_name     = "PostCheckinUnderApi"
+        integration_key    = "auth"
+      }
+      get_checkin_under_api = {
+        route_key          = "GET /api/auth/checkin"
+        authorization_type = "JWT"
+        operation_name     = "GetCheckinUnderApi"
         integration_key    = "auth"
       }
       logout_under_api = {

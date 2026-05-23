@@ -6,6 +6,48 @@ const { ROUTES } = require("./build/lambda/services/auth-service/src/routes.js")
 const PORT = Number(process.env.PORT || 3004);
 const routeDefinitions = Object.values(ROUTES);
 
+function decodeBase64Url(value) {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+  return Buffer.from(padded, "base64").toString("utf8");
+}
+
+function parseJwtPayload(token) {
+  try {
+    const parts = token.split(".");
+    if (parts.length < 2) {
+      return null;
+    }
+
+    return JSON.parse(decodeBase64Url(parts[1]));
+  } catch {
+    return null;
+  }
+}
+
+function resolveJwtAuthorizer(headers) {
+  const authorization = headers.authorization;
+  if (!authorization || !authorization.toLowerCase().startsWith("bearer ")) {
+    return undefined;
+  }
+
+  const token = authorization.slice(7).trim();
+  if (!token) {
+    return undefined;
+  }
+
+  const claims = parseJwtPayload(token);
+  if (!claims || typeof claims !== "object") {
+    return undefined;
+  }
+
+  return {
+    jwt: {
+      claims
+    }
+  };
+}
+
 function normalizeHeaders(headers) {
   const normalized = {};
   for (const [key, value] of Object.entries(headers)) {
@@ -106,6 +148,7 @@ const server = http.createServer(async (req, res) => {
 
   const headers = normalizeHeaders(req.headers);
   const rawBody = await readRequestBody(req);
+  const authorizer = resolveJwtAuthorizer(headers);
 
   const event = {
     version: "2.0",
@@ -118,7 +161,8 @@ const server = http.createServer(async (req, res) => {
       http: {
         method: req.method || "GET",
         path: requestUrl.pathname
-      }
+      },
+      ...(authorizer ? { authorizer } : {})
     },
     pathParameters: route.pathParameters,
     isBase64Encoded: false,

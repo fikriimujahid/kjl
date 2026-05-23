@@ -7,6 +7,8 @@ import { loginHandler } from "../../src/handlers/loginHandler";
 import { registerHandler } from "../../src/handlers/registerHandler";
 import { forgotPasswordHandler } from "../../src/handlers/forgotPasswordHandler";
 import { confirmForgotPasswordHandler } from "../../src/handlers/confirmForgotPasswordHandler";
+import { checkinHandler } from "../../src/handlers/checkinHandler";
+import { getCheckinActivityHandler } from "../../src/handlers/getCheckinActivityHandler";
 import { refreshHandler } from "../../src/handlers/refreshHandler";
 import { logoutHandler } from "../../src/handlers/logoutHandler";
 import { sessionHandler } from "../../src/handlers/sessionHandler";
@@ -24,6 +26,8 @@ jest.mock("../../src/handlers/loginHandler", () => ({ loginHandler: jest.fn() })
 jest.mock("../../src/handlers/registerHandler", () => ({ registerHandler: jest.fn() }));
 jest.mock("../../src/handlers/forgotPasswordHandler", () => ({ forgotPasswordHandler: jest.fn() }));
 jest.mock("../../src/handlers/confirmForgotPasswordHandler", () => ({ confirmForgotPasswordHandler: jest.fn() }));
+jest.mock("../../src/handlers/checkinHandler", () => ({ checkinHandler: jest.fn() }));
+jest.mock("../../src/handlers/getCheckinActivityHandler", () => ({ getCheckinActivityHandler: jest.fn() }));
 jest.mock("../../src/handlers/refreshHandler", () => ({ refreshHandler: jest.fn() }));
 jest.mock("../../src/handlers/logoutHandler", () => ({ logoutHandler: jest.fn() }));
 jest.mock("../../src/handlers/sessionHandler", () => ({ sessionHandler: jest.fn() }));
@@ -78,6 +82,8 @@ describe("handler entrypoint", () => {
   });
 
   it.each([
+    [ROUTES.CHECKIN.routeKey, checkinHandler],
+    [ROUTES.GET_CHECKIN_ACTIVITY.routeKey, getCheckinActivityHandler],
     [ROUTES.LOGIN.routeKey, loginHandler],
     [ROUTES.REGISTER.routeKey, registerHandler],
     [ROUTES.FORGOT_PASSWORD.routeKey, forgotPasswordHandler],
@@ -86,7 +92,10 @@ describe("handler entrypoint", () => {
     [ROUTES.LOGOUT.routeKey, logoutHandler],
     [ROUTES.SESSION.routeKey, sessionHandler]
   ])("dispatches route %s to its handler", async (routeKey, routeHandler) => {
-    const event = createEvent(routeKey as string, routeKey === ROUTES.SESSION.routeKey ? "GET" : "POST");
+    const method = routeKey === ROUTES.SESSION.routeKey || routeKey === ROUTES.GET_CHECKIN_ACTIVITY.routeKey
+      ? "GET"
+      : "POST";
+    const event = createEvent(routeKey as string, method);
     const expected = { statusCode: 200, body: JSON.stringify({ ok: true }) };
 
     (routeHandler as jest.Mock).mockResolvedValue(expected);

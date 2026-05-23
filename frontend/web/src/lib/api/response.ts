@@ -41,3 +41,16 @@ export async function readSuccessData<TData>(response: Response): Promise<TData>
 
   return payload as TData;
 }
+
+export function extractSuccessData<T>(payload: unknown): T | null {
+  if (!payload || typeof payload !== 'object') {
+    return null;
+  }
+
+  const candidate = payload as Record<string, unknown>;
+  if (candidate.success !== true || !('data' in candidate)) {
+    return null;
+  }
+
+  return candidate.data as T;
+}

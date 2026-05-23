@@ -73,7 +73,9 @@ export const findProductDetailsById = async (
       const mappedSession: Session = {
         id: sessionRecord.id,
         title: sessionRecord.title,
-        type: sessionRecord.type
+        type: sessionRecord.type,
+        passingScore: sessionRecord.passingScore ?? undefined,
+        duration: sessionRecord.duration ?? undefined
       };
 
       const currentSessions = sessionsByTopicId.get(sessionRecord.topicId) ?? [];

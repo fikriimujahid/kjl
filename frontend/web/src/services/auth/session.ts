@@ -15,6 +15,7 @@ export function normalizeSessionPayload(payload: SessionPayload): StoredAuthSess
     id: bodyUser?.id ?? '',
     email: bodyUser?.email ?? '',
     name: bodyUser?.name ?? bodyUser?.email ?? 'Pengguna',
+    lastCheckinDate: bodyUser?.lastCheckinDate,
   };
 
   if (!user.id || !user.email) {

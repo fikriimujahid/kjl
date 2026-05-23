@@ -23,7 +23,9 @@ export interface Topic {
 export interface Session {
   id: string;
   title: string;
-  type: 'quiz' | 'pdf' | 'audio' | 'images' | 'video';
+  type: 'practice' | 'pdf' | 'audio' | 'images' | 'video' | 'exam';
+  passingScore?: number;
+  duration?: number; // duration in minutes, applicable for exam type
 }
 
 export interface OwnedProduct {
@@ -65,4 +67,6 @@ export interface SessionRecord {
   title: string;
   type: Session["type"];
   contentUrl?: string;
+  passingScore?: number;
+  duration?: number; // duration in minutes, applicable for exam type
 }

@@ -3,8 +3,12 @@ setlocal
 
 cd /d "%~dp0"
 
-echo Starting auth-service local server...
+set "AWS_PROFILE=terraform-admin"
+set "AWS_SDK_LOAD_CONFIG=1"
+
+echo Starting learning-service local server...
 echo Working directory: %CD%
+echo AWS_PROFILE: %AWS_PROFILE%
 echo.
 
 where npm >nul 2>&1

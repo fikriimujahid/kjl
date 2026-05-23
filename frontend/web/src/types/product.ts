@@ -22,11 +22,12 @@ export interface Topic {
 
 export interface Session {
   id: string;
+  topicId: string;
+  contentUrl: string;
   title: string;
-  type: 'quiz' | 'pdf' | 'audio' | 'images' | 'video';
-  contentUrl?: string;
-  topicId?: string;
-  questions?: Question[];
+  type: 'practice' | 'pdf' | 'audio' | 'images' | 'video' | 'exam';
+  passingScore?: number;
+  duration?: number;
 }
 
 export interface OwnedProduct {

@@ -9,7 +9,7 @@ export function SessionTypeIcon({ type }: SessionTypeIconProps) {
   const props = { size: 14, className: 'shrink-0' };
 
   switch (type) {
-    case 'quiz':
+    case 'exam':
       return <HelpCircle {...props} />;
     default:
       return <BookOpen {...props} />;
