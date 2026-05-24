@@ -57,6 +57,14 @@ frontend_site_hosting = {
   # CLOUDFRONT CONFIGURATION
   cloudfront = {
     aliases = ["kjl.fikri.dev"]
+    rewrite_config = {
+      extension_index_rules = [
+        {
+          extension  = ".txt"
+          index_file = "index.txt"
+        }
+      ]
+    }
     custom_error_responses = [
       {
         error_code            = 403

@@ -29,6 +29,7 @@ interface UseQuizSessionOptions {
 interface UseQuizSessionResult {
   currentIndex: number;
   currentQuestion: Question;
+  currentAnswer: SelectedAnswer | undefined;
   answers: Record<number, SelectedAnswer>;
   checkedAnswers: Record<number, LearningSessionAnswerCheckResult>;
   bookmarkedIndexes: Set<number>;
@@ -157,6 +158,7 @@ export function useQuizSession({
   durationMinutes,
 }: UseQuizSessionOptions): UseQuizSessionResult {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [draftAnswers, setDraftAnswers] = useState<Record<number, SelectedAnswer>>({});
   const [answers, setAnswers] = useState<Record<number, SelectedAnswer>>({});
   const [checkedAnswers, setCheckedAnswers] = useState<Record<number, LearningSessionAnswerCheckResult>>({});
   const [bookmarkedIndexes, setBookmarkedIndexes] = useState<Set<number>>(new Set());
@@ -216,6 +218,7 @@ export function useQuizSession({
         );
 
         setCurrentIndex(restoredCurrentIndex);
+        setDraftAnswers(restoredAnswers);
         setAnswers(restoredAnswers);
         setCheckedAnswers(restoredCheckedAnswers);
         setBookmarkedIndexes(new Set(currentAttempt.progressBookmarkedIndexes ?? []));
@@ -235,71 +238,6 @@ export function useQuizSession({
     };
   }, [attemptId, accessToken, productId, topicId, sessionId, questions.length]);
 
-  useEffect(() => {
-    if (!attemptId || !accessToken || result || !hasHydratedProgressRef.current) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      const progressAnswers = Object.entries(answers).reduce<Record<string, SelectedAnswer>>((acc, [index, answer]) => {
-        acc[index] = {
-          option: answer.option,
-          optionId: answer.optionId,
-        };
-        return acc;
-      }, {});
-
-      const progressCheckedAnswers = Object.entries(checkedAnswers).reduce<Record<string, LearningSessionProgressCheckedAnswer>>((acc, [index, answer]) => {
-        acc[index] = {
-          questionId: answer.questionId,
-          selectedOptionId: answer.selectedOptionId,
-          correctAnswer: answer.correctAnswer,
-          isCorrect: answer.isCorrect,
-          score: answer.score,
-          awardedScore: answer.awardedScore,
-          explanation: answer.explanation,
-        };
-        return acc;
-      }, {});
-
-      const answeredQuestionIndexes = Object.keys(progressAnswers)
-        .map((index) => Number.parseInt(index, 10))
-        .filter((index) => Number.isInteger(index) && index >= 0)
-        .sort((a, b) => a - b);
-
-      const bookmarkedIndexList = Array.from(bookmarkedIndexes.values()).sort((a, b) => a - b);
-      const durationSeconds = Math.max(0, Math.round((Date.now() - attemptStartedAtMsRef.current) / 1000));
-
-      void saveLearningSessionAttemptProgress({
-        productId,
-        topicId,
-        sessionId,
-        attemptId,
-        currentQuestionIndex: Math.max(currentIndex, 0),
-        answeredQuestionIndexes,
-        answers: progressAnswers,
-        checkedAnswers: progressCheckedAnswers,
-        bookmarkedIndexes: bookmarkedIndexList,
-        durationSeconds,
-        accessToken,
-      });
-    }, 800);
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [
-    attemptId,
-    accessToken,
-    productId,
-    topicId,
-    sessionId,
-    currentIndex,
-    answers,
-    checkedAnswers,
-    bookmarkedIndexes,
-    result,
-  ]);
   // Timer tick – forces re-renders every second so derived timer values update.
   useEffect(() => {
     if (result) return;
@@ -328,6 +266,7 @@ export function useQuizSession({
   const timerIsLow = !isPracticeMode && remainingSeconds !== null && remainingSeconds <= 300;
   const isComplete = result !== null;
   const isOnLastQuestion = currentIndex === questions.length - 1;
+  const currentAnswer = draftAnswers[currentIndex] ?? answers[currentIndex];
   const currentCheckedAnswer = checkedAnswers[currentIndex];
   const isCurrentAnswerChecked = Boolean(currentCheckedAnswer);
 
@@ -348,8 +287,8 @@ export function useQuizSession({
   }, [isCurrentAnswerChecked, isOnLastQuestion, isPracticeMode, isSubmitting]);
 
   const selectAnswer = (option: string, optionId: string) => {
-    setAnswers((currentAnswers) => ({
-      ...currentAnswers,
+    setDraftAnswers((currentDraftAnswers) => ({
+      ...currentDraftAnswers,
       [currentIndex]: {
         option,
         optionId,
@@ -363,6 +302,76 @@ export function useQuizSession({
     });
 
     setSubmitError(null);
+  };
+
+  const toProgressAnswers = (sourceAnswers: Record<number, SelectedAnswer>): Record<string, SelectedAnswer> => {
+    return Object.entries(sourceAnswers).reduce<Record<string, SelectedAnswer>>((acc, [index, answer]) => {
+      acc[index] = {
+        option: answer.option,
+        optionId: answer.optionId,
+      };
+      return acc;
+    }, {});
+  };
+
+  const toProgressCheckedAnswers = (sourceCheckedAnswers: Record<number, LearningSessionAnswerCheckResult>): Record<string, LearningSessionProgressCheckedAnswer> => {
+    return Object.entries(sourceCheckedAnswers).reduce<Record<string, LearningSessionProgressCheckedAnswer>>((acc, [index, answer]) => {
+      acc[index] = {
+        questionId: answer.questionId,
+        selectedOptionId: answer.selectedOptionId,
+        correctAnswer: answer.correctAnswer,
+        isCorrect: answer.isCorrect,
+        score: answer.score,
+        awardedScore: answer.awardedScore,
+        explanation: answer.explanation,
+      };
+      return acc;
+    }, {});
+  };
+
+  const persistProgress = async (
+    committedAnswers: Record<number, SelectedAnswer>,
+    persistedCurrentQuestionIndex: number,
+  ): Promise<boolean> => {
+    if (!attemptId || !accessToken || result || !hasHydratedProgressRef.current) {
+      return true;
+    }
+
+    const progressAnswers = toProgressAnswers(committedAnswers);
+    const progressCheckedAnswers = toProgressCheckedAnswers(checkedAnswers);
+    const answeredQuestionIndexes = Object.keys(progressAnswers)
+      .map((index) => Number.parseInt(index, 10))
+      .filter((index) => Number.isInteger(index) && index >= 0)
+      .sort((a, b) => a - b);
+    const bookmarkedIndexList = Array.from(bookmarkedIndexes.values()).sort((a, b) => a - b);
+    const elapsedDurationSeconds = Math.max(0, Math.round((Date.now() - attemptStartedAtMsRef.current) / 1000));
+
+    const saveResult = await saveLearningSessionAttemptProgress({
+      productId,
+      topicId,
+      sessionId,
+      attemptId,
+      currentQuestionIndex: Math.max(persistedCurrentQuestionIndex, 0),
+      answeredQuestionIndexes,
+      answers: progressAnswers,
+      checkedAnswers: progressCheckedAnswers,
+      bookmarkedIndexes: bookmarkedIndexList,
+      durationSeconds: elapsedDurationSeconds,
+      accessToken,
+    });
+
+    return saveResult !== null;
+  };
+
+  const commitCurrentAnswer = (): Record<number, SelectedAnswer> => {
+    if (!currentAnswer) {
+      return answers;
+    }
+
+    return {
+      ...answers,
+      [currentIndex]: currentAnswer,
+    };
   };
 
   const finalizeAttempt = async (summaryResult: QuizResult) => {
@@ -391,7 +400,12 @@ export function useQuizSession({
   };
 
   const submitExamDummy = async (forced = false) => {
-    const answeredCount = questions.reduce((count, _, index) => count + (answers[index] ? 1 : 0), 0);
+    const effectiveAnswers = {
+      ...answers,
+      ...draftAnswers,
+    };
+
+    const answeredCount = questions.reduce((count, _, index) => count + (effectiveAnswers[index] ? 1 : 0), 0);
 
     if (answeredCount === 0 && !forced) {
       setSubmitError('Jawaban belum tersedia untuk dikirim.');
@@ -403,7 +417,7 @@ export function useQuizSession({
 
     try {
       const details: QuizResultDetail[] = questions.map((question, index) => {
-        const selectedAnswer = answers[index];
+        const selectedAnswer = effectiveAnswers[index];
         const fallbackOptionId = question.optionIds?.[0] ?? '';
         const correctAnswer = question.correctAnswer || fallbackOptionId;
 
@@ -441,7 +455,7 @@ export function useQuizSession({
   submitExamDummyRef.current = submitExamDummy;
 
   const checkPracticeAnswer = async () => {
-    const selectedAnswer = answers[currentIndex];
+    const selectedAnswer = currentAnswer;
 
     if (!selectedAnswer) {
       setSubmitError('Pilih jawaban terlebih dahulu.');
@@ -481,9 +495,14 @@ export function useQuizSession({
   };
 
   const finishPractice = async () => {
+    const effectiveAnswers = {
+      ...answers,
+      ...draftAnswers,
+    };
+
     const details: QuizResultDetail[] = questions.map((question, index) => {
       const checkedAnswer = checkedAnswers[index];
-      const selectedAnswer = answers[index];
+      const selectedAnswer = effectiveAnswers[index];
 
       if (!checkedAnswer) {
         return {
@@ -517,7 +536,25 @@ export function useQuizSession({
       }
 
       if (!isOnLastQuestion) {
-        setCurrentIndex((index) => index + 1);
+        const nextIndex = currentIndex + 1;
+        const committedAnswers = commitCurrentAnswer();
+
+        setIsSubmitting(true);
+        setSubmitError(null);
+
+        try {
+          const hasSaved = await persistProgress(committedAnswers, nextIndex);
+          if (!hasSaved) {
+            setSubmitError('Gagal menyimpan progres. Coba lagi.');
+            return;
+          }
+
+          setAnswers(committedAnswers);
+          setCurrentIndex(nextIndex);
+        } finally {
+          setIsSubmitting(false);
+        }
+
         return;
       }
 
@@ -526,7 +563,25 @@ export function useQuizSession({
     }
 
     if (!isOnLastQuestion) {
-      setCurrentIndex((index) => index + 1);
+      const nextIndex = currentIndex + 1;
+      const committedAnswers = commitCurrentAnswer();
+
+      setIsSubmitting(true);
+      setSubmitError(null);
+
+      try {
+        const hasSaved = await persistProgress(committedAnswers, nextIndex);
+        if (!hasSaved) {
+          setSubmitError('Gagal menyimpan progres. Coba lagi.');
+          return;
+        }
+
+        setAnswers(committedAnswers);
+        setCurrentIndex(nextIndex);
+      } finally {
+        setIsSubmitting(false);
+      }
+
       return;
     }
 
@@ -555,6 +610,7 @@ export function useQuizSession({
 
   const reset = () => {
     setCurrentIndex(0);
+    setDraftAnswers({});
     setAnswers({});
     setCheckedAnswers({});
     setBookmarkedIndexes(new Set());
@@ -569,6 +625,7 @@ export function useQuizSession({
   return {
     currentIndex,
     currentQuestion,
+    currentAnswer,
     answers,
     checkedAnswers,
     bookmarkedIndexes,

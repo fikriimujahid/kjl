@@ -208,7 +208,7 @@ export default function QuizViewer({
           <QuizQuestionPanel
             question={quiz.currentQuestion}
             currentIndex={quiz.currentIndex}
-            answer={quiz.answers[quiz.currentIndex]}
+            answer={quiz.currentAnswer}
             isPracticeMode={quiz.isPracticeMode}
             isCurrentAnswerChecked={quiz.isCurrentAnswerChecked}
             checkedAnswer={quiz.currentCheckedAnswer}
@@ -237,7 +237,7 @@ export default function QuizViewer({
           </div>
 
           <button
-            disabled={!quiz.answers[quiz.currentIndex] && !quiz.isCurrentAnswerChecked || quiz.isSubmitting}
+            disabled={!quiz.currentAnswer && !quiz.isCurrentAnswerChecked || quiz.isSubmitting}
             onClick={() => { void quiz.handlePrimaryAction(); }}
             className={cn(
               'flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed',
