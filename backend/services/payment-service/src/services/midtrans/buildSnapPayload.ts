@@ -32,9 +32,9 @@ export const buildSnapPayload = (input: BuildSnapPayloadInput): Record<string, u
   };
 
   payload.callbacks = {
-    finish: `${env.APP_BASE_URL}/payment-success`,
-    error: `${env.APP_BASE_URL}/payment-failed`,
-    pending: `${env.APP_BASE_URL}/payment-success?pending=1`
+    finish: `${env.APP_BASE_URL}/payment-check`,
+    error: `${env.APP_BASE_URL}/payment-check`,
+    pending: `${env.APP_BASE_URL}/payment-check`
   };
 
   return payload;

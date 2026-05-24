@@ -21,10 +21,10 @@ export default function PaymentSuccessPage() {
         </p>
 
         <div className="space-y-4 w-full">
-          <Link href="/my-learning" className="w-full py-5 bg-indigo-600 text-white rounded-3xl font-black text-xl hover:bg-indigo-700 shadow-xl shadow-indigo-100 flex items-center justify-center gap-3 transition-all">
+          {/* <Link href="/my-learning" className="w-full py-5 bg-indigo-600 text-white rounded-3xl font-black text-xl hover:bg-indigo-700 shadow-xl shadow-indigo-100 flex items-center justify-center gap-3 transition-all">
             Mulai Belajar
             <ArrowRight size={24} />
-          </Link>
+          </Link> */}
           <Link href="/dashboard" className="w-full py-4 text-gray-400 font-bold hover:text-indigo-600 transition-colors">
             Kembali ke Dashboard
           </Link>

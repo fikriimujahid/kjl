@@ -1,6 +1,6 @@
 import { DashboardActivityWeek, DashboardProductProgress, DashboardWordOfTheDay } from "@/types/dashboard";
 
-export const STREAK_DAYS = 7;
+export const STREAK_DAYS = 0;
 
 export const WORD_OF_THE_DAY: DashboardWordOfTheDay = {
   word: '頑張る',
@@ -11,11 +11,11 @@ export const WORD_OF_THE_DAY: DashboardWordOfTheDay = {
 };
 
 export const DAILY_ACTIVITY: DashboardActivityWeek[] = [
-  { label: '3 Minggu Lalu', values: [100, 0, 100, 100, 0, 100, 100] },
-  { label: '2 Minggu Lalu', values: [100, 100, 0, 100, 100, 100, 0] },
-  { label: 'Minggu Ini', values: [100, 100, 100, 100, 0, 0, 0] },
+  { label: '3 Minggu Lalu', values: [0, 0, 0, 0, 0, 0, 0] },
+  { label: '2 Minggu Lalu', values: [0, 0, 0, 0, 0, 0, 0] },
+  { label: 'Minggu Ini', values: [0, 0, 0, 0, 0, 0, 0] },
 ];
 
 export const DAYS_SHORT = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'] as const;
 
-export const PRODUCT_PROGRESS: DashboardProductProgress = { p1: 42, p3: 17 };
+export const PRODUCT_PROGRESS: DashboardProductProgress = { p1: 0, p3: 0 };
