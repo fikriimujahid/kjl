@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart2, BookOpen, CheckSquare, Coffee, PlayCircle, RefreshCcw } from 'lucide-react';
+import { BarChart2, BookOpen, CheckSquare, Coffee, Loader2, PlayCircle, RefreshCcw } from 'lucide-react';
 import { cn } from '@/utils/classnames';
 import type { PracticeInstructionsScreenProps } from '../../../types/assessment';
 
@@ -28,6 +28,7 @@ export function PracticeInstructionsScreen({
   totalQuestions,
   onBegin,
   onBack,
+  isLoading = false,
 }: PracticeInstructionsScreenProps) {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 flex flex-col items-center px-4 py-10">
@@ -71,10 +72,15 @@ export function PracticeInstructionsScreen({
             </button>
             <button
               onClick={onBegin}
-              className="flex items-center gap-2 px-8 py-3 text-white text-sm font-bold rounded-xl transition-all shadow-sm hover:shadow-md active:scale-[0.97] bg-violet-600 hover:bg-violet-700"
+              disabled={isLoading}
+              className="flex items-center gap-2 px-8 py-3 text-white text-sm font-bold rounded-xl transition-all shadow-sm hover:shadow-md active:scale-[0.97] bg-violet-600 hover:bg-violet-700 disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100"
             >
-              <PlayCircle size={18} />
-              Mulai Latihan
+              {isLoading ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <PlayCircle size={18} />
+              )}
+              {isLoading ? 'Memuat...' : 'Mulai Latihan'}
             </button>
           </div>
         </div>
