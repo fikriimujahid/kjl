@@ -34,6 +34,7 @@ interface FinishSessionAttemptInput {
   attempt: SessionAttemptRecord;
   totalQuestions: number;
   correctAnswers: number;
+  wrongAnswers: number;
   maxScore: number;
   obtainedScore: number;
   percentage: number;
@@ -176,6 +177,7 @@ export const finishSessionAttemptInRepository = async (
           "#updatedAt = :updatedAt",
           "#totalQuestions = :totalQuestions",
           "#correctAnswers = :correctAnswers",
+          "#wrongAnswers = :wrongAnswers",
           "#maxScore = :maxScore",
           "#obtainedScore = :obtainedScore",
           "#percentage = :percentage",
@@ -190,6 +192,7 @@ export const finishSessionAttemptInRepository = async (
           "#updatedAt": "updatedAt",
           "#totalQuestions": "totalQuestions",
           "#correctAnswers": "correctAnswers",
+          "#wrongAnswers": "wrongAnswers",
           "#maxScore": "maxScore",
           "#obtainedScore": "obtainedScore",
           "#percentage": "percentage",
@@ -204,6 +207,7 @@ export const finishSessionAttemptInRepository = async (
           ":updatedAt": finishedAt,
           ":totalQuestions": input.totalQuestions,
           ":correctAnswers": input.correctAnswers,
+          ":wrongAnswers": input.wrongAnswers,
           ":maxScore": input.maxScore,
           ":obtainedScore": input.obtainedScore,
           ":percentage": input.percentage,

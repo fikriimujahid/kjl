@@ -70,13 +70,7 @@ interface FinishLearningSessionAttemptOptions {
 	topicId: string;
 	sessionId: string;
 	attemptId: string;
-	totalQuestions: number;
-	correctAnswers: number;
-	maxScore: number;
-	obtainedScore: number;
-	percentage: number;
-	passingScore: number;
-	passed: boolean;
+	answers: LearningSessionFinishAnswerInput[];
 	durationSeconds?: number;
 	signal?: AbortSignal;
 	cache?: RequestCache;
@@ -147,6 +141,33 @@ export interface LearningSessionProgressCheckedAnswer {
 	explanation?: string;
 }
 
+export interface LearningSessionFinishAnswerInput {
+	questionId: string;
+	selectedOptionId: string;
+}
+
+export interface LearningSessionAttemptEvaluationDetail {
+	questionId: string;
+	selectedOptionId: string;
+	correctAnswer: string;
+	isCorrect: boolean;
+	score: number;
+	awardedScore: number;
+	explanation?: string;
+}
+
+export interface LearningSessionAttemptEvaluation {
+	totalQuestions: number;
+	correctAnswers: number;
+	wrongAnswers: number;
+	maxScore: number;
+	obtainedScore: number;
+	percentage: number;
+	passingScore: number;
+	passed: boolean;
+	details: LearningSessionAttemptEvaluationDetail[];
+}
+
 export type LearningAttemptStatus = 'ACTIVE' | 'FINISHED';
 export type LearningAttemptSessionType = 'practice' | 'exam';
 
@@ -160,6 +181,7 @@ export interface LearningSessionAttempt {
 	updatedAt: string;
 	totalQuestions?: number;
 	correctAnswers?: number;
+	wrongAnswers?: number;
 	maxScore?: number;
 	obtainedScore?: number;
 	percentage?: number;
@@ -191,6 +213,7 @@ export interface StartLearningSessionAttemptResponse extends LearningSessionAtte
 
 export interface FinishLearningSessionAttemptResponse extends LearningSessionAttemptHistoryResponse {
 	attempt: LearningSessionAttempt;
+	evaluation?: LearningSessionAttemptEvaluation;
 }
 
 export interface SaveLearningSessionAttemptProgressResponse {
@@ -441,6 +464,55 @@ function isLearningSessionProgressCheckedAnswer(value: unknown): value is Learni
 	return true;
 }
 
+function isLearningSessionAttemptEvaluationDetail(value: unknown): value is LearningSessionAttemptEvaluationDetail {
+	if (!value || typeof value !== 'object') {
+		return false;
+	}
+
+	const candidate = value as Record<string, unknown>;
+
+	if (
+		typeof candidate.questionId !== 'string'
+		|| typeof candidate.selectedOptionId !== 'string'
+		|| typeof candidate.correctAnswer !== 'string'
+		|| typeof candidate.isCorrect !== 'boolean'
+		|| typeof candidate.score !== 'number'
+		|| typeof candidate.awardedScore !== 'number'
+	) {
+		return false;
+	}
+
+	if (candidate.explanation !== undefined && typeof candidate.explanation !== 'string') {
+		return false;
+	}
+
+	return true;
+}
+
+function isLearningSessionAttemptEvaluation(value: unknown): value is LearningSessionAttemptEvaluation {
+	if (!value || typeof value !== 'object') {
+		return false;
+	}
+
+	const candidate = value as Record<string, unknown>;
+
+	if (
+		typeof candidate.totalQuestions !== 'number'
+		|| typeof candidate.correctAnswers !== 'number'
+		|| typeof candidate.wrongAnswers !== 'number'
+		|| typeof candidate.maxScore !== 'number'
+		|| typeof candidate.obtainedScore !== 'number'
+		|| typeof candidate.percentage !== 'number'
+		|| typeof candidate.passingScore !== 'number'
+		|| typeof candidate.passed !== 'boolean'
+		|| !Array.isArray(candidate.details)
+	) {
+		return false;
+	}
+
+	return candidate.details.every(isLearningSessionAttemptEvaluationDetail);
+}
+
 function isRecordOf<T>(
 	value: unknown,
 	entryGuard: (entry: unknown) => entry is T,
@@ -485,6 +557,7 @@ function isLearningSessionAttempt(value: unknown): value is LearningSessionAttem
 	const optionalNumberFields = [
 		'totalQuestions',
 		'correctAnswers',
+		'wrongAnswers',
 		'maxScore',
 		'obtainedScore',
 		'percentage',
@@ -568,7 +641,16 @@ function isFinishLearningSessionAttemptResponse(value: unknown): value is Finish
 	}
 
 	const candidate = value as unknown as Record<string, unknown>;
-	return isLearningSessionAttempt(candidate.attempt);
+
+	if (!isLearningSessionAttempt(candidate.attempt)) {
+		return false;
+	}
+
+	if (candidate.evaluation !== undefined && !isLearningSessionAttemptEvaluation(candidate.evaluation)) {
+		return false;
+	}
+
+	return true;
 }
 
 function isSaveLearningSessionAttemptProgressResponse(value: unknown): value is SaveLearningSessionAttemptProgressResponse {
@@ -773,13 +855,7 @@ export async function finishLearningSessionAttempt({
 	topicId,
 	sessionId,
 	attemptId,
-	totalQuestions,
-	correctAnswers,
-	maxScore,
-	obtainedScore,
-	percentage,
-	passingScore,
-	passed,
+	answers,
 	durationSeconds,
 	signal,
 	cache = 'no-store',
@@ -799,13 +875,7 @@ export async function finishLearningSessionAttempt({
 				cache,
 				headers,
 				body: JSON.stringify({
-					totalQuestions,
-					correctAnswers,
-					maxScore,
-					obtainedScore,
-					percentage,
-					passingScore,
-					passed,
+					answers,
 					durationSeconds,
 				}),
 			},

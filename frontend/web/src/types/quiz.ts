@@ -16,6 +16,8 @@ export interface QuizResultDetail {
 export interface QuizResult {
   details: QuizResultDetail[];
   totalQuestions: number;
+  correctAnswers?: number;
+  wrongAnswers?: number;
   maxScore: number;
   obtainedScore: number;
   percentage: number;

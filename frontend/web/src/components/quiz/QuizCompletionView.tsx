@@ -12,7 +12,7 @@ interface QuizCompletionViewProps {
 }
 
 export function QuizCompletionView({ mode, result, onBackToMaterial }: QuizCompletionViewProps) {
-  const correctCount = result.details.filter((detail) => detail.isCorrect).length;
+  const correctCount = result.correctAnswers ?? result.details.filter((detail) => detail.isCorrect).length;
   const failed = !result.passed;
 
   return (

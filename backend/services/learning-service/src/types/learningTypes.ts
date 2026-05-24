@@ -70,6 +70,33 @@ export interface SessionSingleAnswerCheckResult {
   explanation?: string;
 }
 
+export interface SessionAttemptFinishAnswerInput {
+  questionId: string;
+  selectedOptionId: string;
+}
+
+export interface SessionAttemptEvaluationDetail {
+  questionId: string;
+  selectedOptionId: string;
+  correctAnswer: string;
+  isCorrect: boolean;
+  score: number;
+  awardedScore: number;
+  explanation?: string;
+}
+
+export interface SessionAttemptEvaluation {
+  totalQuestions: number;
+  correctAnswers: number;
+  wrongAnswers: number;
+  maxScore: number;
+  obtainedScore: number;
+  percentage: number;
+  passingScore: number;
+  passed: boolean;
+  details: SessionAttemptEvaluationDetail[];
+}
+
 export type SessionAttemptSessionType = "practice" | "exam";
 export type SessionAttemptStatus = "ACTIVE" | "FINISHED";
 
@@ -106,6 +133,7 @@ export interface SessionAttemptRecord {
   updatedAt: string;
   totalQuestions?: number;
   correctAnswers?: number;
+  wrongAnswers?: number;
   maxScore?: number;
   obtainedScore?: number;
   percentage?: number;
@@ -131,6 +159,7 @@ export interface SessionAttemptItem {
   updatedAt: string;
   totalQuestions?: number;
   correctAnswers?: number;
+  wrongAnswers?: number;
   maxScore?: number;
   obtainedScore?: number;
   percentage?: number;
@@ -162,6 +191,7 @@ export interface StartSessionAttemptResponse extends SessionAttemptHistoryRespon
 
 export interface FinishSessionAttemptResponse extends SessionAttemptHistoryResponse {
   attempt: SessionAttemptItem;
+  evaluation?: SessionAttemptEvaluation;
 }
 
 export interface GetSessionAttemptProgressResponse {
