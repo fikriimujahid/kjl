@@ -8,8 +8,8 @@ on:
 
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
-  PROJECT_NAME: ${{ secrets.PROJECT_NAME }}
-  CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
+  PROJECT_NAME: ${{ secrets.FRONTEND_PROJECT_NAME }}
+  CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.FRONTEND_CLOUDFRONT_DISTRIBUTION_ID }}
 
 # CONCURRENCY: Prevents multiple deployments from running simultaneously
 # If a new deployment starts, it cancels any previously running deployments
@@ -48,12 +48,8 @@ jobs:
         run: |
           cat <<'EOF' > .env.local
           PRODUCT_API_BASE_URL=${{ secrets.FRONTEND_PRODUCT_API_BASE_URL }}
+          PAYMENT_API_BASE_URL=${{ secrets.FRONTEND_PAYMENT_API_BASE_URL }}
           AUTH_API_BASE_URL=${{ secrets.FRONTEND_AUTH_API_BASE_URL }}
-          NEXT_PUBLIC_PRODUCT_URL=${{ secrets.PRODUCT_DATA_URL }}
-          NEXT_API_BASE_URL=${{ secrets.NEXT_API_BASE_URL }}
-          NEXT_PUBLIC_COGNITO_API_ENDPOINT=${{ secrets.NEXT_PUBLIC_COGNITO_API_ENDPOINT }}
-          NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID=${{ secrets.NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID }}
-          NEXT_PUBLIC_AUTH_STORAGE_KEY=${{ secrets.NEXT_PUBLIC_AUTH_STORAGE_KEY }}
           EOF
       
       # STEP 4: Authenticate with AWS using OIDC (OpenID Connect)

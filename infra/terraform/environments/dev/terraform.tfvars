@@ -57,6 +57,14 @@ frontend_site_hosting = {
   # CLOUDFRONT CONFIGURATION
   cloudfront = {
     aliases = ["kjl.fikri.dev"]
+    rewrite_config = {
+      extension_index_rules = [
+        {
+          extension  = ".txt"
+          index_file = "index.txt"
+        }
+      ]
+    }
     custom_error_responses = [
       {
         error_code            = 403
@@ -96,6 +104,39 @@ auth_cognito = {
       refresh_token = "days"
     }
   }
+
+  user_pool_schema_attributes = [
+    {
+      name                = "email"
+      attribute_data_type = "String"
+      required            = true
+      mutable             = true
+      string_attribute_constraints = {
+        min_length = 5
+        max_length = 2048
+      }
+    },
+    {
+      name                = "name"
+      attribute_data_type = "String"
+      required            = false
+      mutable             = true
+      string_attribute_constraints = {
+        min_length = 1
+        max_length = 2048
+      }
+    },
+    {
+      name                = "last_checkin_date"
+      attribute_data_type = "String"
+      required            = false
+      mutable             = true
+      string_attribute_constraints = {
+        min_length = 10
+        max_length = 10
+      }
+    }
+  ]
 
   enabled_identity_providers = ["COGNITO"]
   verification_message_template = {
@@ -179,18 +220,46 @@ service_api = {
     product = {
       name                  = "kejepangdulu-dev-product-api"
       description           = "Public Product API Lambda."
-      source_dir            = "../../../../backend/product-service/lambda"
-      handler               = "handler.handler"
+      source_dir            = "../../../../backend/services/product-service/build/lambda"
+      handler               = "services/product-service/src/handler.handler"
       runtime               = "nodejs22.x"
       memory_size           = 256
       timeout               = 10
-      environment_variables = {}
+      environment_variables = {
+        PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY = "internal-dev-key"
+      }
       publish               = true
       dynamodb_access = {
         learning_content = {
           table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/learning-content-dev"
-          read  = true
-          write = true
+          read      = true
+          write     = true
+        }
+      }
+      s3_access = {
+        media_private = {
+          s3_arn = "arn:aws:s3:::kejepangdulu-dev-media-private"
+          read   = true
+          write  = false
+        }
+      }
+    }
+
+    learning = {
+      name                  = "kejepangdulu-dev-learning-api"
+      description           = "Private Learning Content API Lambda."
+      source_dir            = "../../../../backend/services/learning-service/build/lambda"
+      handler               = "services/learning-service/src/handler.handler"
+      runtime               = "nodejs22.x"
+      memory_size           = 256
+      timeout               = 10
+      environment_variables = {}
+      publish = true
+      dynamodb_access = {
+        learning_content = {
+          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/learning-content-dev"
+          read      = true
+          write     = true
         }
       }
       s3_access = {
@@ -205,8 +274,8 @@ service_api = {
     payment = {
       name                  = "kejepangdulu-dev-payment-api"
       description           = "Midtrans Payment API Lambda."
-      source_dir            = "../../../../backend/payment-service/lambda"
-      handler               = "handler.handler"
+      source_dir            = "../../../../backend/services/payment-service/build/lambda"
+      handler               = "services/payment-service/src/handler.handler"
       runtime               = "nodejs22.x"
       memory_size           = 256
       timeout               = 15
@@ -215,48 +284,31 @@ service_api = {
       dynamodb_access = {
         learning_content = {
           table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/learning-content-dev"
-          read  = true
-          write = true
-        }
-      }
-    }
-
-    quiz = {
-      name                  = "kejepangdulu-dev-quiz-api"
-      description           = "Quiz submit API Lambda."
-      source_dir            = "../../../../backend/quiz-service/build/lambda"
-      handler               = "handler.handler"
-      runtime               = "nodejs22.x"
-      memory_size           = 256
-      timeout               = 15
-      environment_variables = {}
-      publish               = true
-      dynamodb_access = {
-        learning_content = {
-          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/learning-content-dev"
-          read  = true
-          write = true
-        }
-      }
-      s3_access = {
-        media_private = {
-          s3_arn = "arn:aws:s3:::kejepangdulu-dev-media-private"
-          read   = true
-          write  = false
+          read      = true
+          write     = true
         }
       }
     }
 
     auth = {
-      name        = "kejepangdulu-dev-auth-api"
-      description = "Auth API Lambda."
-      source_dir  = "../../../../backend/auth-service/build"
-      handler     = "handler.handler"
-      runtime     = "nodejs22.x"
-      memory_size = 256
-      timeout     = 15
-      environment_variables = {} 
-      publish = true
+      name                  = "kejepangdulu-dev-auth-api"
+      description           = "Auth API Lambda."
+      source_dir            = "../../../../backend/services/auth-service/build/lambda"
+      handler               = "services/auth-service/src/handler.handler"
+      runtime               = "nodejs22.x"
+      memory_size           = 256
+      timeout               = 15
+      environment_variables = {
+        DYNAMO_DB_TABLE_NAME = "learning-content-dev"
+      }
+      publish               = true
+      dynamodb_access = {
+        learning_content = {
+          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/learning-content-dev"
+          read      = true
+          write     = true
+        }
+      }
     }
   }
 
@@ -267,7 +319,7 @@ service_api = {
 
     cors_allow_origins  = ["*"]
     cors_allow_methods  = ["GET", "POST", "OPTIONS"]
-    cors_allow_headers  = ["content-type", "authorization"]
+    cors_allow_headers  = ["content-type", "authorization", "x-internal-api-key"]
     cors_expose_headers = []
     cors_max_age        = 300
 
@@ -284,24 +336,71 @@ service_api = {
         operation_name     = "GetProductByIdUnderApi"
         integration_key    = "product"
       }
-      
-      get_purchased_products_by_user_under_api = {
-        route_key          = "GET /api/purchased-products/{userId}"
+      get_owned_products_by_user_under_api = {
+        route_key          = "GET /api/products/owned/{userId}"
         authorization_type = "JWT"
-        operation_name     = "GetPurchasedProductsByUserUnderApi"
+        operation_name     = "GetOwnedProductsByUserUnderApi"
         integration_key    = "product"
       }
-      get_purchased_product_details_by_user_under_api = {
-        route_key          = "GET /api/purchased-product/{userId}/product/{productId}"
-        authorization_type = "JWT"
-        operation_name     = "GetPurchasedProductDetailsByUserUnderApi"
+      get_internal_owned_products_by_user_under_api = {
+        route_key          = "GET /api/internal/products/owned/{userId}"
+        authorization_type = "NONE"
+        operation_name     = "GetInternalOwnedProductsByUserUnderApi"
         integration_key    = "product"
       }
-      get_product_session_details_under_api = {
-        route_key          = "GET /api/products/{productId}/topics/{topicId}/sessions/{sessionId}"
-        authorization_type = "JWT"
-        operation_name     = "GetProductSessionDetailsUnderApi"
+      get_internal_product_summary_under_api = {
+        route_key          = "GET /api/internal/products/{id}/summary"
+        authorization_type = "NONE"
+        operation_name     = "GetInternalProductSummaryUnderApi"
         integration_key    = "product"
+      }
+      get_learning_session_images_under_api = {
+        route_key          = "GET /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/images"
+        authorization_type = "JWT"
+        operation_name     = "GetLearningSessionImagesUnderApi"
+        integration_key    = "learning"
+      }
+      get_learning_session_questions_under_api = {
+        route_key          = "GET /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/questions"
+        authorization_type = "JWT"
+        operation_name     = "GetLearningSessionQuestionsUnderApi"
+        integration_key    = "learning"
+      }
+      check_learning_session_answer_under_api = {
+        route_key          = "POST /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/answers/check"
+        authorization_type = "JWT"
+        operation_name     = "CheckLearningSessionAnswerUnderApi"
+        integration_key    = "learning"
+      }
+      start_learning_session_attempt_under_api = {
+        route_key          = "POST /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts/start"
+        authorization_type = "JWT"
+        operation_name     = "StartLearningSessionAttemptUnderApi"
+        integration_key    = "learning"
+      }
+      get_learning_session_attempts_under_api = {
+        route_key          = "GET /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts"
+        authorization_type = "JWT"
+        operation_name     = "GetLearningSessionAttemptsUnderApi"
+        integration_key    = "learning"
+      }
+      finish_learning_session_attempt_under_api = {
+        route_key          = "POST /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts/{attemptId}/finish"
+        authorization_type = "JWT"
+        operation_name     = "FinishLearningSessionAttemptUnderApi"
+        integration_key    = "learning"
+      }
+      get_learning_session_attempt_progress_under_api = {
+        route_key          = "GET /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts/{attemptId}/progress"
+        authorization_type = "JWT"
+        operation_name     = "GetLearningSessionAttemptProgressUnderApi"
+        integration_key    = "learning"
+      }
+      save_learning_session_attempt_progress_under_api = {
+        route_key          = "PUT /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/attempts/{attemptId}/progress"
+        authorization_type = "JWT"
+        operation_name     = "SaveLearningSessionAttemptProgressUnderApi"
+        integration_key    = "learning"
       }
       create_payment_under_api = {
         route_key          = "POST /api/payments/create"
@@ -309,17 +408,17 @@ service_api = {
         operation_name     = "CreatePaymentUnderApi"
         integration_key    = "payment"
       }
+      get_payment_history_under_api = {
+        route_key          = "GET /api/payments/history"
+        authorization_type = "JWT"
+        operation_name     = "GetPaymentHistoryUnderApi"
+        integration_key    = "payment"
+      }
       payment_webhook_under_api = {
         route_key          = "POST /api/payments/webhook"
         authorization_type = "NONE"
         operation_name     = "PaymentWebhookUnderApi"
         integration_key    = "payment"
-      }
-      submit_quiz_exam_under_api = {
-        route_key          = "POST /api/quiz/exam/submit"
-        authorization_type = "JWT"
-        operation_name     = "SubmitQuizExamUnderApi"
-        integration_key    = "quiz"
       }
       register_under_api = {
         route_key          = "POST /api/auth/register"
@@ -355,6 +454,18 @@ service_api = {
         route_key          = "GET /api/auth/session"
         authorization_type = "NONE"
         operation_name     = "GetSessionUnderApi"
+        integration_key    = "auth"
+      }
+      post_checkin_under_api = {
+        route_key          = "POST /api/auth/checkin"
+        authorization_type = "JWT"
+        operation_name     = "PostCheckinUnderApi"
+        integration_key    = "auth"
+      }
+      get_checkin_under_api = {
+        route_key          = "GET /api/auth/checkin"
+        authorization_type = "JWT"
+        operation_name     = "GetCheckinUnderApi"
         integration_key    = "auth"
       }
       logout_under_api = {

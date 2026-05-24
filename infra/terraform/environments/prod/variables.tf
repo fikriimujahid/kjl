@@ -63,6 +63,18 @@ variable "frontend_site_hosting" {
 
     cloudfront = object({
       aliases = list(string)
+      rewrite_config = optional(object({
+        default_index_file           = optional(string, "index.html")
+        enable_trailing_slash_index = optional(bool, true)
+        enable_extensionless_index  = optional(bool, true)
+        extension_index_rules = optional(list(object({
+          extension  = string
+          index_file = optional(string, "index.html")
+        })), [])
+        ignored_prefixes    = optional(list(string), ["/_next/", "/api/", "/public-data/"])
+        ignored_contains    = optional(list(string), ["/__next."])
+        ignored_exact_paths = optional(list(string), [])
+      }), {})
       custom_error_responses = optional(list(object({
         error_code            = number
         response_code         = optional(number)
@@ -163,6 +175,33 @@ variable "auth_cognito" {
   type = object({
     callback_urls = list(string)
     logout_urls   = list(string)
+
+    user_pool_schema_attributes = optional(list(object({
+      name                     = string
+      attribute_data_type      = string
+      developer_only_attribute = optional(bool, false)
+      mutable                  = optional(bool, true)
+      required                 = optional(bool, false)
+      string_attribute_constraints = optional(object({
+        min_length = optional(number)
+        max_length = optional(number)
+      }))
+      number_attribute_constraints = optional(object({
+        min_value = optional(number)
+        max_value = optional(number)
+      }))
+      })), [
+      {
+        name                = "email"
+        attribute_data_type = "String"
+        required            = true
+        mutable             = true
+        string_attribute_constraints = {
+          min_length = 5
+          max_length = 2048
+        }
+      }
+    ])
 
     token_validity = optional(object({
       access_token_validity  = optional(number)

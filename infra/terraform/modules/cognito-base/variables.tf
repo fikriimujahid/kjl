@@ -24,6 +24,59 @@ variable "supported_identity_providers" {
   default     = ["COGNITO"]
 }
 
+variable "user_pool_schema_attributes" {
+  description = "Cognito user pool schema attributes to create. Include email when using email as username attribute."
+  type = list(object({
+    name                     = string
+    attribute_data_type      = string
+    developer_only_attribute = optional(bool, false)
+    mutable                  = optional(bool, true)
+    required                 = optional(bool, false)
+    string_attribute_constraints = optional(object({
+      min_length = optional(number)
+      max_length = optional(number)
+    }))
+    number_attribute_constraints = optional(object({
+      min_value = optional(number)
+      max_value = optional(number)
+    }))
+  }))
+  default = [
+    {
+      name                = "email"
+      attribute_data_type = "String"
+      required            = true
+      mutable             = true
+      string_attribute_constraints = {
+        min_length = 5
+        max_length = 2048
+      }
+    }
+  ]
+
+  validation {
+    condition = length(var.user_pool_schema_attributes) > 0 && length(distinct([
+      for attribute in var.user_pool_schema_attributes : attribute.name
+    ])) == length(var.user_pool_schema_attributes)
+    error_message = "user_pool_schema_attributes must contain unique names and cannot be empty."
+  }
+
+  validation {
+    condition = contains([
+      for attribute in var.user_pool_schema_attributes : lower(attribute.name)
+    ], "email")
+    error_message = "user_pool_schema_attributes must include the email attribute while username_attributes uses email."
+  }
+
+  validation {
+    condition = alltrue([
+      for attribute in var.user_pool_schema_attributes :
+      contains(["String", "Number", "Boolean", "DateTime"], attribute.attribute_data_type)
+    ])
+    error_message = "attribute_data_type must be one of String, Number, Boolean, DateTime."
+  }
+}
+
 variable "verification_message_template" {
   description = "Optional Cognito verification message template configuration for signup verification emails or SMS."
   type = object({

@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "ignoreDeprecations": "5.0",
+    "target": "ES2022",
+    "module": "Node16",
+    "moduleResolution": "node16",
+    "types": ["node"],
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "paths": {
+      "@shared-utils/*": ["./packages/shared-utils/src/*"],
+      "@shared-types/*": ["./packages/shared-types/src/*"],
+      "@shared-dynamodb/*": ["./packages/shared-dynamodb/src/*"],
+      "@shared-swagger/*": ["./packages/shared-swagger/src/*"],
+      "@shared-cognito/core": ["./packages/shared-cognito/src/core.ts"],
+      "@shared-cognito/*": ["./packages/shared-cognito/src/*"]
+    }
+  }
+}

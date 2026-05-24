@@ -4,7 +4,11 @@ on:
   push:
     branches: [dev, prod]
     paths:
-      - backend/auth-service/**
+      - backend/services/auth-service/**
+      - backend/packages/**
+      - backend/tsconfig.base.json
+      - backend/package.json
+      - backend/package-lock.json
       - .github/workflows/auth-service-lambda-deploy.yml
 
 env:
@@ -14,6 +18,8 @@ jobs:
   deploy-auth-service-lambda:
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name == 'prod' && 'prod' || 'dev' }}
+    env:
+      ZIP_FILE: auth-service-lambda.zip
 
     permissions:
       id-token: write
@@ -21,7 +27,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: backend/auth-service
+        working-directory: backend
 
     steps:
       - name: Checkout
@@ -36,24 +42,24 @@ jobs:
         run: npm ci
 
       - name: Build TypeScript
-        run: npm run build
+        run: npm run build --workspace auth-service
 
       - name: Package Lambda
         run: |
-          if [ ! -d lambda ]; then
-            echo "Expected lambda directory is missing."
+          if [ ! -d services/auth-service/build/lambda ]; then
+            echo "Expected services/auth-service/build/lambda directory is missing."
             exit 1
           fi
 
-          rm -f auth-service-lambda.zip
-          cd lambda
-          zip -r ../auth-service-lambda.zip .
+          rm -f "${ZIP_FILE}"
+          cd services/auth-service/build/lambda
+          zip -r "../../../../${ZIP_FILE}" .
 
       - name: Upload Lambda artifact
         uses: actions/upload-artifact@v4
         with:
           name: auth-service-lambda
-          path: backend/auth-service/auth-service-lambda.zip
+          path: backend/${{ env.ZIP_FILE }}
           if-no-files-found: error
 
       - uses: aws-actions/configure-aws-credentials@v4
@@ -62,17 +68,18 @@ jobs:
           role-to-assume: ${{ github.ref_name == 'prod' && secrets.AWS_PROD_ROLE_ARN || secrets.AWS_DEV_ROLE_ARN }}
 
       - name: Create Lambda env file
+        env:
+          AUTH_ALLOWED_ORIGIN: ${{ secrets.AUTH_SERVICE_AUTH_ALLOWED_ORIGIN }}
+          AUTH_COOKIE_DOMAIN: ${{ secrets.AUTH_SERVICE_AUTH_COOKIE_DOMAIN }}
+          AUTH_COOKIE_SAME_SITE: ${{ secrets.AUTH_SERVICE_AUTH_COOKIE_SAME_SITE }}
+          AUTH_COOKIE_SECURE: ${{ secrets.AUTH_SERVICE_AUTH_COOKIE_SECURE }}
+          AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS: ${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS }}
+          AUTH_REFRESH_COOKIE_NAME: ${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_NAME }}
+          AUTH_REFRESH_COOKIE_PATH: ${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_PATH }}
+          COGNITO_API_ENDPOINT: ${{ secrets.AUTH_SERVICE_COGNITO_API_ENDPOINT }}
+          COGNITO_USER_POOL_CLIENT_ID: ${{ secrets.AUTH_SERVICE_COGNITO_USER_POOL_CLIENT_ID }}
+          DYNAMO_DB_TABLE_NAME: ${{ secrets.AUTH_SERVICE_DYNAMO_DB_TABLE_NAME }}
         run: |
-          AUTH_ALLOWED_ORIGIN="${{ secrets.AUTH_SERVICE_AUTH_ALLOWED_ORIGIN }}"
-          AUTH_COOKIE_DOMAIN="${{ secrets.AUTH_SERVICE_AUTH_COOKIE_DOMAIN }}"
-          AUTH_COOKIE_SAME_SITE="${{ secrets.AUTH_SERVICE_AUTH_COOKIE_SAME_SITE }}"
-          AUTH_COOKIE_SECURE="${{ secrets.AUTH_SERVICE_AUTH_COOKIE_SECURE }}"
-          AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS="${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS }}"
-          AUTH_REFRESH_COOKIE_NAME="${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_NAME }}"
-          AUTH_REFRESH_COOKIE_PATH="${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_PATH }}"
-          COGNITO_API_ENDPOINT="${{ secrets.AUTH_SERVICE_COGNITO_API_ENDPOINT }}"
-          COGNITO_USER_POOL_CLIENT_ID="${{ secrets.AUTH_SERVICE_COGNITO_USER_POOL_CLIENT_ID }}"
-
           if [ -z "${COGNITO_API_ENDPOINT}" ]; then
             echo "COGNITO_API_ENDPOINT secret is missing."
             exit 1
@@ -93,20 +100,27 @@ jobs:
           AUTH_REFRESH_COOKIE_NAME=${AUTH_REFRESH_COOKIE_NAME}
           AUTH_REFRESH_COOKIE_PATH=${AUTH_REFRESH_COOKIE_PATH}
           AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS=${AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS}
+          DYNAMO_DB_TABLE_NAME=${DYNAMO_DB_TABLE_NAME}
           EOF
 
       - name: Update Lambda environment variables
         env:
           LAMBDA_FUNCTION_NAME: ${{ secrets.AUTH_SERVICE_LAMBDA_FUNCTION_NAME }}
+          COGNITO_API_ENDPOINT: ${{ secrets.AUTH_SERVICE_COGNITO_API_ENDPOINT }}
+          COGNITO_USER_POOL_CLIENT_ID: ${{ secrets.AUTH_SERVICE_COGNITO_USER_POOL_CLIENT_ID }}
+          AUTH_ALLOWED_ORIGIN: ${{ secrets.AUTH_SERVICE_AUTH_ALLOWED_ORIGIN }}
+          AUTH_COOKIE_DOMAIN: ${{ secrets.AUTH_SERVICE_AUTH_COOKIE_DOMAIN }}
+          AUTH_COOKIE_SECURE: ${{ secrets.AUTH_SERVICE_AUTH_COOKIE_SECURE }}
+          AUTH_COOKIE_SAME_SITE: ${{ secrets.AUTH_SERVICE_AUTH_COOKIE_SAME_SITE }}
+          AUTH_REFRESH_COOKIE_NAME: ${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_NAME }}
+          AUTH_REFRESH_COOKIE_PATH: ${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_PATH }}
+          AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS: ${{ secrets.AUTH_SERVICE_AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS }}
+          DYNAMO_DB_TABLE_NAME: ${{ secrets.AUTH_SERVICE_DYNAMO_DB_TABLE_NAME }}
         run: |
           if [ -z "${LAMBDA_FUNCTION_NAME}" ]; then
             echo "AUTH_SERVICE_LAMBDA_FUNCTION_NAME secret is missing."
             exit 1
           fi
-
-          set -a
-          source ./.env.lambda
-          set +a
 
           CURRENT_ENV_VARS=$(aws lambda get-function-configuration \
             --function-name "${LAMBDA_FUNCTION_NAME}" \
@@ -123,6 +137,7 @@ jobs:
             --arg authRefreshCookieName "${AUTH_REFRESH_COOKIE_NAME}" \
             --arg authRefreshCookiePath "${AUTH_REFRESH_COOKIE_PATH}" \
             --arg authRefreshCookieMaxAgeSeconds "${AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS}" \
+            --arg dynamoDbTableName "${DYNAMO_DB_TABLE_NAME}" \
             '. + {
               COGNITO_API_ENDPOINT: $cognitoApiEndpoint,
               COGNITO_USER_POOL_CLIENT_ID: $cognitoUserPoolClientId
@@ -133,12 +148,14 @@ jobs:
             | if $authCookieSameSite == "" then del(.AUTH_COOKIE_SAME_SITE) else . + {AUTH_COOKIE_SAME_SITE: $authCookieSameSite} end
             | if $authRefreshCookieName == "" then del(.AUTH_REFRESH_COOKIE_NAME) else . + {AUTH_REFRESH_COOKIE_NAME: $authRefreshCookieName} end
             | if $authRefreshCookiePath == "" then del(.AUTH_REFRESH_COOKIE_PATH) else . + {AUTH_REFRESH_COOKIE_PATH: $authRefreshCookiePath} end
-            | if $authRefreshCookieMaxAgeSeconds == "" then del(.AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS) else . + {AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS: $authRefreshCookieMaxAgeSeconds} end')
+            | if $authRefreshCookieMaxAgeSeconds == "" then del(.AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS) else . + {AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS: $authRefreshCookieMaxAgeSeconds} end
+            | if $dynamoDbTableName == "" then del(.DYNAMO_DB_TABLE_NAME) else . + {DYNAMO_DB_TABLE_NAME: $dynamoDbTableName} end')
 
           UPDATE_PAYLOAD=$(jq -cn \
             --arg functionName "${LAMBDA_FUNCTION_NAME}" \
+            --arg handler "services/auth-service/src/handler.handler" \
             --argjson variables "${UPDATED_ENV_VARS}" \
-            '{FunctionName: $functionName, Environment: {Variables: $variables}}')
+            '{FunctionName: $functionName, Handler: $handler, Environment: {Variables: $variables}}')
 
           aws lambda update-function-configuration \
             --cli-input-json "${UPDATE_PAYLOAD}"
@@ -157,4 +174,4 @@ jobs:
 
           aws lambda update-function-code \
             --function-name "${LAMBDA_FUNCTION_NAME}" \
-            --zip-file fileb://auth-service-lambda.zip
+            --zip-file "fileb://${ZIP_FILE}"

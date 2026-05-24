@@ -14,16 +14,34 @@ resource "aws_cognito_user_pool" "this" {
   username_attributes      = ["email"]
   auto_verified_attributes = ["email"]
 
-  # Require email as a standard attribute for every user profile.
-  schema {
-    name                = "email"
-    attribute_data_type = "String"
-    required            = true
-    mutable             = true
+  # Configure standard/custom user attributes from variable input.
+  dynamic "schema" {
+    for_each = var.user_pool_schema_attributes
 
-    string_attribute_constraints {
-      min_length = 5
-      max_length = 2048
+    content {
+      name                     = schema.value.name
+      attribute_data_type      = schema.value.attribute_data_type
+      developer_only_attribute = try(schema.value.developer_only_attribute, false)
+      mutable                  = try(schema.value.mutable, true)
+      required                 = try(schema.value.required, false)
+
+      dynamic "string_attribute_constraints" {
+        for_each = try(schema.value.string_attribute_constraints, null) == null ? [] : [schema.value.string_attribute_constraints]
+
+        content {
+          min_length = try(tostring(string_attribute_constraints.value.min_length), null)
+          max_length = try(tostring(string_attribute_constraints.value.max_length), null)
+        }
+      }
+
+      dynamic "number_attribute_constraints" {
+        for_each = try(schema.value.number_attribute_constraints, null) == null ? [] : [schema.value.number_attribute_constraints]
+
+        content {
+          min_value = try(tostring(number_attribute_constraints.value.min_value), null)
+          max_value = try(tostring(number_attribute_constraints.value.max_value), null)
+        }
+      }
     }
   }
 

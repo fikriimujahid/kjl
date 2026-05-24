@@ -47,7 +47,7 @@ All Checks (Default):
 
 param (
     [Parameter(Mandatory = $false)]
-    [ValidateSet("monthly", "on-change", "va", "all", "iac", "sast", "secrets")]
+    [ValidateSet("monthly", "on-change", "va", "all", "iac", "sast", "secrets", "depend")]
     [string]$Mode = "all",
 
     # Required ONLY for VA (DAST)
@@ -93,14 +93,6 @@ foreach ($dir in $dirs) {
     if (-not (Test-Path $dir)) {
         New-Item -ItemType Directory -Force -Path $dir | Out-Null
     }
-}
-
-function Get-Im8QuarterTag {
-    # Stable quarterly tag for idempotent DefectDojo test titles.
-    # Example: 2026-Q1
-    $now = Get-Date
-    $q = [math]::Floor((($now.Month - 1) / 3)) + 1
-    return "{0}-Q{1}" -f $now.Year, $q
 }
 
 function Run-ScanTool {
@@ -189,7 +181,7 @@ if ($Mode -in @("monthly", "on-change", "all", "secrets")) {
 # ==========================================================
 # 2. Dependency Scanning (Monthly Requirement)
 # ==========================================================
-if ($Mode -in @("monthly", "all")) {
+if ($Mode -in @("monthly", "all", "depend")) {
     $depCheckOut = "$BASE/2.dependencies"
     
     if (Get-Command "dependency-check" -ErrorAction SilentlyContinue) {
@@ -197,20 +189,7 @@ if ($Mode -in @("monthly", "all")) {
             # Keep existing JSON output (used by local HTML aggregation / reporting).
             dependency-check --scan . --format JSON --out $depCheckOut --disableAssembly
 
-            # Also produce XML output for DefectDojo's "Dependency Check Scan" parser.
-            # This does not remove/replace existing outputs; it adds an additional format.
             dependency-check --scan . --format XML --out $depCheckOut --disableAssembly
-        }
-
-        # Best-effort upload to DefectDojo (do not break pipeline if unavailable).
-        try {
-            $qTag = Get-Im8QuarterTag
-            $depXml = Join-Path $depCheckOut "dependency-check-report.xml"
-            if (Get-Command Invoke-DefectDojoUpload -ErrorAction SilentlyContinue) {
-                Invoke-DefectDojoUpload -ScanType "Dependency Check Scan" -FilePath $depXml -TestTitle "IM8 VA $qTag - Dependency Check" | Out-Null
-            }
-        } catch {
-            Write-Warning "[DefectDojo] Dependency-Check upload step failed gracefully: $_"
         }
     } 
     elseif (Get-Command "docker" -ErrorAction SilentlyContinue) {
@@ -227,20 +206,8 @@ if ($Mode -in @("monthly", "all")) {
          Run-ScanTool -Name "docker" -Description "OWASP Dependency-Check (Docker)" -CommandBlock {
             Write-Host "Using Docker container: owasp/dependency-check" -ForegroundColor Gray
             $DockerReport = "$BASE/2.dependencies".Replace('\', '/')
-                # Add XML output (DefectDojo compatible) without removing existing reports.
                 docker run --rm -t --user 0 --volume "${DockerSrc}:/src:ro" --volume "${DockerData}:/usr/share/dependency-check/data" --volume "${DockerReport}:/report" owasp/dependency-check --scan /src -f JSON -f XML -f HTML -f SARIF --out /report --project "project-dependency-scan" --disableAssembly --exclude "**/node_modules/**" --exclude "**/.git/**" --exclude "**/dist/**"
          }
-
-            # Best-effort upload to DefectDojo (do not break pipeline if unavailable).
-            try {
-                $qTag = Get-Im8QuarterTag
-                $depXml = Join-Path $depCheckOut "dependency-check-report.xml"
-                if (Get-Command Invoke-DefectDojoUpload -ErrorAction SilentlyContinue) {
-                     Invoke-DefectDojoUpload -ScanType "Dependency Check Scan" -FilePath $depXml -TestTitle "IM8 VA $qTag - Dependency Check" | Out-Null
-                }
-            } catch {
-                Write-Warning "[DefectDojo] Dependency-Check upload step failed gracefully: $_"
-            }
     }
 }
 
@@ -337,17 +304,6 @@ if ($Mode -eq "va") {
                     -t ghcr.io/zaproxy/zaproxy:stable `
                     zap-baseline.py -t $TargetUrl -j -J zap-frontend.json -r zap-frontend.html @hookArgs
              }
-
-                 # Best-effort DefectDojo upload (DAST evidence centralized in VMS).
-                 try {
-                     $qTag = Get-Im8QuarterTag
-                     $zapFrontendJson = Join-Path $zapReportDir "zap-frontend.json"
-                     if (Get-Command Invoke-DefectDojoUpload -ErrorAction SilentlyContinue) {
-                          Invoke-DefectDojoUpload -ScanType "OWASP ZAP Scan" -FilePath $zapFrontendJson -TestTitle "IM8 VA $qTag - OWASP ZAP (Frontend)" | Out-Null
-                     }
-                 } catch {
-                     Write-Warning "[DefectDojo] ZAP Frontend upload step failed gracefully: $_"
-                 }
         }
 
         # ------------------------------------------------------
@@ -374,17 +330,6 @@ if ($Mode -eq "va") {
                     -t ghcr.io/zaproxy/zaproxy:stable `
                     zap-api-scan.py -t /zap/scripts/openapi.yaml -f openapi -O $TargetApiUrl -J zap-api.json -r zap-api.html @hookArgs
              }
-
-                 # Best-effort DefectDojo upload (DAST evidence centralized in VMS).
-                 try {
-                     $qTag = Get-Im8QuarterTag
-                     $zapApiJson = Join-Path $zapReportDir "zap-api.json"
-                     if (Get-Command Invoke-DefectDojoUpload -ErrorAction SilentlyContinue) {
-                          Invoke-DefectDojoUpload -ScanType "OWASP ZAP Scan" -FilePath $zapApiJson -TestTitle "IM8 VA $qTag - OWASP ZAP (API)" | Out-Null
-                     }
-                 } catch {
-                     Write-Warning "[DefectDojo] ZAP API upload step failed gracefully: $_"
-                 }
         }
 
     } else {

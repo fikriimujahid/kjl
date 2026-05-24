@@ -1,0 +1,291 @@
+{
+  "info": {
+    "_postman_id": "fc5cc8da-a6fa-4f7c-8df3-9cfc8044114e",
+    "name": "KeJepangDulu API (Generated)",
+    "description": "Generated from backend/openapi/swagger.json with per-service collection variables.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth service",
+      "item": [
+        {
+          "name": "Authenticate with email and password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{authServiceBaseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register a new account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{authServiceBaseUrl}}/api/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"\",\n  \"email\": \"user@example.com\",\n  \"password\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request password reset code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{authServiceBaseUrl}}/api/auth/forgot-password",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm password reset with verification code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{authServiceBaseUrl}}/api/auth/forgot-password/confirm",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"code\": \"\",\n  \"newPassword\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh auth session from refresh token cookie",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{authServiceBaseUrl}}/api/auth/refresh"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout current session and clear refresh cookie",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{authServiceBaseUrl}}/api/auth/logout"
+          },
+          "response": []
+        },
+        {
+          "name": "Get current authentication session status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{authServiceBaseUrl}}/api/auth/session"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Product service",
+      "item": [
+        {
+          "name": "List available products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{productServiceBaseUrl}}/api/products"
+          },
+          "response": []
+        },
+        {
+          "name": "Get product details by product id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{productServiceBaseUrl}}/api/products/{id}"
+          },
+          "response": []
+        },
+        {
+          "name": "List owned products for authenticated user",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{productServiceBaseUrl}}/api/products/owned/{userId}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List owned products for an internal trusted service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{productServiceBaseUrl}}/api/internal/products/owned/{userId}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payment service",
+      "item": [
+        {
+          "name": "Create payment transaction",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{paymentServiceBaseUrl}}/api/payments/create",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get authenticated user payment history",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{paymentServiceBaseUrl}}/api/payments/history",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Handle Midtrans payment webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{paymentServiceBaseUrl}}/api/payments/webhook",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order_id\": \"\",\n  \"transaction_status\": \"\",\n  \"status_code\": \"\",\n  \"gross_amount\": \"\",\n  \"fraud_status\": \"\",\n  \"payment_type\": \"\",\n  \"transaction_id\": \"\",\n  \"transaction_time\": \"1970-01-01T00:00:00.000Z\",\n  \"settlement_time\": \"1970-01-01T00:00:00.000Z\",\n  \"signature_key\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "authServiceBaseUrl",
+      "value": "http://localhost:3004",
+      "type": "string",
+      "description": "Auth service base URL"
+    },
+    {
+      "key": "productServiceBaseUrl",
+      "value": "http://localhost:3001",
+      "type": "string",
+      "description": "Product service base URL"
+    },
+    {
+      "key": "paymentServiceBaseUrl",
+      "value": "http://localhost:3002",
+      "type": "string",
+      "description": "Payment service base URL"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string",
+      "description": "Bearer token used by secured requests"
+    }
+  ]
+}

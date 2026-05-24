@@ -195,6 +195,7 @@ module "frontend_site_hosting" {
       path_pattern = var.service_api.cloudfront_path_pattern
       origin_path  = module.service_api.api_gateway_origin_path
     }
+    rewrite_config        = try(var.frontend_site_hosting.cloudfront.rewrite_config, {})
     custom_error_responses = var.frontend_site_hosting.cloudfront.custom_error_responses
   }
 
@@ -213,7 +214,8 @@ module "cognito" {
 
   callback_urls = var.auth_cognito.callback_urls
 
-  logout_urls = var.auth_cognito.logout_urls
+  logout_urls                 = var.auth_cognito.logout_urls
+  user_pool_schema_attributes = var.auth_cognito.user_pool_schema_attributes
 
   token_validity = try(var.auth_cognito.token_validity, {})
 

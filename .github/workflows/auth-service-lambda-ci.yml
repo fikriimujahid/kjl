@@ -3,7 +3,11 @@ on:
   pull_request:
     branches: [dev, prod]
     paths:
-      - backend/auth-service/**
+      - backend/services/auth-service/**
+      - backend/packages/**
+      - backend/tsconfig.base.json
+      - backend/package.json
+      - backend/package-lock.json
       - .github/workflows/auth-service-lambda-ci.yml
       - .github/workflows/auth-service-lambda-deploy.yml
 jobs:
@@ -11,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: backend/auth-service
+        working-directory: backend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -21,4 +25,4 @@ jobs:
         run: |
           if [ -f package-lock.json ]; then npm ci; else npm install; fi
       - name: Build TypeScript
-        run: npm run build
+        run: npm run build --workspace auth-service

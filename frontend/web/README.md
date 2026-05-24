@@ -16,14 +16,28 @@ Prerequisite: Node.js 20+
 - `npm run start`: run the SSR-capable build locally
 - `npm run export`: static export build for S3 + CloudFront deployment
 
+Dual mode is intentionally supported:
+
+- SSR mode uses `.next` output and `npm run start`.
+- Static mode uses `out` output from `npm run export`.
+
 ## Environment
 
-Copy `.env.example` to `.env.local` if you need to override the product API source.
+Copy `.env.example` to `.env.local`.
 
-- `NEXT_PUBLIC_API_BASE_URL`: product API base URL used by `fetchProducts`, example `https://kjl.fikri.dev/api`.
-- `fetchProducts` calls `${NEXT_PUBLIC_API_BASE_URL}/products` via GET.
+API base URLs are public configuration in this project.
+
+- `PRODUCT_API_BASE_URL`: product service base URL, for example `https://api.example.com/products`.
+- `LEARNING_API_BASE_URL`: learning service base URL, for example `https://api.example.com/learning`.
+- `PAYMENT_API_BASE_URL`: payment service base URL, for example `https://api.example.com/payments`.
+- `AUTH_API_BASE_URL`: auth service base URL, for example `https://api.example.com/auth`.
+- `NEXT_API_BASE_URL` (optional): shared fallback base URL used by some legacy clients.
 
 ## Deployment Targets
 
 - Static export: deploy the `out` directory to S3 + CloudFront
 - SSR runtime: deploy the `.next` output and run `npm run start` on EC2
+
+## Architecture Template
+
+Use [ARCHITECTURE_TEMPLATE.md](ARCHITECTURE_TEMPLATE.md) as the baseline template when recreating this frontend.

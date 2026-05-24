@@ -18,6 +18,37 @@ variable "logout_urls" {
   type        = list(string)
 }
 
+variable "user_pool_schema_attributes" {
+  description = "Cognito user pool schema attributes passed to the base module."
+  type = list(object({
+    name                     = string
+    attribute_data_type      = string
+    developer_only_attribute = optional(bool, false)
+    mutable                  = optional(bool, true)
+    required                 = optional(bool, false)
+    string_attribute_constraints = optional(object({
+      min_length = optional(number)
+      max_length = optional(number)
+    }))
+    number_attribute_constraints = optional(object({
+      min_value = optional(number)
+      max_value = optional(number)
+    }))
+  }))
+  default = [
+    {
+      name                = "email"
+      attribute_data_type = "String"
+      required            = true
+      mutable             = true
+      string_attribute_constraints = {
+        min_length = 5
+        max_length = 2048
+      }
+    }
+  ]
+}
+
 variable "enabled_identity_providers" {
   description = "Identity providers enabled on the Cognito app client. Supported values: COGNITO and Google."
   type        = list(string)
