@@ -139,7 +139,7 @@ module "api_gateway" {
   name                         = var.api_gateway.name
   description                  = var.api_gateway.description
   stage_name                   = var.api_gateway.stage_name
-  access_log_enabled           = true
+  access_log_enabled           = false
   access_log_retention_in_days = 14
 
   cors_configuration = {

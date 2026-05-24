@@ -33,6 +33,9 @@ resource "aws_apigatewayv2_stage" "this" {
   name        = var.stage_name
   auto_deploy = var.auto_deploy
 
+  # Keep the log group alive until stage logging changes are applied.
+  depends_on = [aws_cloudwatch_log_group.api_access]
+
   dynamic "access_log_settings" {
     for_each = var.access_log_enabled ? [1] : []
 
