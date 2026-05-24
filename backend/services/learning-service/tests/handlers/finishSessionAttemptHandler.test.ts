@@ -58,13 +58,9 @@ describe("finishSessionAttemptHandler", () => {
     const event = createEvent(
       { productId: "prod-1", topicId: "topic-1", sessionId: "session-1" },
       {
-        totalQuestions: 65,
-        correctAnswers: 52,
-        maxScore: 65,
-        obtainedScore: 52,
-        percentage: 80,
-        passingScore: 72,
-        passed: true
+        answers: [
+          { questionId: "q1", selectedOptionId: "optA" }
+        ]
       }
     );
 
@@ -93,13 +89,9 @@ describe("finishSessionAttemptHandler", () => {
         attemptId: "attempt-99"
       },
       {
-        totalQuestions: 65,
-        correctAnswers: 52,
-        maxScore: 65,
-        obtainedScore: 52,
-        percentage: 80,
-        passingScore: 72,
-        passed: true
+        answers: [
+          { questionId: "q1", selectedOptionId: "optA" }
+        ]
       }
     );
 
@@ -134,13 +126,9 @@ describe("finishSessionAttemptHandler", () => {
         attemptId: "attempt-1"
       },
       {
-        totalQuestions: 65,
-        correctAnswers: 52,
-        maxScore: 65,
-        obtainedScore: 52,
-        percentage: 80,
-        passingScore: 72,
-        passed: true
+        answers: [
+          { questionId: "q1", selectedOptionId: "optA" }
+        ]
       }
     );
 
@@ -175,13 +163,10 @@ describe("finishSessionAttemptHandler", () => {
         attemptId: "attempt-1"
       },
       {
-        totalQuestions: 65,
-        correctAnswers: 52,
-        maxScore: 65,
-        obtainedScore: 52,
-        percentage: 80,
-        passingScore: 72,
-        passed: true,
+        answers: [
+          { questionId: "q1", selectedOptionId: "optA" },
+          { questionId: "q2", selectedOptionId: "optB" }
+        ],
         durationSeconds: 4200
       }
     );
@@ -208,6 +193,7 @@ describe("finishSessionAttemptHandler", () => {
         updatedAt: "2026-05-22T11:10:00.000Z",
         totalQuestions: 65,
         correctAnswers: 52,
+        wrongAnswers: 13,
         maxScore: 65,
         obtainedScore: 52,
         percentage: 80,
@@ -226,6 +212,7 @@ describe("finishSessionAttemptHandler", () => {
           updatedAt: "2026-05-22T11:10:00.000Z",
           totalQuestions: 65,
           correctAnswers: 52,
+          wrongAnswers: 13,
           maxScore: 65,
           obtainedScore: 52,
           percentage: 80,
@@ -243,13 +230,10 @@ describe("finishSessionAttemptHandler", () => {
       topicId: "topic-1",
       sessionId: "session-1",
       attemptId: "attempt-1",
-      totalQuestions: 65,
-      correctAnswers: 52,
-      maxScore: 65,
-      obtainedScore: 52,
-      percentage: 80,
-      passingScore: 72,
-      passed: true,
+      answers: [
+        { questionId: "q1", selectedOptionId: "optA" },
+        { questionId: "q2", selectedOptionId: "optB" }
+      ],
       durationSeconds: 4200,
       authenticatedUserId: "user-1"
     });
@@ -270,6 +254,7 @@ describe("finishSessionAttemptHandler", () => {
         updatedAt: "2026-05-22T11:10:00.000Z",
         totalQuestions: 65,
         correctAnswers: 52,
+        wrongAnswers: 13,
         maxScore: 65,
         obtainedScore: 52,
         percentage: 80,
@@ -288,6 +273,7 @@ describe("finishSessionAttemptHandler", () => {
           updatedAt: "2026-05-22T11:10:00.000Z",
           totalQuestions: 65,
           correctAnswers: 52,
+          wrongAnswers: 13,
           maxScore: 65,
           obtainedScore: 52,
           percentage: 80,
@@ -316,6 +302,7 @@ describe("finishSessionAttemptHandler", () => {
           updatedAt: "2026-05-22T11:10:00.000Z",
           totalQuestions: 65,
           correctAnswers: 52,
+          wrongAnswers: 13,
           maxScore: 65,
           obtainedScore: 52,
           percentage: 80,
@@ -334,6 +321,7 @@ describe("finishSessionAttemptHandler", () => {
             updatedAt: "2026-05-22T11:10:00.000Z",
             totalQuestions: 65,
             correctAnswers: 52,
+            wrongAnswers: 13,
             maxScore: 65,
             obtainedScore: 52,
             percentage: 80,

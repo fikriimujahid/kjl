@@ -3,8 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Question } from '@/types/product';
 import type {
+  FinishLearningSessionAttemptResponse,
+  LearningSessionAttemptEvaluationDetail,
   LearningSessionAnswerCheckResult,
   LearningSessionAttempt,
+  LearningSessionFinishAnswerInput,
   LearningSessionProgressCheckedAnswer,
 } from '@/services/learning/learningApi';
 import {
@@ -52,8 +55,6 @@ interface UseQuizSessionResult {
   reset: () => void;
 }
 
-const PASSING_SCORE = 70;
-
 function formatSecondsToTimer(totalSeconds: number): string {
   const safeSeconds = Math.max(0, totalSeconds);
   const hours = Math.floor(safeSeconds / 3600);
@@ -65,22 +66,79 @@ function formatSecondsToTimer(totalSeconds: number): string {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
-function buildSummaryResult(details: QuizResultDetail[], totalQuestions: number): QuizResult {
-  const obtainedScore = details.reduce((total, detail) => total + detail.awardedScore, 0);
-  const maxScore = details.reduce((total, detail) => total + detail.score, 0);
-  const percentage = maxScore === 0
-    ? 0
-    : Math.round((obtainedScore / maxScore) * 100);
-
+function mapEvaluationDetailToQuizResultDetail(detail: LearningSessionAttemptEvaluationDetail): QuizResultDetail {
   return {
-    details,
+    questionId: detail.questionId,
+    selectedOptionId: detail.selectedOptionId,
+    isCorrect: detail.isCorrect,
+    score: detail.score,
+    awardedScore: detail.awardedScore,
+  };
+}
+
+function buildQuizResultFromFinishResponse(
+  response: FinishLearningSessionAttemptResponse,
+): QuizResult | null {
+  if (response.evaluation) {
+    const { evaluation } = response;
+
+    return {
+      details: evaluation.details.map(mapEvaluationDetailToQuizResultDetail),
+      totalQuestions: evaluation.totalQuestions,
+      correctAnswers: evaluation.correctAnswers,
+      wrongAnswers: evaluation.wrongAnswers,
+      maxScore: evaluation.maxScore,
+      obtainedScore: evaluation.obtainedScore,
+      percentage: evaluation.percentage,
+      passingScore: evaluation.passingScore,
+      passed: evaluation.passed,
+    };
+  }
+
+  const {
     totalQuestions,
+    correctAnswers,
+    wrongAnswers,
     maxScore,
     obtainedScore,
     percentage,
-    passingScore: PASSING_SCORE,
-    passed: percentage >= PASSING_SCORE,
+    passingScore,
+    passed,
+  } = response.attempt;
+
+  if (
+    totalQuestions == null
+    || correctAnswers == null
+    || maxScore == null
+    || obtainedScore == null
+    || percentage == null
+    || passingScore == null
+    || passed == null
+  ) {
+    return null;
+  }
+
+  return {
+    details: [],
+    totalQuestions,
+    correctAnswers,
+    wrongAnswers: wrongAnswers ?? Math.max(totalQuestions - correctAnswers, 0),
+    maxScore,
+    obtainedScore,
+    percentage,
+    passingScore,
+    passed,
   };
+}
+
+function buildFinishAnswers(
+  questions: Question[],
+  effectiveAnswers: Record<number, SelectedAnswer>,
+): LearningSessionFinishAnswerInput[] {
+  return questions.map((question, index) => ({
+    questionId: question.id,
+    selectedOptionId: effectiveAnswers[index]?.optionId ?? '',
+  }));
 }
 
 function parseIndex(key: string): number | null {
@@ -169,7 +227,7 @@ export function useQuizSession({
   const hasHydratedProgressRef = useRef(false);
   const [, setTimerTick] = useState(0);
   const hasAutoSubmittedRef = useRef(false);
-  const submitExamDummyRef = useRef<((forced?: boolean) => Promise<void>) | null>(null);
+  const submitExamRef = useRef<((forced?: boolean) => Promise<void>) | null>(null);
   const durationSeconds = durationMinutes != null && durationMinutes > 0 ? durationMinutes * 60 : null;
 
   useEffect(() => {
@@ -244,11 +302,11 @@ export function useQuizSession({
     const id = setInterval(() => {
       setTimerTick((t) => t + 1);
       // Auto-submit exam when countdown reaches zero
-      if (mode === 'exam' && durationSeconds !== null && !hasAutoSubmittedRef.current && submitExamDummyRef.current) {
+      if (mode === 'exam' && durationSeconds !== null && !hasAutoSubmittedRef.current && submitExamRef.current) {
         const elapsed = Math.max(0, Math.floor((Date.now() - attemptStartedAtMsRef.current) / 1000));
         if (elapsed >= durationSeconds) {
           hasAutoSubmittedRef.current = true;
-          void submitExamDummyRef.current(true);
+          void submitExamRef.current(true);
         }
       }
     }, 1000);
@@ -374,85 +432,53 @@ export function useQuizSession({
     };
   };
 
-  const finalizeAttempt = async (summaryResult: QuizResult) => {
+  const submitExam = async (_forced = false) => {
     if (!attemptId || !accessToken) {
+      setSubmitError('Sesi kuis tidak ditemukan. Silakan mulai ulang dari materi.');
       return;
     }
 
-    const correctAnswers = summaryResult.details.filter((detail) => detail.isCorrect).length;
-    const durationSeconds = Math.max(0, Math.round((Date.now() - attemptStartedAtMsRef.current) / 1000));
-
-    await finishLearningSessionAttempt({
-      productId,
-      topicId,
-      sessionId,
-      attemptId,
-      totalQuestions: summaryResult.totalQuestions,
-      correctAnswers,
-      maxScore: summaryResult.maxScore,
-      obtainedScore: summaryResult.obtainedScore,
-      percentage: summaryResult.percentage,
-      passingScore: summaryResult.passingScore,
-      passed: summaryResult.passed,
-      durationSeconds,
-      accessToken,
-    });
-  };
-
-  const submitExamDummy = async (forced = false) => {
     const effectiveAnswers = {
       ...answers,
       ...draftAnswers,
     };
 
-    const answeredCount = questions.reduce((count, _, index) => count + (effectiveAnswers[index] ? 1 : 0), 0);
-
-    if (answeredCount === 0 && !forced) {
-      setSubmitError('Jawaban belum tersedia untuk dikirim.');
-      return;
-    }
+    const finishAnswers = buildFinishAnswers(questions, effectiveAnswers);
 
     setIsSubmitting(true);
     setSubmitError(null);
 
     try {
-      const details: QuizResultDetail[] = questions.map((question, index) => {
-        const selectedAnswer = effectiveAnswers[index];
-        const fallbackOptionId = question.optionIds?.[0] ?? '';
-        const correctAnswer = question.correctAnswer || fallbackOptionId;
-
-        if (!selectedAnswer) {
-          return {
-            questionId: question.id,
-            selectedOptionId: '',
-            isCorrect: false,
-            score: 1,
-            awardedScore: 0,
-          };
-        }
-
-        const isCorrect = correctAnswer.length === 0
-          ? true
-          : selectedAnswer.optionId === correctAnswer;
-
-        return {
-          questionId: question.id,
-          selectedOptionId: selectedAnswer.optionId,
-          isCorrect,
-          score: 1,
-          awardedScore: isCorrect ? 1 : 0,
-        };
+      const durationSeconds = Math.max(0, Math.round((Date.now() - attemptStartedAtMsRef.current) / 1000));
+      const finishResponse = await finishLearningSessionAttempt({
+        productId,
+        topicId,
+        sessionId,
+        attemptId,
+        answers: finishAnswers,
+        durationSeconds,
+        accessToken,
       });
 
-      const summaryResult = buildSummaryResult(details, questions.length);
-      setResult(summaryResult);
-      await finalizeAttempt(summaryResult);
+      if (!finishResponse) {
+        setSubmitError('Gagal menyelesaikan sesi. Silakan coba lagi.');
+        return;
+      }
+
+      const nextResult = buildQuizResultFromFinishResponse(finishResponse);
+
+      if (!nextResult) {
+        setSubmitError('Respons hasil kuis tidak valid. Silakan coba lagi.');
+        return;
+      }
+
+      setResult(nextResult);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  submitExamDummyRef.current = submitExamDummy;
+  submitExamRef.current = submitExam;
 
   const checkPracticeAnswer = async () => {
     const selectedAnswer = currentAnswer;
@@ -494,40 +520,6 @@ export function useQuizSession({
     }
   };
 
-  const finishPractice = async () => {
-    const effectiveAnswers = {
-      ...answers,
-      ...draftAnswers,
-    };
-
-    const details: QuizResultDetail[] = questions.map((question, index) => {
-      const checkedAnswer = checkedAnswers[index];
-      const selectedAnswer = effectiveAnswers[index];
-
-      if (!checkedAnswer) {
-        return {
-          questionId: question.id,
-          selectedOptionId: selectedAnswer?.optionId ?? '',
-          isCorrect: false,
-          score: 0,
-          awardedScore: 0,
-        };
-      }
-
-      return {
-        questionId: checkedAnswer.questionId,
-        selectedOptionId: checkedAnswer.selectedOptionId,
-        isCorrect: checkedAnswer.isCorrect,
-        score: checkedAnswer.score,
-        awardedScore: checkedAnswer.awardedScore,
-      };
-    });
-
-    const summaryResult = buildSummaryResult(details, questions.length);
-    setResult(summaryResult);
-    await finalizeAttempt(summaryResult);
-  };
-
   const handlePrimaryAction = async () => {
     if (isPracticeMode) {
       if (!isCurrentAnswerChecked) {
@@ -558,7 +550,7 @@ export function useQuizSession({
         return;
       }
 
-      await finishPractice();
+      await submitExam();
       return;
     }
 
@@ -585,7 +577,7 @@ export function useQuizSession({
       return;
     }
 
-    await submitExamDummy();
+    await submitExam();
   };
 
   const goPrevious = () => {

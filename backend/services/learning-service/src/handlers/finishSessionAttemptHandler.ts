@@ -24,13 +24,7 @@ export const finishSessionAttemptHandler = async (
       topicId: parsedRequest.data.topicId,
       sessionId: parsedRequest.data.sessionId,
       attemptId: parsedRequest.data.attemptId,
-      totalQuestions: parsedRequest.data.totalQuestions,
-      correctAnswers: parsedRequest.data.correctAnswers,
-      maxScore: parsedRequest.data.maxScore,
-      obtainedScore: parsedRequest.data.obtainedScore,
-      percentage: parsedRequest.data.percentage,
-      passingScore: parsedRequest.data.passingScore,
-      passed: parsedRequest.data.passed,
+      answers: parsedRequest.data.answers,
       durationSeconds: parsedRequest.data.durationSeconds,
       authenticatedUserId: authenticatedUser?.id
     });

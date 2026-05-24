@@ -10,6 +10,7 @@ export const mapAttemptItem = (attempt: SessionAttemptRecord): SessionAttemptIte
   updatedAt: attempt.updatedAt,
   totalQuestions: attempt.totalQuestions,
   correctAnswers: attempt.correctAnswers,
+  wrongAnswers: attempt.wrongAnswers,
   maxScore: attempt.maxScore,
   obtainedScore: attempt.obtainedScore,
   percentage: attempt.percentage,

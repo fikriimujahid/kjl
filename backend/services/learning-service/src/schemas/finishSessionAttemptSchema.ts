@@ -1,18 +1,13 @@
 import { APIGatewayProxyEventV2 } from "aws-lambda";
 import { parseEventBody } from "@shared-utils/request";
+import { SessionAttemptFinishAnswerInput } from "../types/learningTypes";
 
 interface FinishSessionAttemptRequest {
   productId: string;
   topicId: string;
   sessionId: string;
   attemptId: string;
-  totalQuestions: number;
-  correctAnswers: number;
-  maxScore: number;
-  obtainedScore: number;
-  percentage: number;
-  passingScore: number;
-  passed: boolean;
+  answers: SessionAttemptFinishAnswerInput[];
   durationSeconds?: number;
 }
 
@@ -34,6 +29,20 @@ const isNonEmptyString = (value: unknown): value is string => {
 
 const isNonNegativeFiniteNumber = (value: unknown): value is number => {
   return typeof value === "number" && Number.isFinite(value) && value >= 0;
+};
+
+const isFinishAnswerInput = (value: unknown): value is SessionAttemptFinishAnswerInput => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
+  if (!isNonEmptyString(candidate.questionId)) {
+    return false;
+  }
+
+  return typeof candidate.selectedOptionId === "string";
 };
 
 const safeParsePayload = (input: unknown): SafeParseResult<FinishSessionAttemptRequest> => {
@@ -74,52 +83,17 @@ const safeParsePayload = (input: unknown): SafeParseResult<FinishSessionAttemptR
     };
   }
 
-  if (!isNonNegativeFiniteNumber(payload.totalQuestions)) {
+  if (!Array.isArray(payload.answers) || payload.answers.length === 0) {
     return {
       success: false,
-      error: "Invalid total questions"
+      error: "Invalid answers"
     };
   }
 
-  if (!isNonNegativeFiniteNumber(payload.correctAnswers)) {
+  if (!payload.answers.every(isFinishAnswerInput)) {
     return {
       success: false,
-      error: "Invalid correct answers"
-    };
-  }
-
-  if (!isNonNegativeFiniteNumber(payload.maxScore)) {
-    return {
-      success: false,
-      error: "Invalid max score"
-    };
-  }
-
-  if (!isNonNegativeFiniteNumber(payload.obtainedScore)) {
-    return {
-      success: false,
-      error: "Invalid obtained score"
-    };
-  }
-
-  if (!isNonNegativeFiniteNumber(payload.percentage)) {
-    return {
-      success: false,
-      error: "Invalid percentage"
-    };
-  }
-
-  if (!isNonNegativeFiniteNumber(payload.passingScore)) {
-    return {
-      success: false,
-      error: "Invalid passing score"
-    };
-  }
-
-  if (typeof payload.passed !== "boolean") {
-    return {
-      success: false,
-      error: "Invalid passed flag"
+      error: "Invalid answer entry"
     };
   }
 
@@ -137,13 +111,10 @@ const safeParsePayload = (input: unknown): SafeParseResult<FinishSessionAttemptR
       topicId: payload.topicId.trim(),
       sessionId: payload.sessionId.trim(),
       attemptId: payload.attemptId.trim(),
-      totalQuestions: payload.totalQuestions,
-      correctAnswers: payload.correctAnswers,
-      maxScore: payload.maxScore,
-      obtainedScore: payload.obtainedScore,
-      percentage: payload.percentage,
-      passingScore: payload.passingScore,
-      passed: payload.passed,
+      answers: payload.answers.map((answer) => ({
+        questionId: answer.questionId.trim(),
+        selectedOptionId: answer.selectedOptionId.trim()
+      })),
       durationSeconds: payload.durationSeconds
     }
   };
