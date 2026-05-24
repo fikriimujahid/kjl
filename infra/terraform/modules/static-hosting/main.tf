@@ -72,6 +72,23 @@ module "s3_logs" {
   }
 }
 
+locals {
+  cloudfront_rewrite_config = {
+    default_index_file           = try(var.cloudfront.rewrite_config.default_index_file, "index.html")
+    enable_trailing_slash_index = try(var.cloudfront.rewrite_config.enable_trailing_slash_index, true)
+    enable_extensionless_index  = try(var.cloudfront.rewrite_config.enable_extensionless_index, true)
+    extension_index_rules = [
+      for rule in try(var.cloudfront.rewrite_config.extension_index_rules, []) : {
+        extension  = trimspace(rule.extension)
+        index_file = trimspace(try(rule.index_file, "index.html"))
+      } if trimspace(try(rule.extension, "")) != ""
+    ]
+    ignored_prefixes    = try(var.cloudfront.rewrite_config.ignored_prefixes, ["/_next/", "/api/", "/public-data/"])
+    ignored_contains    = try(var.cloudfront.rewrite_config.ignored_contains, ["/__next."])
+    ignored_exact_paths = try(var.cloudfront.rewrite_config.ignored_exact_paths, [])
+  }
+}
+
 # -----------------------------------------------------------------------------
 # RESOURCE: CloudFront Function
 # -----------------------------------------------------------------------------
@@ -80,25 +97,86 @@ module "s3_logs" {
 resource "aws_cloudfront_function" "directory_index_rewrite" {
   name    = "${var.cloudfront.project_name}-${var.cloudfront.environment}-directory-index-rewrite"
   runtime = "cloudfront-js-1.0"
-  comment = "Rewrite extensionless routes to directory index.html objects."
+  comment = "Rewrite static routes to index documents and optional extension-based targets."
   publish = true
 
   code = <<-EOF
     function handler(event) {
       var request = event.request;
       var uri = request.uri;
+      var config = ${jsonencode(local.cloudfront_rewrite_config)};
+
+      function isIgnoredPath(path) {
+        var i;
+
+        for (i = 0; i < config.ignored_exact_paths.length; i++) {
+          if (path === config.ignored_exact_paths[i]) {
+            return true;
+          }
+        }
+
+        for (i = 0; i < config.ignored_prefixes.length; i++) {
+          if (path.startsWith(config.ignored_prefixes[i])) {
+            return true;
+          }
+        }
+
+        for (i = 0; i < config.ignored_contains.length; i++) {
+          if (path.indexOf(config.ignored_contains[i]) !== -1) {
+            return true;
+          }
+        }
+
+        return false;
+      }
+
+      function extensionRewrite(path) {
+        var i;
+
+        for (i = 0; i < config.extension_index_rules.length; i++) {
+          var rule = config.extension_index_rules[i];
+          var indexSuffix = "/index" + rule.extension;
+
+          if (!path.endsWith(rule.extension)) {
+            continue;
+          }
+
+          if (path.endsWith(indexSuffix)) {
+            return null;
+          }
+
+          var basePath = path.slice(0, path.length - rule.extension.length);
+          if (basePath === "") {
+            return null;
+          }
+
+          return basePath + "/" + rule.index_file;
+        }
+
+        return null;
+      }
 
       if (uri === "/") {
         return request;
       }
 
-      if (uri.endsWith("/")) {
-        request.uri = uri + "index.html";
+      if (isIgnoredPath(uri)) {
         return request;
       }
 
-      if (!uri.includes(".")) {
-        request.uri = uri + "/index.html";
+      var rewrittenByExtension = extensionRewrite(uri);
+      if (rewrittenByExtension !== null) {
+        request.uri = rewrittenByExtension;
+        return request;
+      }
+
+      if (config.enable_trailing_slash_index && uri.endsWith("/")) {
+        request.uri = uri + config.default_index_file;
+        return request;
+      }
+
+      if (config.enable_extensionless_index && !uri.includes(".")) {
+        request.uri = uri + "/" + config.default_index_file;
       }
 
       return request;

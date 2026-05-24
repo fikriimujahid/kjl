@@ -63,6 +63,18 @@ variable "frontend_site_hosting" {
 
     cloudfront = object({
       aliases = list(string)
+      rewrite_config = optional(object({
+        default_index_file           = optional(string, "index.html")
+        enable_trailing_slash_index = optional(bool, true)
+        enable_extensionless_index  = optional(bool, true)
+        extension_index_rules = optional(list(object({
+          extension  = string
+          index_file = optional(string, "index.html")
+        })), [])
+        ignored_prefixes    = optional(list(string), ["/_next/", "/api/", "/public-data/"])
+        ignored_contains    = optional(list(string), ["/__next."])
+        ignored_exact_paths = optional(list(string), [])
+      }), {})
       custom_error_responses = optional(list(object({
         error_code            = number
         response_code         = optional(number)

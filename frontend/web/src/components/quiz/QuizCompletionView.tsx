@@ -44,12 +44,6 @@ export function QuizCompletionView({ mode, result, onBackToMaterial }: QuizCompl
         {' '}• Passing score: {result.passingScore}%
       </p>
 
-      {mode === 'exam' && (
-        <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-8">
-          Mode simulasi sementara
-        </p>
-      )}
-
       <div className="flex gap-4 justify-center">
         <button
             onClick={onBackToMaterial}

@@ -122,6 +122,18 @@ variable "cloudfront" {
       restriction_type = optional(string, "none")
       locations        = optional(list(string), [])
     }), {})
+    rewrite_config = optional(object({
+      default_index_file           = optional(string, "index.html")
+      enable_trailing_slash_index = optional(bool, true)
+      enable_extensionless_index  = optional(bool, true)
+      extension_index_rules = optional(list(object({
+        extension  = string
+        index_file = optional(string, "index.html")
+      })), [])
+      ignored_prefixes    = optional(list(string), ["/_next/", "/api/", "/public-data/"])
+      ignored_contains    = optional(list(string), ["/__next."])
+      ignored_exact_paths = optional(list(string), [])
+    }), {})
     price_class         = optional(string, "PriceClass_100")
     default_root_object = optional(string, "index.html")
     web_acl_id          = optional(string)
@@ -142,6 +154,15 @@ variable "cloudfront" {
       trimspace(try(var.cloudfront.api_origin.domain_name, "")) != ""
     )
     error_message = "When cloudfront.api_origin.enabled is true, cloudfront.api_origin.domain_name is required."
+  }
+
+  validation {
+    condition = alltrue([
+      for rule in try(var.cloudfront.rewrite_config.extension_index_rules, []) :
+      can(regex("^\\.[A-Za-z0-9._-]+$", rule.extension)) &&
+      can(regex("^[^/]+$", try(rule.index_file, "index.html")))
+    ])
+    error_message = "cloudfront.rewrite_config.extension_index_rules must use extension values like '.txt' and index_file values without '/'."
   }
 }
 
