@@ -217,7 +217,9 @@ service_api = {
       runtime               = "nodejs22.x"
       memory_size           = 256
       timeout               = 10
-      environment_variables = {}
+      environment_variables = {
+        PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY = "internal-dev-key"
+      }
       publish               = true
       dynamodb_access = {
         learning_content = {
@@ -243,16 +245,13 @@ service_api = {
       runtime               = "nodejs22.x"
       memory_size           = 256
       timeout               = 10
-      environment_variables = {
-        DYNAMO_DB_TABLE_NAME      = "learning-content-dev"
-        MEDIA_PRIVATE_BUCKET_NAME = "kejepangdulu-dev-media-private"
-      }
+      environment_variables = {}
       publish = true
       dynamodb_access = {
         learning_content = {
           table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/learning-content-dev"
           read      = true
-          write     = false
+          write     = true
         }
       }
       s3_access = {

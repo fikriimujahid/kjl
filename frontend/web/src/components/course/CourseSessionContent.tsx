@@ -35,6 +35,7 @@ export function CourseSessionContent({
 }: CourseSessionContentProps) {
   const router = useRouter();
   const [sessionViews, setSessionViews] = useState<Record<AssessmentMode, SessionView>>(INITIAL_SESSION_VIEWS);
+  const [isStarting, setIsStarting] = useState(false);
 
   const { startAttempt } = useCourseSessionAttempts({
     productId,
@@ -56,16 +57,21 @@ export function CourseSessionContent({
 
   const goToTesting = async (mode: AssessmentMode) => {
     if (!activeSession) return;
-    const attemptId = await startAttempt(mode);
-    const params = new URLSearchParams({
-      productId,
-      topicId: activeSession.topicId,
-      sessionId: activeSession.id,
-      mode,
-      ...(attemptId ? { attemptId } : {}),
-      ...(activeSession.duration != null ? { duration: String(activeSession.duration) } : {}),
-    });
-    router.push(`/quiz?${params.toString()}`);
+    setIsStarting(true);
+    try {
+      const attemptId = await startAttempt(mode);
+      const params = new URLSearchParams({
+        productId,
+        topicId: activeSession.topicId,
+        sessionId: activeSession.id,
+        mode,
+        ...(attemptId ? { attemptId } : {}),
+        ...(activeSession.duration != null ? { duration: String(activeSession.duration) } : {}),
+      });
+      router.push(`/quiz?${params.toString()}`);
+    } finally {
+      setIsStarting(false);
+    }
   };
 
   if (activeSession) {
@@ -95,6 +101,7 @@ export function CourseSessionContent({
             <PracticeInstructionsScreen
               sessionTitle={activeSession.title}
               totalQuestions={activeSession.content.questions.length}
+              isLoading={isStarting}
               onBegin={() => {
                 void goToTesting(mode);
               }}
@@ -109,6 +116,7 @@ export function CourseSessionContent({
             totalQuestions={activeSession.content.questions.length}
             durationMinutes={activeSession.duration}
             passingScorePercent={activeSession.passingScore}
+            isLoading={isStarting}
             onBegin={() => {
               void goToTesting(mode);
             }}

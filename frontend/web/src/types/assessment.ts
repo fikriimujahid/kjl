@@ -19,6 +19,7 @@ interface BaseInstructionsScreenProps {
   totalQuestions: number;
   onBegin: () => void;
   onBack: () => void;
+  isLoading?: boolean;
 }
 
 export interface PracticeInstructionsScreenProps extends BaseInstructionsScreenProps {}

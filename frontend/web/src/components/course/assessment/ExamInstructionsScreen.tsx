@@ -6,6 +6,7 @@ import {
   Bookmark,
   CheckSquare,
   FileText,
+  Loader2,
   MessageCircle,
   Pause,
   PlayCircle,
@@ -21,6 +22,7 @@ export function ExamInstructionsScreen({
   onBack,
   durationMinutes = 130,
   passingScorePercent = 72,
+  isLoading = false,
 }: ExamInstructionsScreenProps) {
   const hours = Math.floor(durationMinutes / 60);
   const mins = durationMinutes % 60;
@@ -119,10 +121,15 @@ export function ExamInstructionsScreen({
             </button>
             <button
               onClick={onBegin}
-              className="flex items-center gap-2 px-8 py-3 text-white text-sm font-bold rounded-xl transition-all shadow-sm hover:shadow-md active:scale-[0.97] bg-rose-600 hover:bg-rose-700"
+              disabled={isLoading}
+              className="flex items-center gap-2 px-8 py-3 text-white text-sm font-bold rounded-xl transition-all shadow-sm hover:shadow-md active:scale-[0.97] bg-rose-600 hover:bg-rose-700 disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100"
             >
-              <PlayCircle size={18} />
-              Mulai Ujian
+              {isLoading ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <PlayCircle size={18} />
+              )}
+              {isLoading ? 'Memuat...' : 'Mulai Ujian'}
             </button>
           </div>
         </div>
