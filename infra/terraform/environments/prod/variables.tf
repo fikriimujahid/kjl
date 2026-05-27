@@ -138,6 +138,36 @@ variable "service_api" {
 }
 
 # -------------------------------------------------------------------------
+# PRODUCTS DYNAMODB MODULE
+# -------------------------------------------------------------------------
+variable "products_table" {
+  description = "DynamoDB table configuration for products."
+  type = object({
+    table_name   = string
+    billing_mode = string
+    hash_key     = string
+    range_key    = optional(string)
+    attributes = list(object({
+      name = string
+      type = string
+    }))
+    global_secondary_indexes = optional(list(object({
+      name               = string
+      hash_key           = string
+      range_key          = optional(string)
+      projection_type    = string
+      non_key_attributes = optional(list(string), [])
+      read_capacity      = optional(number)
+      write_capacity     = optional(number)
+    })), [])
+    ttl_enabled                    = bool
+    ttl_attribute_name             = optional(string)
+    point_in_time_recovery_enabled = bool
+    server_side_encryption_enabled = bool
+  })
+}
+
+# -------------------------------------------------------------------------
 # DYNAMODB LEARNING CONTENT TABLE
 # -------------------------------------------------------------------------
 variable "learning_content_table" {
