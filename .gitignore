@@ -79,3 +79,7 @@ security/result/*
 security/.secrets.baseline
 security/sample-result/*
 security/scripts/zap-urls.txt
+
+docs/product/p0/*
+docs/product/p1/*
+docs/media/*

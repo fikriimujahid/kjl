@@ -480,6 +480,33 @@ service_api = {
 }
 
 # ============================================================================
+# Products DynamoDB Table Variables
+# ============================================================================
+products_table = {
+  table_name   = "kjl-products-dev"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "PK"
+  range_key    = "SK"
+
+  attributes = [
+    {
+      name = "PK"
+      type = "S"
+    },
+    {
+      name = "SK"
+      type = "S"
+    }
+  ]
+
+  global_secondary_indexes       = []
+  ttl_enabled                    = false
+  ttl_attribute_name             = null
+  point_in_time_recovery_enabled = true
+  server_side_encryption_enabled = true
+}
+
+# ============================================================================
 # DynamoDB Learning Content Table Variables
 # ============================================================================
 learning_content_table = {
