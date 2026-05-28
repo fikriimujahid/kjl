@@ -230,8 +230,8 @@ service_api = {
       }
       publish               = true
       dynamodb_access = {
-        learning_content = {
-          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/learning-content-dev"
+        products_table = {
+          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/kjl-products-dev"
           read      = true
           write     = true
         }
@@ -257,7 +257,7 @@ service_api = {
       publish = true
       dynamodb_access = {
         learning_content = {
-          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/learning-content-dev"
+          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/kjl-progress-dev"
           read      = true
           write     = true
         }
@@ -282,8 +282,8 @@ service_api = {
       environment_variables = {}
       publish               = true
       dynamodb_access = {
-        learning_content = {
-          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/learning-content-dev"
+        payments_table = {
+          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/kjl-payments-dev"
           read      = true
           write     = true
         }
@@ -299,12 +299,12 @@ service_api = {
       memory_size           = 256
       timeout               = 15
       environment_variables = {
-        DYNAMO_DB_TABLE_NAME = "learning-content-dev"
+        DYNAMO_DB_TABLE_NAME = "kjl-progress-dev"
       }
       publish               = true
       dynamodb_access = {
         learning_content = {
-          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/learning-content-dev"
+          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/kjl-progress-dev"
           read      = true
           write     = true
         }
@@ -337,16 +337,16 @@ service_api = {
         integration_key    = "product"
       }
       get_owned_products_by_user_under_api = {
-        route_key          = "GET /api/products/owned/{userId}"
+        route_key          = "GET /api/payments/owned/{userId}"
         authorization_type = "JWT"
         operation_name     = "GetOwnedProductsByUserUnderApi"
-        integration_key    = "product"
+        integration_key    = "payment"
       }
       get_internal_owned_products_by_user_under_api = {
-        route_key          = "GET /api/internal/products/owned/{userId}"
+        route_key          = "GET /api/internal/payments/owned/{userId}"
         authorization_type = "NONE"
         operation_name     = "GetInternalOwnedProductsByUserUnderApi"
-        integration_key    = "product"
+        integration_key    = "payment"
       }
       get_internal_product_summary_under_api = {
         route_key          = "GET /api/internal/products/{id}/summary"
@@ -507,10 +507,37 @@ products_table = {
 }
 
 # ============================================================================
-# DynamoDB Learning Content Table Variables
+# Payments DynamoDB Table Variables
 # ============================================================================
-learning_content_table = {
-  table_name   = "learning-content-dev"
+payments_table = {
+  table_name   = "kjl-payments-dev"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "PK"
+  range_key    = "SK"
+
+  attributes = [
+    {
+      name = "PK"
+      type = "S"
+    },
+    {
+      name = "SK"
+      type = "S"
+    }
+  ]
+
+  global_secondary_indexes       = []
+  ttl_enabled                    = false
+  ttl_attribute_name             = null
+  point_in_time_recovery_enabled = true
+  server_side_encryption_enabled = true
+}
+
+# ============================================================================
+# DynamoDB Progress Table Variables
+# ============================================================================
+progress_table = {
+  table_name   = "kjl-progress-dev"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "PK"
   range_key    = "SK"

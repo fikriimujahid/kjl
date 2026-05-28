@@ -75,6 +75,7 @@ jobs:
           APP_BASE_URL: ${{ secrets.PAYMENT_SERVICE_APP_BASE_URL }}
           PRODUCT_SERVICE_INTERNAL_API_BASE_URL: ${{ secrets.PAYMENT_SERVICE_PRODUCT_SERVICE_INTERNAL_API_BASE_URL }}
           PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY: ${{ secrets.PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY }}
+          PAYMENT_SERVICE_INTERNAL_SERVICE_API_KEY: ${{ secrets.PAYMENT_SERVICE_INTERNAL_SERVICE_API_KEY }}
         run: |
           if [ -z "${DYNAMO_DB_TABLE_NAME}" ]; then
             echo "DYNAMO_DB_TABLE_NAME is missing. Set vars.DYNAMO_DB_TABLE_NAME or secrets.DYNAMO_DB_TABLE_NAME."
@@ -95,6 +96,11 @@ jobs:
             echo "PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY is missing. Set vars.PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY or secrets.PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY."
             exit 1
           fi
+          
+          if [ -z "${PAYMENT_SERVICE_INTERNAL_SERVICE_API_KEY}" ]; then
+            echo "PAYMENT_SERVICE_INTERNAL_SERVICE_API_KEY is missing. Set vars.PAYMENT_SERVICE_INTERNAL_SERVICE_API_KEY or secrets.PAYMENT_SERVICE_INTERNAL_SERVICE_API_KEY."
+            exit 1
+          fi
 
           cat > .env.lambda <<EOF
           DYNAMO_DB_TABLE_NAME=${DYNAMO_DB_TABLE_NAME}
@@ -103,6 +109,7 @@ jobs:
           APP_BASE_URL=${APP_BASE_URL}
           PRODUCT_SERVICE_INTERNAL_API_BASE_URL=${PRODUCT_SERVICE_INTERNAL_API_BASE_URL}
           PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY=${PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY}
+          PAYMENT_SERVICE_INTERNAL_SERVICE_API_KEY=${PAYMENT_SERVICE_INTERNAL_SERVICE_API_KEY}
           EOF
 
       - name: Update Lambda environment variables
@@ -114,6 +121,7 @@ jobs:
           APP_BASE_URL: ${{ secrets.PAYMENT_SERVICE_APP_BASE_URL }}
           PRODUCT_SERVICE_INTERNAL_API_BASE_URL: ${{ secrets.PAYMENT_SERVICE_PRODUCT_SERVICE_INTERNAL_API_BASE_URL }}
           PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY: ${{ secrets.PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY }}
+          PAYMENT_SERVICE_INTERNAL_SERVICE_API_KEY: ${{ secrets.PAYMENT_SERVICE_INTERNAL_SERVICE_API_KEY }}
         run: |
           if [ -z "${LAMBDA_FUNCTION_NAME}" ]; then
             echo "PAYMENT_SERVICE_LAMBDA_FUNCTION_NAME secret is missing."
@@ -132,13 +140,15 @@ jobs:
             --arg appBaseUrl "${APP_BASE_URL}" \
             --arg productServiceInternalApiBaseUrl "${PRODUCT_SERVICE_INTERNAL_API_BASE_URL}" \
             --arg productServiceInternalServiceApiKey "${PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY}" \
+            --arg paymentServiceInternalServiceApiKey "${PAYMENT_SERVICE_INTERNAL_SERVICE_API_KEY}" \
             '. + {
               DYNAMO_DB_TABLE_NAME: $dynamoDbTableName,
               MIDTRANS_SERVER_KEY: $midtransServerKey,
               MIDTRANS_SNAP_API_URL: $midtransSnapApiUrl,
               APP_BASE_URL: $appBaseUrl,
               PRODUCT_SERVICE_INTERNAL_API_BASE_URL: $productServiceInternalApiBaseUrl,
-              PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY: $productServiceInternalServiceApiKey
+              PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY: $productServiceInternalServiceApiKey,
+              PAYMENT_SERVICE_INTERNAL_SERVICE_API_KEY: $paymentServiceInternalServiceApiKey
             }')
 
           UPDATE_PAYLOAD=$(jq -cn \

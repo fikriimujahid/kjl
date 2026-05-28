@@ -1,7 +1,7 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
 import { getAuthenticatedUser } from "@shared-utils/auth";
 import { createErrorResponse, createSuccessResponse } from "@shared-utils/response";
-import { mapProductErrorToResponse } from "../errors/errorToResponse";
+import { mapPaymentErrorToResponse } from "../errors/errorToResponse";
 import { getOwnedProductsSchema } from "../schemas/getOwnedProductsSchema";
 import { getOwnedProducts } from "../use-cases/getOwnedProducts";
 
@@ -26,7 +26,7 @@ export const getOwnedProductsHandler = async (
 
     return createSuccessResponse(event, 200, ownedProducts);
   } catch (error) {
-    return mapProductErrorToResponse(event, error, {
+    return mapPaymentErrorToResponse(event, error, {
       statusCode: 502,
       message: "Failed to load owned product data",
       code: "OWNED_PRODUCTS_FETCH_FAILED"

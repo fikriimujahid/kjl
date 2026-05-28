@@ -40,6 +40,20 @@ export const paymentHistoryResponseSchema: OpenApiSchemaObject = {
   items: paymentHistoryItemSchema
 };
 
+export const ownedProductSchema: OpenApiSchemaObject = {
+  type: "object",
+  required: ["id", "productId", "userId", "level", "name", "purchaseDate", "expiryDate"],
+  properties: {
+    id: { type: "string" },
+    productId: { type: "string" },
+    userId: { type: "string" },
+    level: { type: "string" },
+    name: { type: "string" },
+    purchaseDate: { type: "string", format: "date-time" },
+    expiryDate: { type: "string", format: "date-time" }
+  }
+};
+
 export const webhookRequestSchema: OpenApiSchemaObject = {
   type: "object",
   properties: {

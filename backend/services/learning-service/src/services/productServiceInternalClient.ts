@@ -22,25 +22,25 @@ export const getOwnedProductsByUserIdInternal = async (
 ): Promise<OwnedProductSummary[]> => {
   const env = getLearningServiceEnv();
   const internalApiClient = createInternalApiClient({
-    baseUrl: env.PRODUCT_SERVICE_INTERNAL_API_BASE_URL,
-    apiKey: env.PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY,
+    baseUrl: env.PAYMENT_SERVICE_INTERNAL_API_BASE_URL,
+    apiKey: env.PAYMENT_SERVICE_INTERNAL_SERVICE_API_KEY,
     timeoutMs: 2000
   });
 
   try {
     return await internalApiClient.get<OwnedProductSummary[]>(
-      `/api/internal/products/owned/${encodeURIComponent(userId)}`
+      `/api/internal/payments/owned/${encodeURIComponent(userId)}`
     );
   } catch (error) {
     if (error instanceof InternalApiClientError) {
-      logger.error("product-service.internal.owned-products.failed", {
+      logger.error("payment-service.internal.owned-products.failed", {
         userId,
         statusCode: error.statusCode,
         errorCode: error.code,
         errorMessage: error.message
       });
     } else {
-      logger.error("product-service.internal.owned-products.failed", {
+      logger.error("payment-service.internal.owned-products.failed", {
         userId,
         error
       });
