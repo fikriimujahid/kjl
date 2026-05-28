@@ -7,12 +7,12 @@ import {
 	NotFoundError,
 	ValidationError
 } from "../errors/applicationErrors";
+import { listOwnedProductsByUserId } from "../repositories/paymentOrderRepository";
 import { PaymentOrderRecord } from "../models/payment";
 import { getProductSummaryByIdInternal } from "../services/productServiceInternalClient";
 import { savePaymentOrder } from "../repositories/paymentOrderRepository";
 import { buildSnapPayload } from "../services/midtrans/buildSnapPayload";
 import { createSnapTransaction } from "../services/midtransService";
-import { getOwnedProductsByUserIdInternal } from "../services/productServiceInternalClient";
 
 const logger = createLogger("payment-service");
 
@@ -31,7 +31,7 @@ export const createPayment = async (
 	input: CreatePaymentInput
 ): Promise<CreatePaymentResult> => {
 	try {
-		const ownedProducts = await getOwnedProductsByUserIdInternal(input.authenticatedUser.id);
+		const ownedProducts = await listOwnedProductsByUserId(input.authenticatedUser.id);
     const hasActiveAccess = ownedProducts.some((ownedProduct) => ownedProduct.productId === input.productId);
 
 		if (hasActiveAccess) {

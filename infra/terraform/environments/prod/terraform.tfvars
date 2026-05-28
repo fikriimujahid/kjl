@@ -335,16 +335,16 @@ service_api = {
         integration_key    = "product"
       }
       get_owned_products_by_user_under_api = {
-        route_key          = "GET /api/products/owned/{userId}"
+        route_key          = "GET /api/payments/owned/{userId}"
         authorization_type = "JWT"
         operation_name     = "GetOwnedProductsByUserUnderApi"
-        integration_key    = "product"
+        integration_key    = "payment"
       }
       get_internal_owned_products_by_user_under_api = {
-        route_key          = "GET /api/internal/products/owned/{userId}"
+        route_key          = "GET /api/internal/payments/owned/{userId}"
         authorization_type = "NONE"
         operation_name     = "GetInternalOwnedProductsByUserUnderApi"
-        integration_key    = "product"
+        integration_key    = "payment"
       }
       get_internal_product_summary_under_api = {
         route_key          = "GET /api/internal/products/{id}/summary"
@@ -482,6 +482,33 @@ service_api = {
 # ============================================================================
 products_table = {
   table_name   = "kjl-products-prod"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "PK"
+  range_key    = "SK"
+
+  attributes = [
+    {
+      name = "PK"
+      type = "S"
+    },
+    {
+      name = "SK"
+      type = "S"
+    }
+  ]
+
+  global_secondary_indexes       = []
+  ttl_enabled                    = false
+  ttl_attribute_name             = null
+  point_in_time_recovery_enabled = true
+  server_side_encryption_enabled = true
+}
+
+# ============================================================================
+# Payments DynamoDB Table Variables
+# ============================================================================
+payments_table = {
+  table_name   = "kjl-payments-prod"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "PK"
   range_key    = "SK"

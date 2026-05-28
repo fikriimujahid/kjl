@@ -1,6 +1,6 @@
 {
   "info": {
-    "_postman_id": "fc5cc8da-a6fa-4f7c-8df3-9cfc8044114e",
+    "_postman_id": "6e1275e2-ad7b-4c65-bb10-8c330fca74b5",
     "name": "KeJepangDulu API (Generated)",
     "description": "Generated from backend/openapi/swagger.json with per-service collection variables.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -150,34 +150,6 @@
             "url": "{{productServiceBaseUrl}}/api/products/{id}"
           },
           "response": []
-        },
-        {
-          "name": "List owned products for authenticated user",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": "{{productServiceBaseUrl}}/api/products/owned/{userId}",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "List owned products for an internal trusted service",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": "{{productServiceBaseUrl}}/api/internal/products/owned/{userId}"
-          },
-          "response": []
         }
       ]
     },
@@ -214,6 +186,34 @@
                 }
               ]
             }
+          },
+          "response": []
+        },
+        {
+          "name": "List owned products for authenticated user",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{paymentServiceBaseUrl}}/api/payments/owned/{userId}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List owned products for an internal trusted service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{paymentServiceBaseUrl}}/api/internal/payments/owned/{userId}"
           },
           "response": []
         },

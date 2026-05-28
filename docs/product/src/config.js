@@ -32,7 +32,7 @@ function getConfig() {
 
   return {
     awsRegion: process.env.AWS_REGION || "ap-southeast-1",
-    tableName: process.env.DYNAMODB_TABLE_NAME || "learning-content-dev",
+    tableName: process.env.DYNAMODB_TABLE_NAME || "kjl-progress-dev",
     privateBucketName: process.env.MEDIA_PRIVATE_BUCKET_NAME || "kejepangdulu-dev-media-private",
     publicBucketName: process.env.MEDIA_PUBLIC_BUCKET_NAME || "kejepangdulu-dev-public",
     contentRoot: process.cwd(),

@@ -1,10 +1,9 @@
-import { findProductDetailsById, findProducts, findOwnedProducts } from "../../src/repositories/productRepository";
-import { getOwnedProducts, getProductDetailsById, getProducts } from "../../src/services/productService";
+import { findProductDetailsById, findProducts } from "../../src/repositories/productRepository";
+import { getProductDetailsById, getProducts } from "../../src/services/productService";
 
 jest.mock("../../src/repositories/productRepository", () => ({
   findProducts: jest.fn(),
-  findProductDetailsById: jest.fn(),
-  findOwnedProducts: jest.fn()
+  findProductDetailsById: jest.fn()
 }));
 
 describe("productService", () => {
@@ -61,26 +60,5 @@ describe("productService", () => {
 
     expect(findProductDetailsById).toHaveBeenCalledWith("missing-product");
     expect(result).toBeNull();
-  });
-
-  it("getOwnedProducts delegates to repository and returns active purchases", async () => {
-    const ownedProducts = [
-      {
-        id: "purchase-1",
-        productId: "prod-1",
-        userId: "user-1",
-        level: "N5",
-        name: "JLPT N5",
-        purchaseDate: "2026-01-01T00:00:00.000Z",
-        accessExpiryDate: "2026-12-31T00:00:00.000Z"
-      }
-    ];
-
-    (findOwnedProducts as jest.Mock).mockResolvedValue(ownedProducts);
-
-    const result = await getOwnedProducts("user-1");
-
-    expect(findOwnedProducts).toHaveBeenCalledWith("user-1");
-    expect(result).toEqual(ownedProducts);
   });
 });

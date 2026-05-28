@@ -3,6 +3,7 @@ import { selectItems } from "@shared-dynamodb/selectItems";
 import { createLogger } from "@shared-utils/logger";
 import { InternalApiClientError } from "@shared-utils/internalApiClient";
 import { getPaymentServiceEnv } from "../config/env";
+import { OwnedProduct } from "../models/ownedProduct";
 import { PaymentOrderRecord } from "../models/payment";
 import { createDynamoDocumentClient } from "@shared-dynamodb/client";
 import {
@@ -110,6 +111,51 @@ export const listPaymentOrdersByUserId = async (
       tableName,
       userId,
       paymentPartitionKey,
+      error
+    });
+    throw error;
+  }
+};
+
+export const listOwnedProductsByUserId = async (
+  userId: string
+): Promise<OwnedProduct[]> => {
+  const purchasePartitionKey = `${OWNED_PRODUCT_PARTITION_KEY_PREFIX}${userId}`;
+  const currentDate = new Date().toISOString();
+  const dynamoDbDocumentClient = createDynamoDocumentClient();
+  const tableName = getPaymentServiceEnv().DYNAMO_DB_TABLE_NAME;
+
+  try {
+    const response = await selectItems<OwnedProduct & Record<string, unknown>>(dynamoDbDocumentClient, {
+      from: tableName,
+      keyWhere: {
+        PK: purchasePartitionKey
+      },
+      keyBeginsWith: {
+        SK: PURCHASE_SORT_KEY_PREFIX
+      },
+      where: {
+        expiryDate: {
+          gt: currentDate
+        }
+      }
+    });
+
+    return response.items.map((item) => ({
+      id: item.id,
+      productId: item.productId,
+      userId: item.userId,
+      level: item.level,
+      name: item.name,
+      purchaseDate: item.purchaseDate,
+      expiryDate: item.expiryDate
+    }));
+  } catch (error) {
+    logger.error("dynamodb.ownedProducts.list.failed", {
+      tableName,
+      userId,
+      purchasePartitionKey,
+      currentDate,
       error
     });
     throw error;
