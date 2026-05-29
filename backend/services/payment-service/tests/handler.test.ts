@@ -5,6 +5,14 @@ jest.mock("../src/handlers/createPaymentHandler", () => ({
   createPaymentHandler: jest.fn()
 }));
 
+jest.mock("../src/handlers/getOwnedProductsHandler", () => ({
+  getOwnedProductsHandler: jest.fn()
+}));
+
+jest.mock("../src/handlers/getOwnedProductsInternalHandler", () => ({
+  getOwnedProductsInternalHandler: jest.fn()
+}));
+
 jest.mock("../src/handlers/getPaymentHistoryHandler", () => ({
   getPaymentHistoryHandler: jest.fn()
 }));
@@ -23,6 +31,8 @@ const ORIGINAL_ENV = process.env;
 interface LoadedHandlerModule {
   handler: (event: APIGatewayProxyEventV2) => Promise<APIGatewayProxyStructuredResultV2>;
   createPaymentMock: jest.Mock;
+  getOwnedProductsMock: jest.Mock;
+  getOwnedProductsInternalMock: jest.Mock;
   getPaymentHistoryMock: jest.Mock;
   handleWebhookMock: jest.Mock;
   createErrorResponseMock: jest.Mock;
@@ -52,6 +62,12 @@ const loadHandler = (): LoadedHandlerModule => {
   const { createPaymentHandler } = require("../src/handlers/createPaymentHandler") as {
     createPaymentHandler: jest.Mock;
   };
+  const { getOwnedProductsHandler } = require("../src/handlers/getOwnedProductsHandler") as {
+    getOwnedProductsHandler: jest.Mock;
+  };
+  const { getOwnedProductsInternalHandler } = require("../src/handlers/getOwnedProductsInternalHandler") as {
+    getOwnedProductsInternalHandler: jest.Mock;
+  };
   const { getPaymentHistoryHandler } = require("../src/handlers/getPaymentHistoryHandler") as {
     getPaymentHistoryHandler: jest.Mock;
   };
@@ -66,6 +82,8 @@ const loadHandler = (): LoadedHandlerModule => {
   return {
     handler,
     createPaymentMock: createPaymentHandler,
+    getOwnedProductsMock: getOwnedProductsHandler,
+    getOwnedProductsInternalMock: getOwnedProductsInternalHandler,
     getPaymentHistoryMock: getPaymentHistoryHandler,
     handleWebhookMock: handleWebhookHandler,
     createErrorResponseMock: createErrorResponse,
@@ -130,7 +148,7 @@ describe("payment-service handler routing", () => {
   });
 
   it("dispatches create payment route", async () => {
-    const { handler, createPaymentMock, getPaymentHistoryMock, handleWebhookMock } = loadHandler();
+    const { handler, createPaymentMock, getOwnedProductsMock, getOwnedProductsInternalMock, getPaymentHistoryMock, handleWebhookMock } = loadHandler();
     const event = createEvent(ROUTES.CREATE_PAYMENT.routeKey);
     const response = { statusCode: 200, body: "{}" } as APIGatewayProxyStructuredResultV2;
 
@@ -142,13 +160,49 @@ describe("payment-service handler routing", () => {
       expect.stringContaining('"event":"request.succeeded"')
     );
     expect(createPaymentMock).toHaveBeenCalledWith(event);
+        expect(getOwnedProductsMock).not.toHaveBeenCalled();
+        expect(getOwnedProductsInternalMock).not.toHaveBeenCalled();
     expect(getPaymentHistoryMock).not.toHaveBeenCalled();
     expect(handleWebhookMock).not.toHaveBeenCalled();
     expect(result).toBe(response);
   });
 
+      it("dispatches get owned products route", async () => {
+        const { handler, createPaymentMock, getOwnedProductsMock, getOwnedProductsInternalMock, getPaymentHistoryMock, handleWebhookMock } = loadHandler();
+        const event = createEvent(ROUTES.GET_OWNED_PRODUCTS.routeKey, "GET");
+        const response = { statusCode: 200, body: "[]" } as APIGatewayProxyStructuredResultV2;
+
+        getOwnedProductsMock.mockResolvedValue(response);
+
+        const result = await handler(event);
+
+        expect(getOwnedProductsMock).toHaveBeenCalledWith(event);
+        expect(createPaymentMock).not.toHaveBeenCalled();
+        expect(getOwnedProductsInternalMock).not.toHaveBeenCalled();
+        expect(getPaymentHistoryMock).not.toHaveBeenCalled();
+        expect(handleWebhookMock).not.toHaveBeenCalled();
+        expect(result).toBe(response);
+      });
+
+      it("dispatches get internal owned products route", async () => {
+        const { handler, createPaymentMock, getOwnedProductsMock, getOwnedProductsInternalMock, getPaymentHistoryMock, handleWebhookMock } = loadHandler();
+        const event = createEvent(ROUTES.GET_INTERNAL_OWNED_PRODUCTS.routeKey, "GET");
+        const response = { statusCode: 200, body: "[]" } as APIGatewayProxyStructuredResultV2;
+
+        getOwnedProductsInternalMock.mockResolvedValue(response);
+
+        const result = await handler(event);
+
+        expect(getOwnedProductsInternalMock).toHaveBeenCalledWith(event);
+        expect(createPaymentMock).not.toHaveBeenCalled();
+        expect(getOwnedProductsMock).not.toHaveBeenCalled();
+        expect(getPaymentHistoryMock).not.toHaveBeenCalled();
+        expect(handleWebhookMock).not.toHaveBeenCalled();
+        expect(result).toBe(response);
+      });
+
   it("dispatches get payment history route", async () => {
-    const { handler, createPaymentMock, getPaymentHistoryMock, handleWebhookMock } = loadHandler();
+        const { handler, createPaymentMock, getOwnedProductsMock, getOwnedProductsInternalMock, getPaymentHistoryMock, handleWebhookMock } = loadHandler();
     const event = createEvent(ROUTES.GET_PAYMENT_HISTORY.routeKey, "GET");
     const response = { statusCode: 200, body: "[]" } as APIGatewayProxyStructuredResultV2;
 
@@ -158,12 +212,14 @@ describe("payment-service handler routing", () => {
 
     expect(getPaymentHistoryMock).toHaveBeenCalledWith(event);
     expect(createPaymentMock).not.toHaveBeenCalled();
+    expect(getOwnedProductsMock).not.toHaveBeenCalled();
+    expect(getOwnedProductsInternalMock).not.toHaveBeenCalled();
     expect(handleWebhookMock).not.toHaveBeenCalled();
     expect(result).toBe(response);
   });
 
   it("dispatches webhook route", async () => {
-    const { handler, createPaymentMock, handleWebhookMock } = loadHandler();
+    const { handler, createPaymentMock, getOwnedProductsMock, getOwnedProductsInternalMock, handleWebhookMock } = loadHandler();
     const event = createEvent(ROUTES.HANDLE_WEBHOOK.routeKey);
     const response = { statusCode: 200, body: "{}" } as APIGatewayProxyStructuredResultV2;
 
@@ -173,6 +229,8 @@ describe("payment-service handler routing", () => {
 
     expect(handleWebhookMock).toHaveBeenCalledWith(event);
     expect(createPaymentMock).not.toHaveBeenCalled();
+    expect(getOwnedProductsMock).not.toHaveBeenCalled();
+    expect(getOwnedProductsInternalMock).not.toHaveBeenCalled();
     expect(result).toBe(response);
   });
 

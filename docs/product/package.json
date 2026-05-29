@@ -1,7 +1,8 @@
 {
-  "name": "learning-content-migration",
+  "name": "docs-product-migration",
   "version": "1.0.0",
-  "description": "Standalone migration script for loading learning content JSON into DynamoDB.",
+  "private": true,
+  "description": "Standalone migration script for docs/product learning content.",
   "main": "migrate-learning-content.js",
   "scripts": {
     "migrate": "node migrate-learning-content.js"
@@ -11,6 +12,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.926.0",
+    "@aws-sdk/client-s3": "^3.926.0",
     "@aws-sdk/lib-dynamodb": "^3.926.0",
     "dotenv": "^16.6.1"
   }

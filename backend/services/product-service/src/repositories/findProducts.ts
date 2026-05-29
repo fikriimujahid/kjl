@@ -34,6 +34,7 @@ export const findProducts = async (): Promise<Product[]> => {
       id: item.id,
       name: item.name,
       price: item.price,
+      normalPrice: item.normalPrice,
       shortDescription: item.shortDescription,
       level: item.level,
       topicsCount: item.topicsCount,

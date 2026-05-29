@@ -71,19 +71,14 @@ function validateProduct(product, pathPrefix, errors) {
   });
 }
 
-function validateProductsJson(payload) {
+function validateProducts(products, sourceLabel) {
+  if (!Array.isArray(products) || products.length === 0) {
+    throw new Error(`No products found in ${sourceLabel}.`);
+  }
+
   const errors = [];
-
-  if (!Array.isArray(payload)) {
-    throw new Error("Input JSON must be an array of products.");
-  }
-
-  if (payload.length === 0) {
-    throw new Error("Input JSON contains no products.");
-  }
-
-  payload.forEach((product, productIndex) => {
-    validateProduct(product, `products[${productIndex}]`, errors);
+  products.forEach((product, productIndex) => {
+    validateProduct(product, `${sourceLabel}.products[${productIndex}]`, errors);
   });
 
   if (errors.length > 0) {
@@ -92,5 +87,5 @@ function validateProductsJson(payload) {
 }
 
 module.exports = {
-  validateProductsJson,
+  validateProducts
 };

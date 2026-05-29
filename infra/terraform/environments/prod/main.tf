@@ -1,6 +1,3 @@
-locals {
-  name_prefix = "${var.project_name}-${var.environment}"
-}
 data "aws_caller_identity" "current" {}
 data "aws_s3_bucket" "state_backend" {
   bucket = "terraform-state-${data.aws_caller_identity.current.account_id}"
@@ -22,6 +19,137 @@ module "budget_alert" {
 }
 
 # -------------------------------------------------------------------------
+# PRODUCT CATALOG BUCKET (PUBLIC VIA CLOUDFRONT)
+# -------------------------------------------------------------------------
+module "catalog_public_bucket" {
+  source = "../../modules/s3"
+
+  bucket_name        = "${var.project_name}-${var.environment}-public"
+  force_destroy      = false
+  tags               = var.tags
+  versioning_enabled = false
+
+  encryption = {
+    sse_algorithm      = "AES256"
+    kms_master_key_id  = null
+    bucket_key_enabled = true
+  }
+
+  lifecycle_config = {
+    lifecycle_days  = null
+    lifecycle_rules = []
+  }
+
+  security = {
+    public_access_block = {
+      block_public_acls       = true
+      block_public_policy     = true
+      ignore_public_acls      = true
+      restrict_public_buckets = true
+    }
+    object_ownership            = "BucketOwnerEnforced"
+    attach_tls_only_policy      = false
+    additional_policy_documents = []
+  }
+}
+
+# -------------------------------------------------------------------------
+# PRIVATE MEDIA BUCKET
+# -------------------------------------------------------------------------
+module "media_private_bucket" {
+  source = "../../modules/s3"
+
+  bucket_name        = "${var.project_name}-${var.environment}-media-private"
+  force_destroy      = false
+  tags               = var.tags
+  versioning_enabled = true
+
+  encryption = {
+    sse_algorithm      = "AES256"
+    kms_master_key_id  = null
+    bucket_key_enabled = true
+  }
+
+  lifecycle_config = {
+    lifecycle_days  = null
+    lifecycle_rules = []
+  }
+
+  security = {
+    public_access_block = {
+      block_public_acls       = true
+      block_public_policy     = true
+      ignore_public_acls      = true
+      restrict_public_buckets = true
+    }
+    object_ownership            = "BucketOwnerEnforced"
+    attach_tls_only_policy      = true
+    additional_policy_documents = []
+  }
+}
+
+# -------------------------------------------------------------------------
+# PRODUCTS DYNAMODB MODULE
+# -------------------------------------------------------------------------
+module "products_table" {
+  source = "../../modules/dynamodb"
+
+  table_name                     = var.products_table.table_name
+  billing_mode                   = var.products_table.billing_mode
+  hash_key                       = var.products_table.hash_key
+  range_key                      = try(var.products_table.range_key, null)
+  attributes                     = var.products_table.attributes
+  global_secondary_indexes       = try(var.products_table.global_secondary_indexes, [])
+  ttl_enabled                    = var.products_table.ttl_enabled
+  ttl_attribute_name             = try(var.products_table.ttl_attribute_name, null)
+  point_in_time_recovery_enabled = var.products_table.point_in_time_recovery_enabled
+  server_side_encryption_enabled = var.products_table.server_side_encryption_enabled
+
+  tags = var.tags
+}
+
+# -------------------------------------------------------------------------
+# PAYMENTS DYNAMODB MODULE
+# -------------------------------------------------------------------------
+module "payments_table" {
+  source = "../../modules/dynamodb"
+
+  table_name                     = var.payments_table.table_name
+  billing_mode                   = var.payments_table.billing_mode
+  hash_key                       = var.payments_table.hash_key
+  range_key                      = try(var.payments_table.range_key, null)
+  attributes                     = var.payments_table.attributes
+  global_secondary_indexes       = try(var.payments_table.global_secondary_indexes, [])
+  ttl_enabled                    = var.payments_table.ttl_enabled
+  ttl_attribute_name             = try(var.payments_table.ttl_attribute_name, null)
+  point_in_time_recovery_enabled = var.payments_table.point_in_time_recovery_enabled
+  server_side_encryption_enabled = var.payments_table.server_side_encryption_enabled
+
+  tags = var.tags
+}
+
+# -------------------------------------------------------------------------
+# DYNAMODB MODULE
+# -------------------------------------------------------------------------
+module "progress_table" {
+  source = "../../modules/dynamodb"
+
+  table_name                     = var.progress_table.table_name
+  billing_mode                   = var.progress_table.billing_mode
+  hash_key                       = var.progress_table.hash_key
+  range_key                      = try(var.progress_table.range_key, null)
+  attributes                     = var.progress_table.attributes
+  global_secondary_indexes       = try(var.progress_table.global_secondary_indexes, [])
+  ttl_enabled                    = var.progress_table.ttl_enabled
+  ttl_attribute_name             = try(var.progress_table.ttl_attribute_name, null)
+  point_in_time_recovery_enabled = var.progress_table.point_in_time_recovery_enabled
+  server_side_encryption_enabled = var.progress_table.server_side_encryption_enabled
+
+  tags = var.tags
+}
+
+
+# -------------------------------------------------------------------------
 # SERVICE API MODULE
 # -------------------------------------------------------------------------
 module "service_api" {
@@ -38,15 +166,8 @@ module "service_api" {
       timeout               = lambda_cfg.timeout
       environment_variables = lambda_cfg.environment_variables
       publish               = lambda_cfg.publish
-      dynamodb_access = {
-        for access_key, access_cfg in try(lambda_cfg.dynamodb_access, {}) : access_key => merge(
-          access_cfg,
-          access_key == "learning_content" ? {
-            table_arn = module.learning_content_table.table_arn
-          } : {}
-        )
-      }
-      s3_access = try(lambda_cfg.s3_access, {})
+      dynamodb_access       = try(lambda_cfg.dynamodb_access, {})
+      s3_access             = try(lambda_cfg.s3_access, {})
     }
   }
 
@@ -67,26 +188,6 @@ module "service_api" {
     issuer   = module.cognito.cognito_uri
     audience = [module.cognito.user_pool_client_id]
   }
-
-  tags = var.tags
-}
-
-# -------------------------------------------------------------------------
-# DYNAMODB LEARNING CONTENT TABLE
-# -------------------------------------------------------------------------
-module "learning_content_table" {
-  source = "../../modules/dynamodb"
-
-  table_name                     = var.learning_content_table.table_name
-  billing_mode                   = var.learning_content_table.billing_mode
-  hash_key                       = var.learning_content_table.hash_key
-  range_key                      = try(var.learning_content_table.range_key, null)
-  attributes                     = var.learning_content_table.attributes
-  global_secondary_indexes       = try(var.learning_content_table.global_secondary_indexes, [])
-  ttl_enabled                    = var.learning_content_table.ttl_enabled
-  ttl_attribute_name             = try(var.learning_content_table.ttl_attribute_name, null)
-  point_in_time_recovery_enabled = var.learning_content_table.point_in_time_recovery_enabled
-  server_side_encryption_enabled = var.learning_content_table.server_side_encryption_enabled
 
   tags = var.tags
 }
@@ -122,6 +223,12 @@ module "frontend_site_hosting" {
     environment  = var.environment
     aliases      = var.frontend_site_hosting.cloudfront.aliases
     zone_id      = var.frontend_site_hosting.zone_id
+    public_origin = {
+      enabled                     = true
+      bucket_name                 = module.catalog_public_bucket.bucket_name
+      bucket_regional_domain_name = module.catalog_public_bucket.bucket_regional_domain_name
+      manage_bucket_policy        = true
+    }
     api_origin = {
       enabled      = true
       domain_name  = module.service_api.api_gateway_domain_name
@@ -172,41 +279,3 @@ module "github_cicd" {
 
   tags = var.tags
 }
-
-
-
-# module "app_s3" {
-#   source = "./modules/s3"
-
-#   buckets = {
-#     "${var.project_name}-${var.environment}-content-private" = {
-#       versioning_enabled = true
-#       force_destroy      = false
-#       ownership          = "BucketOwnerEnforced"
-#       lifecycle_days     = 365
-#     }
-
-#     "${var.project_name}-${var.environment}-backup" = {
-#       versioning_enabled = true
-#       force_destroy      = false
-#       ownership          = "BucketOwnerPreferred"
-#       lifecycle_days     = 365
-#     }
-#   }
-
-#   create_iam_policies = true
-
-#   tags = local.common_tags
-# }
-
-# module "app_dynamodb" {
-#   source = "./modules/dynamodb"
-
-#   project_name                   = var.project_name
-#   environment                    = var.environment
-#   table_name_overrides           = var.dynamodb_table_name_overrides
-#   point_in_time_recovery_enabled = var.dynamodb_point_in_time_recovery_enabled
-#   create_iam_policies            = var.create_app_iam_policies
-#   tags                           = local.app_tags
-# }
-

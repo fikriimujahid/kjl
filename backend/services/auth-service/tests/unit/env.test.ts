@@ -15,7 +15,7 @@ describe("auth env config", () => {
     jest.isolateModules(() => {
       const sharedEnv = require("@shared-utils/env");
       const fakeEnv = {
-        DYNAMO_DB_TABLE_NAME: "learning-content-dev",
+        DYNAMO_DB_TABLE_NAME: "kjl-progress-dev",
         COGNITO_API_ENDPOINT: "https://cognito.example.com",
         COGNITO_USER_POOL_CLIENT_ID: "client-id",
         AUTH_ALLOWED_ORIGIN: "https://example.com",

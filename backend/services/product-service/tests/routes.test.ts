@@ -11,25 +11,18 @@ describe("product routes", () => {
       "GET /api/products/{id}"
     ],
     [
-      "GET_OWNED_PRODUCTS",
-      ROUTES.GET_OWNED_PRODUCTS,
+      "GET_INTERNAL_PRODUCT_SUMMARY",
+      ROUTES.GET_INTERNAL_PRODUCT_SUMMARY,
       "GET",
-      "/api/products/owned/{userId}",
-      "GET /api/products/owned/{userId}"
+      "/api/internal/products/{id}/summary",
+      "GET /api/internal/products/{id}/summary"
     ],
     [
-      "GET_INTERNAL_OWNED_PRODUCTS",
-      ROUTES.GET_INTERNAL_OWNED_PRODUCTS,
+      "GET_INTERNAL_SESSION_BY_ID",
+      ROUTES.GET_INTERNAL_SESSION_BY_ID,
       "GET",
-      "/api/internal/products/owned/{userId}",
-      "GET /api/internal/products/owned/{userId}"
-    ],
-    [
-      "GET_INTERNAL_PRODUCT_EXISTS",
-      ROUTES.GET_INTERNAL_PRODUCT_EXISTS,
-      "GET",
-      "/api/internal/products/{id}/exists",
-      "GET /api/internal/products/{id}/exists"
+      "/api/internal/products/{productId}/topics/{topicId}/sessions/{sessionId}",
+      "GET /api/internal/products/{productId}/topics/{topicId}/sessions/{sessionId}"
     ]
   ])("keeps %s route contract", (_, route, method, path, routeKey) => {
     expect(route.method).toBe(method);

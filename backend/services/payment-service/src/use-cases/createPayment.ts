@@ -7,12 +7,12 @@ import {
 	NotFoundError,
 	ValidationError
 } from "../errors/applicationErrors";
+import { listOwnedProductsByUserId, grantProductAccess } from "../repositories/paymentOrderRepository";
 import { PaymentOrderRecord } from "../models/payment";
 import { getProductSummaryByIdInternal } from "../services/productServiceInternalClient";
 import { savePaymentOrder } from "../repositories/paymentOrderRepository";
 import { buildSnapPayload } from "../services/midtrans/buildSnapPayload";
 import { createSnapTransaction } from "../services/midtransService";
-import { getOwnedProductsByUserIdInternal } from "../services/productServiceInternalClient";
 
 const logger = createLogger("payment-service");
 
@@ -31,7 +31,7 @@ export const createPayment = async (
 	input: CreatePaymentInput
 ): Promise<CreatePaymentResult> => {
 	try {
-		const ownedProducts = await getOwnedProductsByUserIdInternal(input.authenticatedUser.id);
+		const ownedProducts = await listOwnedProductsByUserId(input.authenticatedUser.id);
     const hasActiveAccess = ownedProducts.some((ownedProduct) => ownedProduct.productId === input.productId);
 
 		if (hasActiveAccess) {
@@ -59,7 +59,7 @@ export const createPayment = async (
 
 	const amount = Math.round(product.price);
 
-	if (amount <= 0) {
+	if (amount < 0) {
 		throw new ValidationError("Invalid product price");
 	}
 
@@ -67,6 +67,52 @@ export const createPayment = async (
 
 	if (orderId.length > 50) {
 		throw new ValidationError("Unable to create valid order id for this user");
+	}
+
+	if (amount === 0) {
+		const now = new Date().toISOString();
+
+		const freeOrder: PaymentOrderRecord = {
+			PK: `PAYMENT#${input.authenticatedUser.id}`,
+			SK: `PAYMENT#${orderId}`,
+			entityType: "PAYMENT_ORDER",
+			orderId,
+			userId: input.authenticatedUser.id,
+			productId: product.id,
+			name: product.name,
+			level: product.level,
+			amount: 0,
+			grossAmount: "0.00",
+			accessDurationDays: product.accessDurationDays,
+			snapRedirectUrl: null,
+			status: "SUCCESS",
+			paymentProvider: "MIDTRANS",
+			createdAt: now,
+			updatedAt: now
+		};
+
+		let expiryDate: string;
+
+		try {
+			expiryDate = await grantProductAccess(freeOrder, now);
+		} catch {
+			throw new ExternalServiceError("Failed to grant product access");
+		}
+
+		freeOrder.accessGrantedAt = now;
+		freeOrder.expiryDate = expiryDate;
+
+		try {
+			await savePaymentOrder(freeOrder);
+		} catch {
+			throw new ExternalServiceError("Failed to persist payment order");
+		}
+
+		return {
+			orderId,
+			snapToken: "",
+			redirectUrl: null
+		};
 	}
 
 	const snapPayload = buildSnapPayload({

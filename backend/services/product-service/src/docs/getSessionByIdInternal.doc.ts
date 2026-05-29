@@ -1,18 +1,18 @@
 import { createErrorResponse } from "@shared-swagger/errors";
 import { OpenApiPathItem } from "@shared-swagger/openapi";
 import { createOkResponse } from "@shared-swagger/responses";
-import { ownedProductSchema } from "./schemas";
+import { ROUTES } from "../routes";
+import { sessionRecordSchema } from "./schemas";
 
-export const getOwnedProductsInternalDocPath = "/api/internal/products/owned/{userId}";
+export const getSessionByIdInternalDocPath = ROUTES.GET_INTERNAL_SESSION_BY_ID.path;
 
-export const getOwnedProductsInternalDocPathItem: OpenApiPathItem = {
+export const getSessionByIdInternalDocPathItem: OpenApiPathItem = {
   get: {
-    summary: "List owned products for an internal trusted service",
+    summary: "Get an internal session record by product, topic, and session id",
     tags: ["Product"],
     responses: {
       "200": createOkResponse({
-        type: "array",
-        items: ownedProductSchema
+        oneOf: [sessionRecordSchema, { type: "null" }]
       }),
       "400": createErrorResponse("Bad Request"),
       "403": createErrorResponse("Forbidden"),

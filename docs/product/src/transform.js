@@ -1,7 +1,6 @@
 "use strict";
 
 function buildTopicPartitionKey(productId, topicId) {
-  // Topic IDs in the source file are not globally unique, so include productId.
   return `TOPIC#${productId}#${topicId}`;
 }
 
@@ -10,7 +9,7 @@ function transformProductsToItems(products) {
   const summary = {
     totalProducts: 0,
     totalTopics: 0,
-    totalSessions: 0,
+    totalSessions: 0
   };
 
   products.forEach((product, productIndex) => {
@@ -21,7 +20,7 @@ function transformProductsToItems(products) {
       PK: productPartitionKey,
       SK: "METADATA",
       entityType: "PRODUCT",
-      ...productAttributes,
+      ...productAttributes
     });
 
     summary.totalProducts += 1;
@@ -37,7 +36,7 @@ function transformProductsToItems(products) {
         productId: product.id,
         topicPartitionKey,
         topicOrder: topicIndex,
-        ...topicAttributes,
+        ...topicAttributes
       });
 
       summary.totalTopics += 1;
@@ -52,7 +51,7 @@ function transformProductsToItems(products) {
           productOrder: productIndex,
           topicOrder: topicIndex,
           sessionOrder: sessionIndex,
-          ...session,
+          ...session
         });
 
         summary.totalSessions += 1;
@@ -60,12 +59,9 @@ function transformProductsToItems(products) {
     });
   });
 
-  return {
-    items,
-    summary,
-  };
+  return { items, summary };
 }
 
 module.exports = {
-  transformProductsToItems,
+  transformProductsToItems
 };

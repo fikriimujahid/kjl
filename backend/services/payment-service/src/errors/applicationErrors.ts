@@ -20,6 +20,12 @@ export class UnauthorizedError extends ApplicationError {
   }
 }
 
+export class ForbiddenError extends ApplicationError {
+  constructor(message: string) {
+    super(message, 403);
+  }
+}
+
 export class NotFoundError extends ApplicationError {
   constructor(message: string) {
     super(message, 404);

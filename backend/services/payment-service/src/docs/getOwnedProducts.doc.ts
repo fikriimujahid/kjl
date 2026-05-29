@@ -1,24 +1,23 @@
 import { withBearerAuth } from "@shared-swagger/auth";
-import { createErrorResponse } from "@shared-swagger/errors";
+import { commonErrorResponses, createErrorResponse } from "@shared-swagger/errors";
 import { OpenApiPathItem } from "@shared-swagger/openapi";
 import { createOkResponse } from "@shared-swagger/responses";
+import { ROUTES } from "../routes";
 import { ownedProductSchema } from "./schemas";
 
-export const getOwnedProductsDocPath = "/api/products/owned/{userId}";
+export const getOwnedProductsDocPath = ROUTES.GET_OWNED_PRODUCTS.path;
 
 export const getOwnedProductsDocPathItem: OpenApiPathItem = {
   get: {
     summary: "List owned products for authenticated user",
-    tags: ["Product"],
+    tags: ["Payment"],
     security: withBearerAuth(),
     responses: {
       "200": createOkResponse({
         type: "array",
         items: ownedProductSchema
       }),
-      "400": createErrorResponse("Bad Request"),
-      "401": createErrorResponse("Unauthorized"),
-      "403": createErrorResponse("Forbidden"),
+      ...commonErrorResponses,
       "502": createErrorResponse("Bad Gateway")
     }
   }

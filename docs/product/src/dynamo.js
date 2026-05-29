@@ -2,7 +2,6 @@
 
 const { BatchWriteCommand } = require("@aws-sdk/lib-dynamodb");
 
-// DynamoDB BatchWriteItem accepts up to 25 items per request.
 const MAX_BATCH_SIZE = 25;
 
 function chunkArray(array, size) {
@@ -30,20 +29,19 @@ function getRetryDelayMs(attempt) {
 async function writeBatchWithRetry({ docClient, tableName, items, maxRetries }) {
   let pendingRequests = items.map((item) => ({
     PutRequest: {
-      Item: item,
-    },
+      Item: item
+    }
   }));
 
   for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
     const response = await docClient.send(
       new BatchWriteCommand({
         RequestItems: {
-          [tableName]: pendingRequests,
-        },
+          [tableName]: pendingRequests
+        }
       })
     );
 
-    // Retry only unprocessed requests, as recommended by DynamoDB docs.
     pendingRequests = response.UnprocessedItems?.[tableName] ?? [];
 
     if (pendingRequests.length === 0) {
@@ -54,8 +52,7 @@ async function writeBatchWithRetry({ docClient, tableName, items, maxRetries }) 
       break;
     }
 
-    const delayMs = getRetryDelayMs(attempt);
-    await delay(delayMs);
+    await delay(getRetryDelayMs(attempt));
   }
 
   throw new Error(
@@ -63,38 +60,36 @@ async function writeBatchWithRetry({ docClient, tableName, items, maxRetries }) 
   );
 }
 
-async function batchWriteItems({ docClient, tableName, items, maxRetries = 5 }) {
+async function batchWriteItems({ docClient, tableName, items, maxRetries, dryRun }) {
   const batches = chunkArray(items, MAX_BATCH_SIZE);
   let insertedItems = 0;
 
   for (let batchIndex = 0; batchIndex < batches.length; batchIndex += 1) {
     const batch = batches[batchIndex];
 
-    try {
-      await writeBatchWithRetry({
-        docClient,
-        tableName,
-        items: batch,
-        maxRetries,
-      });
-
+    if (dryRun) {
       insertedItems += batch.length;
-      console.log(
-        `Inserted batch ${batchIndex + 1}/${batches.length} (${batch.length} items).`
-      );
-    } catch (error) {
-      throw new Error(
-        `Batch ${batchIndex + 1}/${batches.length} failed. ${error.message}`
-      );
+      console.log(`[dry-run] batch write ${batchIndex + 1}/${batches.length} (${batch.length} items)`);
+      continue;
     }
+
+    await writeBatchWithRetry({
+      docClient,
+      tableName,
+      items: batch,
+      maxRetries
+    });
+
+    insertedItems += batch.length;
+    console.log(`Inserted batch ${batchIndex + 1}/${batches.length} (${batch.length} items).`);
   }
 
   return {
     insertedItems,
-    batchesProcessed: batches.length,
+    batchesProcessed: batches.length
   };
 }
 
 module.exports = {
-  batchWriteItems,
+  batchWriteItems
 };

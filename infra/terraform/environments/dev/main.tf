@@ -89,21 +89,61 @@ module "media_private_bucket" {
 }
 
 # -------------------------------------------------------------------------
-# DYNAMODB MODULE
+# PRODUCTS DYNAMODB MODULE
 # -------------------------------------------------------------------------
-module "learning_content_table" {
+module "products_table" {
   source = "../../modules/dynamodb"
 
-  table_name                     = var.learning_content_table.table_name
-  billing_mode                   = var.learning_content_table.billing_mode
-  hash_key                       = var.learning_content_table.hash_key
-  range_key                      = try(var.learning_content_table.range_key, null)
-  attributes                     = var.learning_content_table.attributes
-  global_secondary_indexes       = try(var.learning_content_table.global_secondary_indexes, [])
-  ttl_enabled                    = var.learning_content_table.ttl_enabled
-  ttl_attribute_name             = try(var.learning_content_table.ttl_attribute_name, null)
-  point_in_time_recovery_enabled = var.learning_content_table.point_in_time_recovery_enabled
-  server_side_encryption_enabled = var.learning_content_table.server_side_encryption_enabled
+  table_name                     = var.products_table.table_name
+  billing_mode                   = var.products_table.billing_mode
+  hash_key                       = var.products_table.hash_key
+  range_key                      = try(var.products_table.range_key, null)
+  attributes                     = var.products_table.attributes
+  global_secondary_indexes       = try(var.products_table.global_secondary_indexes, [])
+  ttl_enabled                    = var.products_table.ttl_enabled
+  ttl_attribute_name             = try(var.products_table.ttl_attribute_name, null)
+  point_in_time_recovery_enabled = var.products_table.point_in_time_recovery_enabled
+  server_side_encryption_enabled = var.products_table.server_side_encryption_enabled
+
+  tags = var.tags
+}
+
+# -------------------------------------------------------------------------
+# PAYMENTS DYNAMODB MODULE
+# -------------------------------------------------------------------------
+module "payments_table" {
+  source = "../../modules/dynamodb"
+
+  table_name                     = var.payments_table.table_name
+  billing_mode                   = var.payments_table.billing_mode
+  hash_key                       = var.payments_table.hash_key
+  range_key                      = try(var.payments_table.range_key, null)
+  attributes                     = var.payments_table.attributes
+  global_secondary_indexes       = try(var.payments_table.global_secondary_indexes, [])
+  ttl_enabled                    = var.payments_table.ttl_enabled
+  ttl_attribute_name             = try(var.payments_table.ttl_attribute_name, null)
+  point_in_time_recovery_enabled = var.payments_table.point_in_time_recovery_enabled
+  server_side_encryption_enabled = var.payments_table.server_side_encryption_enabled
+
+  tags = var.tags
+}
+
+# -------------------------------------------------------------------------
+# DYNAMODB MODULE
+# -------------------------------------------------------------------------
+module "progress_table" {
+  source = "../../modules/dynamodb"
+
+  table_name                     = var.progress_table.table_name
+  billing_mode                   = var.progress_table.billing_mode
+  hash_key                       = var.progress_table.hash_key
+  range_key                      = try(var.progress_table.range_key, null)
+  attributes                     = var.progress_table.attributes
+  global_secondary_indexes       = try(var.progress_table.global_secondary_indexes, [])
+  ttl_enabled                    = var.progress_table.ttl_enabled
+  ttl_attribute_name             = try(var.progress_table.ttl_attribute_name, null)
+  point_in_time_recovery_enabled = var.progress_table.point_in_time_recovery_enabled
+  server_side_encryption_enabled = var.progress_table.server_side_encryption_enabled
 
   tags = var.tags
 }
@@ -239,30 +279,3 @@ module "github_cicd" {
 
   tags = var.tags
 }
-
-
-
-# module "app_s3" {
-#   source = "./modules/s3"
-
-#   buckets = {
-#     "${var.project_name}-${var.environment}-content-private" = {
-#       versioning_enabled = true
-#       force_destroy      = false
-#       ownership          = "BucketOwnerEnforced"
-#       lifecycle_days     = 365
-#     }
-
-#     "${var.project_name}-${var.environment}-backup" = {
-#       versioning_enabled = true
-#       force_destroy      = false
-#       ownership          = "BucketOwnerPreferred"
-#       lifecycle_days     = 365
-#     }
-#   }
-
-#   create_iam_policies = true
-
-#   tags = local.common_tags
-# }
-

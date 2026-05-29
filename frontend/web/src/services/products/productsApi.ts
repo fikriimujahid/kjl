@@ -7,6 +7,7 @@ import type {
 } from '@/types/product';
 
 const PRODUCT_API_BASE_URL = (process.env.PRODUCT_API_BASE_URL ?? '/api').replace(/\/+$/, '');
+const PAYMENT_API_BASE_URL = (process.env.PAYMENT_API_BASE_URL ?? PRODUCT_API_BASE_URL).replace(/\/+$/, '');
 const OWNED_PRODUCTS_ENDPOINT = '/owned';
 const PRODUCTS_ENDPOINT = '/products';
 
@@ -128,7 +129,7 @@ export async function getOwnedProducts({
 			: {};
 
 		const response = await fetch(
-			`${PRODUCT_API_BASE_URL}${OWNED_PRODUCTS_ENDPOINT}/${encodeURIComponent(userId)}`,
+			`${PAYMENT_API_BASE_URL}${OWNED_PRODUCTS_ENDPOINT}/${encodeURIComponent(userId)}`,
 			{
 				signal,
 				cache,

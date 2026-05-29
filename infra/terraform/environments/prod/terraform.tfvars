@@ -23,7 +23,7 @@ budget = {
 
 # ============================================================================
 # Frontend Site Hosting Variables
-# ============================================================================ 
+# ============================================================================
 frontend_site_hosting = {
   zone_id = "Z0641160BIPE40MMNCVP"
   # S3 STATIC HOSTING BUCKETS
@@ -49,13 +49,22 @@ frontend_site_hosting = {
   # ACM CONFIGURATION
   acm = {
     domain_name               = "kejepangdulu.click"
-    subject_alternative_names = ["kejepangdulu.click"]
-    #existing_certificate_arn  = "arn:aws:acm:us-east-1:731099197523:certificate/adba9bcc-d4b9-4b1b-8bb7-204de0c57120"
+    subject_alternative_names = ["*.kejepangdulu.click"]
+    zone_id                   = "Z0641160BIPE40MMNCVP"
+    #existing_certificate_arn = "arn:aws:acm:us-east-1:731099197523:certificate/adba9bcc-d4b9-4b1b-8bb7-204de0c57120"
   }
 
   # CLOUDFRONT CONFIGURATION
   cloudfront = {
     aliases = ["kejepangdulu.click"]
+    rewrite_config = {
+      extension_index_rules = [
+        {
+          extension  = ".txt"
+          index_file = "index.txt"
+        }
+      ]
+    }
     custom_error_responses = [
       {
         error_code            = 403
@@ -176,7 +185,7 @@ auth_cognito = {
 
               <!-- Footer -->
               <tr><td align="center" style="padding:24px 0 0;">
-                <p style="margin:0;font-size:12px;color:#bbb;">&copy; 2025 KeJepangDulu. All rights reserved.</p>
+                <p style="margin:0;font-size:12px;color:#bbb;">&copy; 2026 KeJepangDulu. All rights reserved.</p>
               </td></tr>
 
             </table>
@@ -198,7 +207,8 @@ github_cicd = {
   role_name                = "kejepangdulu-prod-github-oidc-role"
   managed_policy_arns = [
     "arn:aws:iam::aws:policy/AmazonS3FullAccess",
-    "arn:aws:iam::aws:policy/CloudFrontFullAccess"
+    "arn:aws:iam::aws:policy/CloudFrontFullAccess",
+    "arn:aws:iam::aws:policy/AWSLambda_FullAccess"
   ]
 }
 
@@ -217,6 +227,13 @@ service_api = {
       timeout               = 10
       environment_variables = {}
       publish               = true
+      dynamodb_access = {
+        learning_content = {
+          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/learning-content-prod"
+          read      = true
+          write     = true
+        }
+      }
       s3_access = {
         media_private = {
           s3_arn = "arn:aws:s3:::kejepangdulu-prod-media-private"
@@ -234,15 +251,13 @@ service_api = {
       runtime               = "nodejs22.x"
       memory_size           = 256
       timeout               = 10
-      environment_variables = {
-        DYNAMO_DB_TABLE_NAME      = "learning-content"
-        MEDIA_PRIVATE_BUCKET_NAME = "kejepangdulu-prod-media-private"
-      }
+      environment_variables = {}
       publish = true
       dynamodb_access = {
         learning_content = {
-          read  = true
-          write = false
+          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/learning-content-prod"
+          read      = true
+          write     = true
         }
       }
       s3_access = {
@@ -265,34 +280,10 @@ service_api = {
       environment_variables = {}
       publish               = true
       dynamodb_access = {
-        learning_content = {
-          read  = true
-          write = true
-        }
-      }
-    }
-
-    quiz = {
-      name                  = "kejepangdulu-prod-quiz-api"
-      description           = "Quiz submit API Lambda."
-      source_dir            = "../../../../backend/quiz-service/build/lambda"
-      handler               = "handler.handler"
-      runtime               = "nodejs22.x"
-      memory_size           = 256
-      timeout               = 15
-      environment_variables = {}
-      publish               = true
-      dynamodb_access = {
-        learning_content = {
-          read  = true
-          write = true
-        }
-      }
-      s3_access = {
-        media_private = {
-          s3_arn = "arn:aws:s3:::kejepangdulu-prod-media-private"
-          read   = true
-          write  = false
+        payments_table = {
+          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/kjl-payments-prod"
+          read      = true
+          write     = true
         }
       }
     }
@@ -306,12 +297,12 @@ service_api = {
       memory_size           = 256
       timeout               = 15
       environment_variables = {
-        DYNAMO_DB_TABLE_NAME = "learning-content"
+        DYNAMO_DB_TABLE_NAME = "kjl-progress-prod"
       }
       publish               = true
       dynamodb_access = {
-        learning_content = {
-          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/learning-content"
+        progress_table = {
+          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/kjl-progress-prod"
           read      = true
           write     = true
         }
@@ -320,8 +311,8 @@ service_api = {
   }
 
   api_gateway = {
-    name        = "kejepangdulu-prod-product-api"
-    description = "Public Product API."
+    name        = "kejepangdulu-prod-service-api"
+    description = "Service API."
     stage_name  = "$default"
 
     cors_allow_origins  = ["*"]
@@ -343,22 +334,28 @@ service_api = {
         operation_name     = "GetProductByIdUnderApi"
         integration_key    = "product"
       }
-      get_purchased_products_by_user_under_api = {
-        route_key          = "GET /api/purchased-products/{userId}"
+      get_owned_products_by_user_under_api = {
+        route_key          = "GET /api/payments/owned/{userId}"
         authorization_type = "JWT"
-        operation_name     = "GetPurchasedProductsByUserUnderApi"
-        integration_key    = "product"
+        operation_name     = "GetOwnedProductsByUserUnderApi"
+        integration_key    = "payment"
       }
       get_internal_owned_products_by_user_under_api = {
-        route_key          = "GET /api/internal/products/owned/{userId}"
+        route_key          = "GET /api/internal/payments/owned/{userId}"
         authorization_type = "NONE"
         operation_name     = "GetInternalOwnedProductsByUserUnderApi"
+        integration_key    = "payment"
+      }
+      get_internal_product_summary_under_api = {
+        route_key          = "GET /api/internal/products/{id}/summary"
+        authorization_type = "NONE"
+        operation_name     = "GetInternalProductSummaryUnderApi"
         integration_key    = "product"
       }
-      get_internal_product_exists_under_api = {
-        route_key          = "GET /api/internal/products/{id}/exists"
+      get_internal_session_by_id_under_api = {
+        route_key          = "GET /api/internal/products/{productId}/topics/{topicId}/sessions/{sessionId}"
         authorization_type = "NONE"
-        operation_name     = "GetInternalProductExistsUnderApi"
+        operation_name     = "GetInternalSessionByIdUnderApi"
         integration_key    = "product"
       }
       get_learning_session_images_under_api = {
@@ -427,12 +424,6 @@ service_api = {
         operation_name     = "PaymentWebhookUnderApi"
         integration_key    = "payment"
       }
-      submit_quiz_exam_under_api = {
-        route_key          = "POST /api/quiz/exam/submit"
-        authorization_type = "JWT"
-        operation_name     = "SubmitQuizExamUnderApi"
-        integration_key    = "quiz"
-      }
       register_under_api = {
         route_key          = "POST /api/auth/register"
         authorization_type = "NONE"
@@ -493,10 +484,10 @@ service_api = {
 }
 
 # ============================================================================
-# DynamoDB Learning Content Table Variables
+# Products DynamoDB Table Variables
 # ============================================================================
-learning_content_table = {
-  table_name   = "learning-content"
+products_table = {
+  table_name   = "kjl-products-prod"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "PK"
   range_key    = "SK"
@@ -519,4 +510,56 @@ learning_content_table = {
   server_side_encryption_enabled = true
 }
 
+# ============================================================================
+# Payments DynamoDB Table Variables
+# ============================================================================
+payments_table = {
+  table_name   = "kjl-payments-prod"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "PK"
+  range_key    = "SK"
 
+  attributes = [
+    {
+      name = "PK"
+      type = "S"
+    },
+    {
+      name = "SK"
+      type = "S"
+    }
+  ]
+
+  global_secondary_indexes       = []
+  ttl_enabled                    = false
+  ttl_attribute_name             = null
+  point_in_time_recovery_enabled = true
+  server_side_encryption_enabled = true
+}
+
+# ============================================================================
+# DynamoDB Progress Table Variables
+# ============================================================================
+progress_table = {
+  table_name   = "kjl-progress-prod"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "PK"
+  range_key    = "SK"
+
+  attributes = [
+    {
+      name = "PK"
+      type = "S"
+    },
+    {
+      name = "SK"
+      type = "S"
+    }
+  ]
+
+  global_secondary_indexes       = []
+  ttl_enabled                    = false
+  ttl_attribute_name             = null
+  point_in_time_recovery_enabled = true
+  server_side_encryption_enabled = true
+}
