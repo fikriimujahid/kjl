@@ -6,12 +6,14 @@ import {
   SessionNotFoundError,
   UnsupportedSessionTypeError
 } from "../errors/applicationErrors";
-import { findSessionById } from "../repositories/findSessionById";
 import {
   finishSessionAttemptInRepository,
   listSessionAttempts
 } from "../repositories/sessionAttemptRepository";
-import { getOwnedProductsByUserIdInternal } from "../services/productServiceInternalClient";
+import {
+  getOwnedProductsByUserIdInternal,
+  getSessionByIdInternal
+} from "../services/productServiceInternalClient";
 import { getSessionAnswersFromStorage } from "../services/sessionAnswerStorage";
 import {
   FinishSessionAttemptResponse,
@@ -100,7 +102,7 @@ export const finishSessionAttempt = async (
     throw new ForbiddenLearningContentAccessError();
   }
 
-  const session = await findSessionById(input.productId, input.topicId, input.sessionId);
+  const session = await getSessionByIdInternal(input.productId, input.topicId, input.sessionId);
 
   if (!session) {
     throw new SessionNotFoundError();
