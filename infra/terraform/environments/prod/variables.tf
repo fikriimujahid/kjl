@@ -198,10 +198,10 @@ variable "payments_table" {
 }
 
 # -------------------------------------------------------------------------
-# DYNAMODB LEARNING CONTENT TABLE
+# DYNAMODB PROGRESS TABLE
 # -------------------------------------------------------------------------
-variable "learning_content_table" {
-  description = "DynamoDB table configuration for learning content."
+variable "progress_table" {
+  description = "DynamoDB table configuration for progress tracking."
   type = object({
     table_name   = string
     billing_mode = string

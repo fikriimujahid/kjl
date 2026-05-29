@@ -280,8 +280,8 @@ service_api = {
       environment_variables = {}
       publish               = true
       dynamodb_access = {
-        learning_content = {
-          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/learning-content-prod"
+        payments_table = {
+          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/kjl-payments-prod"
           read      = true
           write     = true
         }
@@ -297,12 +297,12 @@ service_api = {
       memory_size           = 256
       timeout               = 15
       environment_variables = {
-        DYNAMO_DB_TABLE_NAME = "learning-content-prod"
+        DYNAMO_DB_TABLE_NAME = "kjl-progress-prod"
       }
       publish               = true
       dynamodb_access = {
-        learning_content = {
-          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/learning-content-prod"
+        progress_table = {
+          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/kjl-progress-prod"
           read      = true
           write     = true
         }
@@ -538,10 +538,10 @@ payments_table = {
 }
 
 # ============================================================================
-# DynamoDB Learning Content Table Variables
+# DynamoDB Progress Table Variables
 # ============================================================================
-learning_content_table = {
-  table_name   = "learning-content-prod"
+progress_table = {
+  table_name   = "kjl-progress-prod"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "PK"
   range_key    = "SK"
