@@ -60,21 +60,21 @@ output "learning_api_lambda_function_name" {
 }
 
 # -------------------------------------------------------------------------
-# DYNAMODB LEARNING CONTENT TABLE
+# DYNAMODB TABLE
 # -------------------------------------------------------------------------
-output "learning_content_table_name" {
-  description = "DynamoDB learning content table name in the dev environment."
-  value       = module.learning_content_table.table_name
+output "progress_table_name" {
+  description = "DynamoDB progress table name in the dev environment."
+  value       = module.progress_table.table_name
 }
 
-output "learning_content_table_arn" {
-  description = "DynamoDB learning content table ARN in the dev environment."
-  value       = module.learning_content_table.table_arn
+output "products_table_name" {
+  description = "DynamoDB products table name in the dev environment."
+  value       = module.products_table.table_name
 }
 
-output "learning_content_table_id" {
-  description = "DynamoDB learning content table ID in the dev environment."
-  value       = module.learning_content_table.table_id
+output "payments_table_name" {
+  description = "DynamoDB payments table name in the dev environment."
+  value       = module.payments_table.table_name
 }
 
 # -------------------------------------------------------------------------
