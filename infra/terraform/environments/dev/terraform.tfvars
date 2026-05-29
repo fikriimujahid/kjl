@@ -256,7 +256,7 @@ service_api = {
       environment_variables = {}
       publish = true
       dynamodb_access = {
-        learning_content = {
+        progress_table = {
           table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/kjl-progress-dev"
           read      = true
           write     = true
@@ -303,7 +303,7 @@ service_api = {
       }
       publish               = true
       dynamodb_access = {
-        learning_content = {
+        progress_table = {
           table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/kjl-progress-dev"
           read      = true
           write     = true
@@ -352,6 +352,12 @@ service_api = {
         route_key          = "GET /api/internal/products/{id}/summary"
         authorization_type = "NONE"
         operation_name     = "GetInternalProductSummaryUnderApi"
+        integration_key    = "product"
+      }
+      get_internal_session_by_id_under_api = {
+        route_key          = "GET /api/internal/products/{productId}/topics/{topicId}/sessions/{sessionId}"
+        authorization_type = "NONE"
+        operation_name     = "GetInternalSessionByIdUnderApi"
         integration_key    = "product"
       }
       get_learning_session_images_under_api = {

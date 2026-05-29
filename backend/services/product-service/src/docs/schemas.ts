@@ -82,3 +82,35 @@ export const ownedProductSchema: OpenApiSchemaObject = {
     expiryDate: { type: "string", format: "date-time" }
   }
 };
+
+export const sessionRecordSchema: OpenApiSchemaObject = {
+  type: "object",
+  required: [
+    "PK",
+    "SK",
+    "entityType",
+    "productId",
+    "topicId",
+    "sessionOrder",
+    "id",
+    "title",
+    "type"
+  ],
+  properties: {
+    PK: { type: "string" },
+    SK: { type: "string" },
+    entityType: { type: "string", enum: ["SESSION"] },
+    productId: { type: "string" },
+    topicId: { type: "string" },
+    sessionOrder: { type: "number" },
+    id: { type: "string" },
+    title: { type: "string" },
+    type: {
+      type: "string",
+      enum: ["practice", "pdf", "audio", "images", "video", "exam"]
+    },
+    contentUrl: { type: "string" },
+    passingScore: { type: "number" },
+    duration: { type: "number" }
+  }
+};

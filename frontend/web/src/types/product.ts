@@ -2,6 +2,7 @@ export interface Product {
   id: string;
   name: string;
   price: number;
+  normalPrice?: number;
   shortDescription: string;
   level: string;
   topicsCount: number;

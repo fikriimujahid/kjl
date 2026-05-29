@@ -32,6 +32,7 @@ export const findProductSummarysById = async (
       id: response.items[0].id,
       name: response.items[0].name,
       price: response.items[0].price,
+      normalPrice: response.items[0].normalPrice,
       shortDescription: response.items[0].shortDescription,
       level: response.items[0].level,
       topicsCount: response.items[0].topicsCount,

@@ -10,6 +10,7 @@ export const productListColumns = [
   "id",
   "name",
   "price",
+  "normalPrice",
   "shortDescription",
   "level",
   "topicsCount",
