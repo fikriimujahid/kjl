@@ -6,6 +6,8 @@ const parseUrlEnv = (rawValue: string): string => rawValue.trim().replace(/\/$/,
 const learningServiceEnvSchema = defineEnvSchema({
   DYNAMO_DB_TABLE_NAME: { required: true, parse: parseStringEnv },
   MEDIA_PRIVATE_BUCKET_NAME: { required: true, parse: parseStringEnv },
+  PRODUCT_SERVICE_INTERNAL_API_BASE_URL: { required: true, parse: parseUrlEnv },
+  PRODUCT_SERVICE_INTERNAL_SERVICE_API_KEY: { required: true, parse: parseStringEnv },
   PAYMENT_SERVICE_INTERNAL_API_BASE_URL: { required: true, parse: parseUrlEnv },
   PAYMENT_SERVICE_INTERNAL_SERVICE_API_KEY: { required: true, parse: parseStringEnv }
 });

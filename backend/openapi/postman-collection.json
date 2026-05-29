@@ -1,6 +1,6 @@
 {
   "info": {
-    "_postman_id": "6e1275e2-ad7b-4c65-bb10-8c330fca74b5",
+    "_postman_id": "f65624c6-0203-424b-bab8-389a33da9653",
     "name": "KeJepangDulu API (Generated)",
     "description": "Generated from backend/openapi/swagger.json with per-service collection variables.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -148,6 +148,24 @@
             "method": "GET",
             "header": [],
             "url": "{{productServiceBaseUrl}}/api/products/{id}"
+          },
+          "response": []
+        },
+        {
+          "name": "Get an internal product summary by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{productServiceBaseUrl}}/api/internal/products/{id}/summary"
+          },
+          "response": []
+        },
+        {
+          "name": "Get an internal session record by product, topic, and session id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{productServiceBaseUrl}}/api/internal/products/{productId}/topics/{topicId}/sessions/{sessionId}"
           },
           "response": []
         }

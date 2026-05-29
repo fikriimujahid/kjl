@@ -1,11 +1,21 @@
 import { buildOpenApiDocument, generateOpenApiJson } from "@shared-swagger/generate";
 import { OpenApiPathItem } from "@shared-swagger/openapi";
 import { getProductDetailDocPath, getProductDetailDocPathItem } from "./getProductDetail.doc";
+import {
+  getProductSummaryInternalDocPath,
+  getProductSummaryInternalDocPathItem
+} from "./getProductSummaryInternal.doc";
 import { getProductsDocPath, getProductsDocPathItem } from "./getProducts.doc";
+import {
+  getSessionByIdInternalDocPath,
+  getSessionByIdInternalDocPathItem
+} from "./getSessionByIdInternal.doc";
 
 export const productServicePaths: Record<string, OpenApiPathItem> = {
   [getProductsDocPath]: getProductsDocPathItem,
-  [getProductDetailDocPath]: getProductDetailDocPathItem
+  [getProductDetailDocPath]: getProductDetailDocPathItem,
+  [getProductSummaryInternalDocPath]: getProductSummaryInternalDocPathItem,
+  [getSessionByIdInternalDocPath]: getSessionByIdInternalDocPathItem
 };
 
 const productServiceLocalBaseUrl = "http://localhost:3001";
@@ -28,7 +38,7 @@ export const buildProductServiceOpenApi = () => {
       }
     ],
     includeBearerAuth: true,
-    tags: [{ name: "Product", description: "Product browsing operations" }],
+    tags: [{ name: "Product", description: "Product browsing and internal metadata operations" }],
     paths: productServicePaths
   });
 };

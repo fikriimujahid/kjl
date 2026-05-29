@@ -352,6 +352,12 @@ service_api = {
         operation_name     = "GetInternalProductSummaryUnderApi"
         integration_key    = "product"
       }
+      get_internal_session_by_id_under_api = {
+        route_key          = "GET /api/internal/products/{productId}/topics/{topicId}/sessions/{sessionId}"
+        authorization_type = "NONE"
+        operation_name     = "GetInternalSessionByIdUnderApi"
+        integration_key    = "product"
+      }
       get_learning_session_images_under_api = {
         route_key          = "GET /api/learning/products/{productId}/topics/{topicId}/sessions/{sessionId}/images"
         authorization_type = "JWT"

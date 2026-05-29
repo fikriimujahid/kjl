@@ -3,6 +3,7 @@ import { logRequestReceived, logRequestResult } from "@shared-utils/requestLifec
 import { createErrorResponse } from "@shared-utils/response";
 import { handler } from "../src/handler";
 import { getProductDetailsHandler } from "../src/handlers/getProductDetailsHandler";
+import { getSessionByIdInternalHandler } from "../src/handlers/getSessionByIdInternalHandler";
 import { getProductSummaryInternalHandler } from "../src/handlers/getProductSummaryInternalHandler";
 import { getProductsHandler } from "../src/handlers/getProductsHandler";
 import { ROUTES } from "../src/routes";
@@ -40,6 +41,10 @@ jest.mock("../src/handlers/getProductSummaryInternalHandler", () => ({
   getProductSummaryInternalHandler: jest.fn(),
 }));
 
+jest.mock("../src/handlers/getSessionByIdInternalHandler", () => ({
+  getSessionByIdInternalHandler: jest.fn(),
+}));
+
 jest.mock("@shared-utils/response", () => ({
   createErrorResponse: jest.fn(),
 }));
@@ -48,6 +53,7 @@ describe("product-service handler routing", () => {
   const getProductsMock = getProductsHandler as jest.MockedFunction<typeof getProductsHandler>;
   const getProductDetailsMock = getProductDetailsHandler as jest.MockedFunction<typeof getProductDetailsHandler>;
   const getProductSummaryInternalMock = getProductSummaryInternalHandler as jest.MockedFunction<typeof getProductSummaryInternalHandler>;
+  const getSessionByIdInternalMock = getSessionByIdInternalHandler as jest.MockedFunction<typeof getSessionByIdInternalHandler>;
   const createErrorResponseMock = createErrorResponse as jest.MockedFunction<typeof createErrorResponse>;
   const logRequestReceivedMock = logRequestReceived as jest.MockedFunction<typeof logRequestReceived>;
   const logRequestResultMock = logRequestResult as jest.MockedFunction<typeof logRequestResult>;
@@ -57,6 +63,17 @@ describe("product-service handler routing", () => {
   });
 
   function createEvent(routeKey: string, id?: string): APIGatewayProxyEventV2 {
+    const defaultPathParameters =
+      routeKey === ROUTES.GET_INTERNAL_SESSION_BY_ID.routeKey
+        ? {
+            productId: id ?? "prod-1",
+            topicId: "topic-1",
+            sessionId: "session-1"
+          }
+        : id
+          ? { id }
+          : undefined;
+
     return {
       routeKey,
       requestContext: {
@@ -82,7 +99,7 @@ describe("product-service handler routing", () => {
       headers: {},
       isBase64Encoded: false,
       version: "2.0",
-      pathParameters: id ? { id } : undefined,
+      pathParameters: defaultPathParameters,
     } as APIGatewayProxyEventV2;
   }
 
@@ -158,6 +175,7 @@ describe("product-service handler routing", () => {
     expect(getProductSummaryInternalMock).toHaveBeenCalledWith(event);
     expect(getProductsMock).not.toHaveBeenCalled();
     expect(getProductDetailsMock).not.toHaveBeenCalled();
+    expect(getSessionByIdInternalMock).not.toHaveBeenCalled();
     expect(result).toBe(response);
     expect(logRequestReceivedMock).toHaveBeenCalledWith(
       expect.any(Object),
@@ -170,6 +188,37 @@ describe("product-service handler routing", () => {
     expect(logRequestResultMock).toHaveBeenCalledWith(
       expect.any(Object),
       expect.objectContaining({ routeKey: ROUTES.GET_INTERNAL_PRODUCT_SUMMARY.routeKey, requestId: "req-123" }),
+      response
+    );
+  });
+
+  it("routes GET /api/internal/products/{productId}/topics/{topicId}/sessions/{sessionId} to getSessionByIdInternal", async () => {
+    const response: APIGatewayProxyStructuredResultV2 = {
+      statusCode: 200,
+      body: JSON.stringify({ id: "session-1" }),
+    };
+    getSessionByIdInternalMock.mockResolvedValue(response);
+
+    const event = createEvent(ROUTES.GET_INTERNAL_SESSION_BY_ID.routeKey, "prod-1");
+    const result = await handler(event);
+
+    expect(getSessionByIdInternalMock).toHaveBeenCalledTimes(1);
+    expect(getSessionByIdInternalMock).toHaveBeenCalledWith(event);
+    expect(getProductsMock).not.toHaveBeenCalled();
+    expect(getProductDetailsMock).not.toHaveBeenCalled();
+    expect(getProductSummaryInternalMock).not.toHaveBeenCalled();
+    expect(result).toBe(response);
+    expect(logRequestReceivedMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        routeKey: ROUTES.GET_INTERNAL_SESSION_BY_ID.routeKey,
+        requestId: "req-123",
+        method: "GET"
+      })
+    );
+    expect(logRequestResultMock).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ routeKey: ROUTES.GET_INTERNAL_SESSION_BY_ID.routeKey, requestId: "req-123" }),
       response
     );
   });
@@ -193,6 +242,7 @@ describe("product-service handler routing", () => {
     expect(getProductsMock).not.toHaveBeenCalled();
     expect(getProductDetailsMock).not.toHaveBeenCalled();
     expect(getProductSummaryInternalMock).not.toHaveBeenCalled();
+    expect(getSessionByIdInternalMock).not.toHaveBeenCalled();
     expect(createErrorResponseMock).toHaveBeenCalledWith(event, 404, "Route not found", {
       code: "ROUTE_NOT_FOUND"
     });
@@ -207,7 +257,8 @@ describe("product-service handler routing", () => {
   it.each([
     [ROUTES.GET_PRODUCTS.routeKey],
     [ROUTES.GET_PRODUCT_DETAIL.routeKey],
-    [ROUTES.GET_INTERNAL_PRODUCT_SUMMARY.routeKey]
+    [ROUTES.GET_INTERNAL_PRODUCT_SUMMARY.routeKey],
+    [ROUTES.GET_INTERNAL_SESSION_BY_ID.routeKey]
   ])("logs request lifecycle metadata for route %s", async (routeKey) => {
     const defaultResponse: APIGatewayProxyStructuredResultV2 = {
       statusCode: 200,
@@ -217,6 +268,7 @@ describe("product-service handler routing", () => {
     getProductsMock.mockResolvedValue(defaultResponse);
     getProductDetailsMock.mockResolvedValue(defaultResponse);
     getProductSummaryInternalMock.mockResolvedValue(defaultResponse);
+    getSessionByIdInternalMock.mockResolvedValue(defaultResponse);
 
     const pathParameter =
       routeKey === ROUTES.GET_PRODUCTS.routeKey
