@@ -228,8 +228,8 @@ service_api = {
       environment_variables = {}
       publish               = true
       dynamodb_access = {
-        learning_content = {
-          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/learning-content-prod"
+        product_table = {
+          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/kjl-products-prod"
           read      = true
           write     = true
         }
@@ -254,8 +254,8 @@ service_api = {
       environment_variables = {}
       publish = true
       dynamodb_access = {
-        learning_content = {
-          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/learning-content-prod"
+        progress_table = {
+          table_arn = "arn:aws:dynamodb:ap-southeast-1:731099197523:table/kjl-progress-prod"
           read      = true
           write     = true
         }
